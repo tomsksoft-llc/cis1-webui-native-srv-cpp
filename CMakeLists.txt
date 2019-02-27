@@ -15,8 +15,10 @@ set(${PROJECT_NAME}_SRC
     router.cpp
     publisher.cpp
     file_handler.cpp
+    login_handler.cpp
     socket_util.cpp
-    file_util.cpp)
+    file_util.cpp
+    request_util.cpp)
 
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
 #set_property(TARGET ${PROJECT_NAME}

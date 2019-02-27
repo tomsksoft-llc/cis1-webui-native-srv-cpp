@@ -14,6 +14,7 @@
 #include "fail.h"
 #include "queued_websocket_session.h"
 #include "file_handler.h"
+#include "login_handler.h"
 
 namespace pt = boost::property_tree;
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
@@ -55,7 +56,32 @@ int main(int argc, char* argv[])
     // The io_context is required for all I/O
     net::io_context ioc{};
 
+    auto authenticate_fn = 
+        [](const std::string& uname, const std::string& pass)
+        {
+            if(uname == "uname" && pass == "pass")
+            {
+                return "SomeToken";
+            }
+            else
+            {
+                return "";
+            }
+        };
+    auto authorize_fn = 
+        [](const std::string& token)
+        {
+            if(token == "SomeToken")
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        };
     file_handler fh(doc_root);
+    login_handler lh(authenticate_fn, authorize_fn);
     // Example of basic websocket handler
     auto ws_msg_handler = 
         [](bool text, beast::flat_buffer& buffer, size_t bytes_transferred, websocket_queue& queue)
@@ -81,9 +107,23 @@ int main(int argc, char* argv[])
     // Create router for requests
     auto base_router = std::make_shared<router>();
     base_router->add_route("/", 
-            [&fh](auto&&... args)
+            [&fh, &lh](
+                http::request<http::string_body>&& req,
+                http_session_queue& queue)
             {
-                fh.handle(std::forward<decltype(args)>(args)..., "/index.html");
+                if(!lh.authorize(req))
+                {
+                    fh.handle(std::move(req), queue, "/index.html");
+                }
+                else
+                {
+                    fh.handle(std::move(req), queue, "/index_auth_ok.html");
+                }
+            });
+    base_router->add_route("/login", 
+            [&lh](auto&&... args)
+            {
+                lh.handle(std::forward<decltype(args)>(args)...);
             });
     base_router->add_catch_route(
             [&fh](auto&&... args)
