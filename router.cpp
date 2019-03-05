@@ -35,7 +35,7 @@ http::response<http::string_body> handlers::server_error(http::request<http::str
 
 void router::handle(
         http::request<http::string_body>&& req,
-        http_session_queue& queue) const
+        http_session::queue& queue) const
 {
     std::string target = req.target().to_string();
     for(auto&& [regexp, handler] : routes_)
@@ -66,7 +66,7 @@ void router::handle_upgrade(
 
 using namespace std::string_literals;
 
-void router::add_route(std::string route, std::function<void(http::request<http::string_body>&&, http_session_queue&)> handle_cb)
+void router::add_route(std::string route, std::function<void(http::request<http::string_body>&&, http_session::queue&)> handle_cb)
 {
     const boost::regex esc("[.^$|()\\[\\]{}*+?\\\\]");
     const std::string rep("\\\\&");
@@ -76,7 +76,7 @@ void router::add_route(std::string route, std::function<void(http::request<http:
     routes_.emplace_back(regex, handle_cb);
 }
 
-void router::add_catch_route(std::function<void(http::request<http::string_body>&&, http_session_queue&)> handle_cb)
+void router::add_catch_route(std::function<void(http::request<http::string_body>&&, http_session::queue&)> handle_cb)
 {
     routes_.emplace_back("/.+", handle_cb);
 }

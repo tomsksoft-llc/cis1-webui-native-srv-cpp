@@ -15,43 +15,56 @@
 #include "queued_websocket_session.h"
 #include "file_handler.h"
 #include "login_handler.h"
+#include "projects_handler.h"
+#include "router.h"
 
 namespace pt = boost::property_tree;
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace net = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 
-int main(int argc, char* argv[])
+struct init_params
 {
     net::ip::address address;
     unsigned short port;
     std::string doc_root;
     std::string cis_root;
-    // Check command line arguments.
+};
+
+init_params parse_args(int argc, char* argv[])
+{
+    init_params result{};
     if(argc == 2)
     {
         pt::ptree pt;
         pt::ini_parser::read_ini(argv[1], pt);
-        address = net::ip::make_address(pt.get<std::string>("http.ip"));
-        port = pt.get<unsigned short>("http.port");
-        doc_root = pt.get<std::string>("http.doc_root");
+        result.address = net::ip::make_address(pt.get<std::string>("http.ip"));
+        result.port = pt.get<unsigned short>("http.port");
+        result.doc_root = pt.get<std::string>("http.doc_root");
         auto opt_cis_root = pt.get_optional<std::string>("cis.base_dir");
         if(opt_cis_root)
         {
-            cis_root = opt_cis_root.value();
+            result.cis_root = opt_cis_root.value();
         }
         else
         {
-            cis_root = std::getenv("cis_base_dir");
+            result.cis_root = std::getenv("cis_base_dir");
         }
     }
     else
     {
-        address = net::ip::make_address("127.0.0.1");
-        port = static_cast<unsigned short>(8080);
-        doc_root = ".";
-        cis_root = std::getenv("cis_base_dir");
+        result.address = net::ip::make_address("127.0.0.1");
+        result.port = static_cast<unsigned short>(8080);
+        result.doc_root = ".";
+        result.cis_root = std::getenv("cis_base_dir");
     }
+    return result;
+}
+
+int main(int argc, char* argv[])
+{
+    // Check command line arguments.
+    auto [address, port, doc_root, cis_root] = parse_args(argc, argv);
 
     // The io_context is required for all I/O
     net::io_context ioc{};
@@ -81,6 +94,7 @@ int main(int argc, char* argv[])
             }
         };
     file_handler fh(doc_root);
+    projects_handler ph(cis_root);
     login_handler lh(authenticate_fn, authorize_fn);
     // Example of basic websocket handler
     auto ws_msg_handler = 
@@ -109,7 +123,7 @@ int main(int argc, char* argv[])
     base_router->add_route("/", 
             [&fh, &lh](
                 http::request<http::string_body>&& req,
-                http_session_queue& queue)
+                http_session::queue& queue)
             {
                 if(!lh.authorize(req))
                 {
@@ -119,6 +133,11 @@ int main(int argc, char* argv[])
                 {
                     fh.handle(std::move(req), queue, "/index_auth_ok.html");
                 }
+            });
+    base_router->add_route("/projects", 
+            [&ph](auto&&... args)
+            {
+                ph.handle(std::forward<decltype(args)>(args)...);
             });
     base_router->add_route("/login", 
             [&lh](auto&&... args)

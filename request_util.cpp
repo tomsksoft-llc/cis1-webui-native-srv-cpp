@@ -2,7 +2,7 @@
 
 #include <boost/regex.hpp>
 
-std::map<std::string, std::string> parse_request(const std::string& body)
+std::map<std::string, std::string> parse_request_query(const std::string& body)
 {
     std::map<std::string, std::string> result;
     static boost::regex r("(^|&)([a-zA-Z0-9]+)\\=([a-zA-Z0-9]+)");

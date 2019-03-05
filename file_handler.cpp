@@ -1,6 +1,7 @@
 #include "file_handler.h"
 
 #include "http_session.h"
+#include "router.h"
 #include "file_util.h"
 
 file_handler::file_handler(const std::string& doc_root)
@@ -9,7 +10,7 @@ file_handler::file_handler(const std::string& doc_root)
 
 void file_handler::handle(
             http::request<http::string_body>&& req,
-            http_session_queue& queue,
+            http_session::queue& queue,
             const std::string only_path)
 {
         std::string path = 

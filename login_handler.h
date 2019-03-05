@@ -2,7 +2,9 @@
 
 #include <functional>
 
-#include "http_session_queue.h"
+#include "http_session.h"
+
+class http_session;
 
 class login_handler
 {
@@ -14,6 +16,6 @@ public:
             std::function<bool(const std::string&)> authorize_fn);
     void handle(
             http::request<http::string_body>&& req,
-            http_session_queue& queue);
+            http_session::queue& queue);
     bool authorize(http::request<http::string_body>& req);
 };

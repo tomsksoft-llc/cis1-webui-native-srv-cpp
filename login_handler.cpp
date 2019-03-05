@@ -1,6 +1,7 @@
 #include "login_handler.h"
 
 #include "http_session.h"
+#include "router.h"
 #include "request_util.h"
 
 using namespace std::string_literals;
@@ -14,36 +15,43 @@ login_handler::login_handler(
 
 void login_handler::handle(
             http::request<http::string_body>&& req,
-            http_session_queue& queue)
+            http_session::queue& queue)
 {
     if(req.method() == http::verb::post)
     {
-        auto parsed = parse_request(req.body());
-
+        http::response<http::empty_body> res{http::status::found, req.version()};
+        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+        
+        auto parsed = parse_request_query(req.body());
+        
+        bool login_failed = false;
         if(!parsed.count("uname") || !parsed.count("pass"))
         {
-            //fail
+            res.set(http::field::location, "/login_failed.html");
+            login_failed = true;
         }
         
         auto token = authenticate_(parsed["uname"], parsed["pass"]);
 
         if(token.empty())
         {
-            //fail
+            res.set(http::field::location, "/login_failed.html");
+            login_failed = true;
         }
-
-        http::response<http::empty_body> res{http::status::found, req.version()};
-        res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
-        auto origin = req.find("origin");
-        if(origin != req.end())
+        
+        if(!login_failed)
         {
-            res.set(http::field::location, origin->value());
+            auto origin = req.find("origin");
+            if(origin != req.end())
+            {
+                res.set(http::field::location, origin->value());
+            }
+            else
+            {
+                res.set(http::field::location, "/");
+            }
+            res.insert(http::field::set_cookie, "AuthToken="s + token);
         }
-        else
-        {
-            res.set(http::field::location, "/");
-        }
-        res.insert(http::field::set_cookie, "AuthToken="s + token);
         res.keep_alive(req.keep_alive());
         return queue.send(std::move(res));
     }

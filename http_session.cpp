@@ -6,31 +6,9 @@
 
 #include "fail.h"
 
+#include "router.h"
+
 namespace websocket = beast::websocket;         // from <boost/beast/websocket.hpp>
-
-http_session_queue::http_session_queue(http_session& self)
-            : self_(self)
-{
-    static_assert(limit > 0, "queue limit must be positive");
-    //items_.reserve(limit);
-}
-
-bool http_session_queue::is_full() const
-{
-    return items_.size() >= limit;
-}
-
-bool http_session_queue::on_write()
-{
-    BOOST_ASSERT(!items_.empty());
-    auto const was_full = is_full();
-    items_.erase(items_.begin());
-    if(! items_.empty())
-    {
-        (*items_.front())();
-    }
-    return was_full;
-}
 
 http_session::http_session(
     tcp::socket socket,
@@ -143,14 +121,11 @@ void http_session::on_read(beast::error_code ec)
         timer_.expires_at((std::chrono::steady_clock::time_point::min)());
 
         // Create a WebSocket websocket_session by transferring the socket
-        //std::make_shared<websocket_session>(
-        //    std::move(socket_))->do_accept(std::move(req_));
         router_->handle_upgrade(std::move(socket_), std::move(req_));
         return;
     }
 
     // Send the response
-    //handle_request(*doc_root_, std::move(req_), queue_);
     router_->handle(std::move(req_), queue_);
 
     // If we aren't at the queue limit, try to pipeline another request
