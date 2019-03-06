@@ -12,6 +12,4 @@ public:
             http::request<http::string_body>&& req,
             http_session::queue& queue);
     void update();
-private:
-    void on_jobs_update();
 };
