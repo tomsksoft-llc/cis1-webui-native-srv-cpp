@@ -4,12 +4,12 @@
 #include "router.h"
 #include "file_util.h"
 
-const char* CIS_JOBS_FOLDER = "/jobs";
+const char* CIS_PROJECTS_FOLDER = "/projects";
 
 projects_handler::projects_handler(const std::string& cis_root)
-    : jobs_(path_cat(cis_root, CIS_JOBS_FOLDER))
+    : projects_(path_cat(cis_root, CIS_PROJECTS_FOLDER))
 {
-    jobs_.fetch();
+    projects_.fetch();
 }
 
 void projects_handler::handle(
@@ -25,13 +25,19 @@ void projects_handler::handle(
         http::response<http::string_body> res{http::status::internal_server_error, req.version()};
         res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
         res.set(http::field::content_type, "application/json");
-        res.body() = jobs_.to_json_string();
+        res.body() = projects_.to_json_string();
         res.prepare_payload();
         res.keep_alive(req.keep_alive());
         return queue.send(std::move(res));
 }
 
+void projects_handler::run(
+        const std::string& project,
+        const std::string& job)
+{
+}  
+
 void projects_handler::update()
 {
-    jobs_.fetch();
+    projects_.fetch();
 }

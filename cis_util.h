@@ -7,19 +7,19 @@
 
 namespace pt = boost::property_tree;
 
-struct job
+struct project
 {
-    job(std::string name);
+    project(std::string name);
     std::string name;
     pt::ptree to_ptree();
 };
 
-class job_list
+class project_list
 {
-    const std::string cis_jobs_path_;
-    std::vector<job> jobs_;
+    const std::string cis_projects_path_;
+    std::vector<project> projects_;
 public:
-    job_list(const std::string& path);
+    project_list(const std::string& path);
     pt::ptree to_ptree();
     std::string to_json_string();
     void fetch();
