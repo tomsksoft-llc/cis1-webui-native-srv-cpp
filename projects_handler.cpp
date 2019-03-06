@@ -31,6 +31,11 @@ void projects_handler::handle(
         return queue.send(std::move(res));
 }
 
+void projects_handler::update()
+{
+    jobs_.fetch();
+}
+
 void projects_handler::on_jobs_update()
 {
     jobs_.fetch();

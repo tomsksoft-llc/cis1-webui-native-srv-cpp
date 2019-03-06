@@ -181,6 +181,13 @@ int main(int argc, char* argv[])
     l.reset();
 
     auto cis_router = std::make_shared<router>();
+    cis_router->add_route("/projects",
+            [&ph](http::request<http::string_body>&& req,
+                http_session::queue& queue)
+            {
+                ph.update();
+                return queue.send(handlers::accepted(std::move(req)));
+            });
     auto cis_accept_handler = 
     [&cis_router](tcp::socket&& socket){
         std::make_shared<http_session>(
