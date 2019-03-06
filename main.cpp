@@ -143,7 +143,7 @@ int main(int argc, char* argv[])
     base_router->add_route("/projects", 
             [&ph](auto&&... args)
             {
-                ph.handle(std::forward<decltype(args)>(args)...);
+                ph.get_projects(std::forward<decltype(args)>(args)...);
             });
     base_router->add_route("/login", 
             [&lh](auto&&... args)

@@ -12,7 +12,7 @@ projects_handler::projects_handler(const std::string& cis_root)
     projects_.fetch();
 }
 
-void projects_handler::handle(
+void projects_handler::get_projects(
             http::request<http::string_body>&& req,
             http_session::queue& queue)
 {
