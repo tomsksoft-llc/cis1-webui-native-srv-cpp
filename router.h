@@ -19,6 +19,8 @@ using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace handlers
 {
 
+http::response<http::string_body> accepted(http::request<http::string_body>&& req);
+
 http::response<http::string_body> not_found(http::request<http::string_body>&& req);
 
 http::response<http::string_body> bad_request(http::request<http::string_body>&& req, beast::string_view why);

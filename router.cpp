@@ -1,5 +1,16 @@
 #include "router.h"
 
+http::response<http::string_body> handlers::accepted(http::request<http::string_body>&& req)
+{
+    http::response<http::string_body> res{http::status::accepted, req.version()};
+    res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = "Request accepted.";
+    res.prepare_payload();
+    return res;
+}
+
 http::response<http::string_body> handlers::not_found(http::request<http::string_body>&& req)
 {
     http::response<http::string_body> res{http::status::not_found, req.version()};
