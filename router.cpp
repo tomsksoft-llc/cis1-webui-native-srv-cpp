@@ -79,30 +79,22 @@ using namespace std::string_literals;
 
 void router::add_route(std::string route, std::function<void(http::request<http::string_body>&&, http_session::queue&)> handle_cb)
 {
-    const boost::regex esc("[.^$|()\\[\\]{}*+?\\\\]");
-    const std::string rep("\\\\&");
-    std::string result = boost::regex_replace(route, esc, rep,
-                                   boost::match_default | boost::format_sed);
-    std::string regex = "^"s + result + "$"s;
+    std::string regex = "^"s + route + "$"s;
     routes_.emplace_back(regex, handle_cb);
 }
 
 void router::add_catch_route(std::function<void(http::request<http::string_body>&&, http_session::queue&)> handle_cb)
 {
-    routes_.emplace_back("/.+", handle_cb);
+    routes_.emplace_back("^/.+$", handle_cb);
 }
 
 void router::add_ws_route(std::string route, std::function<void(tcp::socket&&, http::request<http::string_body>&&)> handle_cb)
 {
-    const boost::regex esc("[.^$|()\\[\\]{}*+?\\\\]");
-    const std::string rep("\\\\&");
-    std::string result = boost::regex_replace(route, esc, rep,
-                                   boost::match_default | boost::format_sed);
-    std::string regex = "^"s + result + "(\\?.+$|$)"s;
+    std::string regex = "^"s + route + "(\\?.+$|$)"s;
     ws_routes_.emplace_back(regex, handle_cb);
 }
 
 void router::add_ws_catch_route(std::function<void(tcp::socket&&, http::request<http::string_body>&&)> handle_cb)
 {
-    ws_routes_.emplace_back("/.+", handle_cb);
+    ws_routes_.emplace_back("^/.+$", handle_cb);
 }
