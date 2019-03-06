@@ -180,6 +180,24 @@ int main(int argc, char* argv[])
     l->run();
     l.reset();
 
+    auto cis_router = std::make_shared<router>();
+    auto cis_accept_handler = 
+    [&cis_router](tcp::socket&& socket){
+        std::make_shared<http_session>(
+            std::move(socket),
+            cis_router)->run();
+    };
+    l = std::make_shared<listener>(
+        ioc,
+        cis_accept_handler);
+    l->listen(tcp::endpoint{cis_address, cis_port}, ec);
+    if(ec)
+    {
+        return EXIT_FAILURE;
+    }
+    l->run();
+    l.reset();
+
     // Capture SIGINT and SIGTERM to perform a clean shutdown
     net::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait(
