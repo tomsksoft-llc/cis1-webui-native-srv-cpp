@@ -1,0 +1,28 @@
+#pragma once
+
+#include <filesystem>
+#include <vector>
+
+#include <boost/process.hpp>
+
+class child_process
+    : public std::enable_shared_from_this<child_process>
+{
+public:
+    child_process(
+            boost::asio::io_context& ctx,
+            boost::process::environment env,
+            std::filesystem::path start_dir);
+    ~child_process();
+    void run(
+            const std::string& programm,
+            const std::string& arg1,
+            const std::string& arg2,
+            std::function<void(int, std::vector<char>&, const std::error_code&)> cb);
+private:
+    boost::asio::io_context& ctx_;
+    boost::process::environment env_;
+    std::filesystem::path start_dir_;
+    std::vector<char> buffer_;
+    boost::process::child *proc_ = nullptr;    
+};

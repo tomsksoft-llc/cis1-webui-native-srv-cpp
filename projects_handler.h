@@ -11,6 +11,9 @@ public:
     void get_projects(
             http::request<http::string_body>&& req,
             http_session::queue& queue);
-    void run(const std::string& project, const std::string& job);
+    void run(
+            boost::asio::io_context& ctx,
+            const std::string& project,
+            const std::string& job);
     void update();
 };

@@ -145,6 +145,11 @@ int main(int argc, char* argv[])
             {
                 ph.get_projects(std::forward<decltype(args)>(args)...);
             });
+    base_router->add_route("/run/.+/.+", 
+            [&ph, &ioc](auto&&... args)
+            {
+                ph.run(ioc, "internal", "core_test");
+            });
     base_router->add_route("/login", 
             [&lh](auto&&... args)
             {

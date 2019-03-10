@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/asio/io_context.hpp>
 #include <boost/property_tree/json_parser.hpp>
 
 namespace pt = boost::property_tree;
@@ -24,3 +25,8 @@ public:
     std::string to_json_string();
     void fetch();
 };
+
+void run_job(
+        boost::asio::io_context& ctx,
+        const std::string& project,
+        const std::string& name);

@@ -1,7 +1,11 @@
 #include "cis_util.h"
 
 #include <filesystem>
-#include <vector>
+#include <iostream>
+
+#include <boost/process.hpp>
+
+#include "child_process.h"
 
 namespace fs = std::filesystem;
 
@@ -55,4 +59,31 @@ std::string project_list::to_json_string()
     std::stringstream json;
     pt::write_json(json, json_tree);
     return json.str();
+}
+
+void run_job(
+        boost::asio::io_context& ctx,
+        const std::string& project,
+        const std::string& name)
+{
+    const char* cis_base_dir = "/home/enjection/workspace/ts_cis_http/cis";
+    auto env = boost::this_process::environment();
+    env["cis_base_dir"] = cis_base_dir;
+    std::make_shared<child_process>(ctx, env, cis_base_dir)->run(
+            "sh",
+            "core/startjob",
+            project + "/" + name,
+            [](int exit, std::vector<char>& buffer, const std::error_code& ec)
+            {
+                if(!ec)
+                {
+                    std::cout << "process exited with " << exit << std::endl;
+                    std::cout << "std_out contain:" << std::endl;
+                    std::cout.write(buffer.data(), buffer.size());
+                }
+                else
+                {
+                    std::cout << "error" << std::endl;
+                }
+            });
 }

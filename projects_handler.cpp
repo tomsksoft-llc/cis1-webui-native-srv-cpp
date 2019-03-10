@@ -32,9 +32,11 @@ void projects_handler::get_projects(
 }
 
 void projects_handler::run(
+        boost::asio::io_context& ctx,
         const std::string& project,
         const std::string& job)
 {
+    ::run_job(ctx, project, job);
 }  
 
 void projects_handler::update()
