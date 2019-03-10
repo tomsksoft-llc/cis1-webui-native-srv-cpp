@@ -5,7 +5,6 @@
 #include <boost/beast/websocket.hpp>
 
 #include "fail.h"
-
 #include "router.h"
 
 namespace websocket = beast::websocket;         // from <boost/beast/websocket.hpp>

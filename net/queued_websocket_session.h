@@ -1,8 +1,8 @@
 #pragma once
 
-#include "basic_websocket_session.h"
-
 #include <deque>
+
+#include "basic_websocket_session.h"
 
 class queued_websocket_session;
 

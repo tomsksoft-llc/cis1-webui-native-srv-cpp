@@ -5,16 +5,17 @@
 #include <algorithm>
 
 #include <boost/asio.hpp>
+#include <boost/beast.hpp>
 #include <cstdlib>
 
-#include "listener.h"
-#include "http_session.h"
+#include "net/listener.h"
+#include "net/http_session.h"
+#include "net/queued_websocket_session.h"
+#include "net/router.h"
 #include "fail.h"
-#include "queued_websocket_session.h"
 #include "file_handler.h"
 #include "login_handler.h"
 #include "projects_handler.h"
-#include "router.h"
 #include "cis_dirs.h"
 #include "init.h"
 

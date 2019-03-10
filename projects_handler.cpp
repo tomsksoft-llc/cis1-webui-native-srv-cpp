@@ -1,7 +1,7 @@
 #include "projects_handler.h"
 
-#include "http_session.h"
-#include "router.h"
+#include "net/http_session.h"
+#include "net/router.h"
 #include "file_util.h"
 #include "cis_dirs.h"
 
