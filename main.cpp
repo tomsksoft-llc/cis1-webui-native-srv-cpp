@@ -107,8 +107,15 @@ int main(int argc, char* argv[])
             {
                 ph.get_projects(std::forward<decltype(args)>(args)...);
             });
-    base_router->add_route("/run/.+/.+", 
-            [&ph, &ioc](auto&&... args)
+    base_router->add_route("/run/<string>/<string>"_R, 
+            //-> "^/run/([^/?#]+)/([^/?#]+)" 
+            //(substitute "<string>" to "([^/?#]+)", make {std::string, std::string} arg
+            // get groups 0 to ..n and assign it to arg)
+            [&ph, &ioc](
+                http::request<http::string_body>&& req,
+                http_session::queue& queue,
+                const std::string& project
+                const std::string& job)
             {
                 ph.run(ioc, "internal", "core_test");
             });
