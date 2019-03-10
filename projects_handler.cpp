@@ -4,6 +4,7 @@
 #include "net/router.h"
 #include "file_util.h"
 #include "cis_dirs.h"
+#include "response.h"
 
 projects_handler::projects_handler()
     : projects_(path_cat(cis::get_root_dir(), cis::PROJECTS))
@@ -19,7 +20,7 @@ void projects_handler::get_projects(
         // Handle an unknown error
         if(ec)
         {
-            return queue.send(handlers::server_error(std::move(req), ec.message()));
+            return queue.send(response::server_error(std::move(req), ec.message()));
         }
         http::response<http::string_body> res{http::status::internal_server_error, req.version()};
         res.set(http::field::server, BOOST_BEAST_VERSION_STRING);

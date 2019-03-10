@@ -13,6 +13,7 @@
 #include "net/queued_websocket_session.h"
 #include "net/router.h"
 #include "fail.h"
+#include "response.h"
 #include "file_handler.h"
 #include "login_handler.h"
 #include "projects_handler.h"
@@ -152,7 +153,7 @@ int main(int argc, char* argv[])
                 http_session::queue& queue)
             {
                 ph.update();
-                return queue.send(handlers::accepted(std::move(req)));
+                return queue.send(response::accepted(std::move(req)));
             });
     auto cis_accept_handler = 
     [&cis_router](tcp::socket&& socket){

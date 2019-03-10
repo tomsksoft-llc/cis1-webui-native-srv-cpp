@@ -16,19 +16,6 @@ using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 
 #include "http_session.h"
 
-namespace handlers
-{
-
-http::response<http::string_body> accepted(http::request<http::string_body>&& req);
-
-http::response<http::string_body> not_found(http::request<http::string_body>&& req);
-
-http::response<http::string_body> bad_request(http::request<http::string_body>&& req, beast::string_view why);
-
-http::response<http::string_body> server_error(http::request<http::string_body>&& req, beast::string_view what);
-
-} //namespace handlers
-
 class router
 {
 public:

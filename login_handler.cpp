@@ -3,6 +3,7 @@
 #include "net/http_session.h"
 #include "net/router.h"
 #include "request_util.h"
+#include "response.h"
 
 using namespace std::string_literals;
 
@@ -57,7 +58,7 @@ void login_handler::handle(
     }
     else
     {
-        return queue.send(handlers::not_found(std::move(req)));
+        return queue.send(response::not_found(std::move(req)));
     }
 }
 

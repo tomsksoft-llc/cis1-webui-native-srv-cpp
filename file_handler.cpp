@@ -3,6 +3,7 @@
 #include "net/http_session.h"
 #include "net/router.h"
 #include "file_util.h"
+#include "response.h"
 
 file_handler::file_handler(const std::string& doc_root)
     : doc_root_(doc_root)
@@ -24,13 +25,13 @@ void file_handler::handle(
         body.open(path.c_str(), beast::file_mode::scan, ec);
         if(ec == beast::errc::no_such_file_or_directory)
         {
-            return queue.send(handlers::not_found(std::move(req)));
+            return queue.send(response::not_found(std::move(req)));
         }
 
         // Handle an unknown error
         if(ec)
         {
-            return queue.send(handlers::server_error(std::move(req), ec.message()));
+            return queue.send(response::server_error(std::move(req), ec.message()));
         }
 
         // Cache the size since we need it after the move

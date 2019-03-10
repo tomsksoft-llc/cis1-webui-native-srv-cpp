@@ -14,6 +14,7 @@ set(${PROJECT_NAME}_SRC
     net/queued_websocket_session.cpp
     net/router.cpp
     net/socket_util.cpp
+    response.cpp
     publisher.cpp
     file_handler.cpp
     login_handler.cpp
