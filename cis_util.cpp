@@ -6,6 +6,7 @@
 #include <boost/process.hpp>
 
 #include "child_process.h"
+#include "cis_dirs.h"
 
 namespace fs = std::filesystem;
 
@@ -66,13 +67,11 @@ void run_job(
         const std::string& project,
         const std::string& name)
 {
-    const char* cis_base_dir = "/home/enjection/workspace/ts_cis_http/cis";
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = cis_base_dir;
-    std::make_shared<child_process>(ctx, env, cis_base_dir)->run(
+    env["cis_base_dir"] = cis::get_root_dir();
+    std::make_shared<child_process>(ctx, env)->run(
             "sh",
-            "core/startjob",
-            project + "/" + name,
+            {"startjob", project + "/" + name},
             [](int exit, std::vector<char>& buffer, const std::error_code& ec)
             {
                 if(!ec)

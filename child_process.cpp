@@ -1,12 +1,14 @@
 #include "child_process.h"
 
+#include "cis_dirs.h"
+#include "file_util.h"
+
 child_process::child_process(
         boost::asio::io_context& ctx,
-        boost::process::environment env,
-        std::filesystem::path start_dir)
+        boost::process::environment env)
     : ctx_(ctx)
     , env_(env)
-    , start_dir_(start_dir)
+    , start_dir_(path_cat(cis::get_root_dir(), cis::CORE))
 {
     buffer_.resize(1024);
 }
@@ -21,8 +23,7 @@ child_process::~child_process()
 
 void child_process::run(
         const std::string& programm,
-        const std::string& arg1,
-        const std::string& arg2,
+        std::vector<std::string> args,
         std::function<void(int, std::vector<char>&, const std::error_code&)> cb)
 {
     namespace bp = boost::process;
@@ -30,12 +31,11 @@ void child_process::run(
     proc_ = new bp::child(
         bp::search_path(programm),
         env_,
-        bp::start_dir = start_dir_.c_str(),
-        arg1,
-        arg2,
         ctx_,
         //strand_.context(), //TODO
         bp::std_out > boost::asio::buffer(buffer_),
+        bp::start_dir = start_dir_.c_str(),
+        bp::args = args,
         bp::on_exit = 
         [&, cb, self](int exit, const std::error_code& ec)
         {

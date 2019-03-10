@@ -21,7 +21,8 @@ set(${PROJECT_NAME}_SRC
     file_util.cpp
     request_util.cpp
     cis_util.cpp
-    child_process.cpp)
+    child_process.cpp
+    cis_dirs.cpp)
 
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
 #set_property(TARGET ${PROJECT_NAME}

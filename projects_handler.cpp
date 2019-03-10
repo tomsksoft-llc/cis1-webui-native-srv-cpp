@@ -3,11 +3,10 @@
 #include "http_session.h"
 #include "router.h"
 #include "file_util.h"
+#include "cis_dirs.h"
 
-const char* CIS_PROJECTS_FOLDER = "/jobs";
-
-projects_handler::projects_handler(const std::string& cis_root)
-    : projects_(path_cat(cis_root, CIS_PROJECTS_FOLDER))
+projects_handler::projects_handler()
+    : projects_(path_cat(cis::get_root_dir(), cis::PROJECTS))
 {
     projects_.fetch();
 }

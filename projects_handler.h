@@ -7,7 +7,7 @@ class projects_handler
 {
     project_list projects_;
 public:
-    projects_handler(const std::string& cis_root);
+    projects_handler();
     void get_projects(
             http::request<http::string_body>&& req,
             http_session::queue& queue);

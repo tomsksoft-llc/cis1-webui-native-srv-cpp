@@ -17,6 +17,7 @@
 #include "login_handler.h"
 #include "projects_handler.h"
 #include "router.h"
+#include "cis_dirs.h"
 
 namespace pt = boost::property_tree;
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
@@ -71,7 +72,7 @@ int main(int argc, char* argv[])
 {
     // Check command line arguments.
     auto [address, port, cis_address, cis_port, doc_root, cis_root] = parse_args(argc, argv);
-
+    cis::set_root_dir(cis_root.c_str());
     // The io_context is required for all I/O
     net::io_context ioc{};
 
@@ -100,7 +101,7 @@ int main(int argc, char* argv[])
             }
         };
     file_handler fh(doc_root);
-    projects_handler ph(cis_root);
+    projects_handler ph;
     login_handler lh(authenticate_fn, authorize_fn);
     // Example of basic websocket handler
     auto ws_msg_handler = 
