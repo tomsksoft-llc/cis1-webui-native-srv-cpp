@@ -19,6 +19,7 @@
 #include "projects_handler.h"
 #include "cis_dirs.h"
 #include "init.h"
+#include "websocket_handler.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace net = boost::asio;                    // from <boost/asio.hpp>
@@ -65,25 +66,14 @@ int main(int argc, char* argv[])
     projects_handler ph;
     login_handler lh(authenticate_fn, authorize_fn);
     // Example of basic websocket handler
+    websocket_handler ws_handler;
+
+    ws_handler.add_event(1, [](){std::cout << "got event 1" << std::endl;});
+
     auto ws_msg_handler = 
-        [](bool text, beast::flat_buffer& buffer, size_t bytes_transferred, websocket_queue& queue)
+        [&ws_handler](bool text, beast::flat_buffer& buffer, size_t bytes_transferred, websocket_queue& queue)
         {
-            char* tempchar = new char[bytes_transferred + 1];
-            boost::asio::buffer_copy(boost::asio::buffer(tempchar, bytes_transferred), buffer.data(), bytes_transferred);
-            tempchar[bytes_transferred] = '\0';
-            if(text)
-            {
-                std::cout << tempchar << std::endl;
-            }
-            else
-            {
-                std::cout << "got binary message!" << std::endl;
-            }
-            delete[] tempchar;
-            auto reply = std::make_shared<std::string>("reply text");
-            // Using lambda for control reply lifetime
-            queue.send_text(boost::asio::buffer(reply->data(), reply->size()), [reply](){});
-            queue.send_text(boost::asio::buffer(reply->data(), reply->size()), [reply](){});
+            ws_handler.handle(text, buffer, bytes_transferred, queue);
         };
 
     // Create router for requests
@@ -107,6 +97,7 @@ int main(int argc, char* argv[])
             {
                 ph.get_projects(std::forward<decltype(args)>(args)...);
             });
+    /*
     base_router->add_route("/run/<string>/<string>"_R, 
             //-> "^/run/([^/?#]+)/([^/?#]+)" 
             //(substitute "<string>" to "([^/?#]+)", make {std::string, std::string} arg
@@ -118,7 +109,7 @@ int main(int argc, char* argv[])
                 const std::string& job)
             {
                 ph.run(ioc, "internal", "core_test");
-            });
+            });*/
     base_router->add_route("/login", 
             [&lh](auto&&... args)
             {
