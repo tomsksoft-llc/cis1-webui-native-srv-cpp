@@ -20,6 +20,7 @@
 #include "cis_dirs.h"
 #include "init.h"
 #include "websocket_handler.h"
+#include "rights_manager.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace net = boost::asio;                    // from <boost/asio.hpp>
@@ -62,13 +63,28 @@ int main(int argc, char* argv[])
                 return false;
             }
         };
+    rights_manager rm;
+    rm.add_resource("projects.internal.read", false);
+    rm.set_right("enjection", "projects.internal.read", true);
+
     file_handler fh(doc_root);
     projects_handler ph;
     login_handler lh(authenticate_fn, authorize_fn);
     // Example of basic websocket handler
     websocket_handler ws_handler;
 
-    ws_handler.add_event(1, [](){std::cout << "got event 1" << std::endl;});
+    ws_handler.add_event(3, 
+            [&rm](){
+                std::cout << "got event 1" << std::endl;
+                if(rm.check_right("enjection", "projects.internal.read"))
+                {
+                    std::cout << "authorized" << std::endl;
+                }
+                else
+                {
+                    std::cout << "not authorized" << std::endl;
+                }
+            });
 
     auto ws_msg_handler = 
         [&ws_handler](bool text, beast::flat_buffer& buffer, size_t bytes_transferred, websocket_queue& queue)
