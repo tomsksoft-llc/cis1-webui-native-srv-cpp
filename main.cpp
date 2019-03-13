@@ -64,8 +64,15 @@ int main(int argc, char* argv[])
             }
         };
     rights_manager rm;
-    rm.add_resource("projects.internal.read", false);
+    /*
+    rm.add_resource("projects.internal.read", true);
+    rm.add_resource("projects.internal.write", false);
     rm.set_right("enjection", "projects.internal.read", true);
+    rm.set_right("enjection", "projects.internal.write", true);
+    rm.set_right("david", "projects.internal.write", true);
+    */
+
+    rm.load_from_file("/tmp/rights.pwd");
 
     file_handler fh(doc_root);
     projects_handler ph;
@@ -76,7 +83,8 @@ int main(int argc, char* argv[])
     ws_handler.add_event(3, 
             [&rm](){
                 std::cout << "got event 1" << std::endl;
-                if(rm.check_right("enjection", "projects.internal.read"))
+                rm.save_to_file({"/tmp/rights.pwd"});
+                if(rm.check_right("enjection", "projects.internal.read").value())
                 {
                     std::cout << "authorized" << std::endl;
                 }

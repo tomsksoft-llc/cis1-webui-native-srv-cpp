@@ -2,6 +2,8 @@
 
 #include <string>
 #include <map>
+#include <optional>
+#include <filesystem>
 
 class rights_manager
 {
@@ -17,5 +19,8 @@ public:
     // "enjection" "projects.internal.read" true
     void set_right(std::string username, std::string resource_name, bool value);
     // "enjection" "projects.internal.read" -> true
-    bool check_right(std::string username, std::string resource_name);
+    std::optional<bool> check_right(std::string username, std::string resource_name);
+
+    void save_to_file(const std::filesystem::path& file);
+    void load_from_file(const std::filesystem::path& file);
 };
