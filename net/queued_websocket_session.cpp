@@ -2,6 +2,10 @@
 
 #include "fail.h"
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
+
 websocket_queue::websocket_queue(queued_websocket_session& self)
     : self_(self)
 {
@@ -56,6 +60,9 @@ void queued_websocket_session::accept_handler(
 {
     std::make_shared<queued_websocket_session>(
         std::move(socket), handler)->do_accept(std::move(req));
+#ifndef NDEBUG
+    std::cout << "accept_handler()" << std::endl;
+#endif
 }
 
 queued_websocket_session::queued_websocket_session(tcp::socket socket, request_handler_t handler)
@@ -63,6 +70,13 @@ queued_websocket_session::queued_websocket_session(tcp::socket socket, request_h
     , handler_(handler)
     , queue_(*this)
 {}
+
+#ifndef NDEBUG
+queued_websocket_session::~queued_websocket_session()
+{
+    std::cout << "~queued_websocket_session()" << std::endl;
+}
+#endif
 
 void queued_websocket_session::on_accept_success()
 {
@@ -101,6 +115,10 @@ void queued_websocket_session::on_read(
     // This indicates that the websocket_session was closed
     if(ec == websocket::error::closed)
     {
+#ifndef NDEBUG
+        std::cout << "websocket::error::closed" << std::endl;
+#endif
+        timer_.expires_after(std::chrono::seconds(0));
         return;
     }
     if(ec)

@@ -5,6 +5,7 @@ project(ts_ws)
 find_package(Threads REQUIRED)
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS regex filesystem REQUIRED)
+find_package(RapidJSON REQUIRED)
 
 set(${PROJECT_NAME}_SRC
     net/fail.cpp
@@ -12,22 +13,28 @@ set(${PROJECT_NAME}_SRC
     net/listener.cpp
     net/basic_websocket_session.cpp
     net/queued_websocket_session.cpp
-    net/router.cpp
     net/socket_util.cpp
+    http_router.cpp
+    websocket_router.cpp
+    web_app.cpp
+    cookie_parser.cpp
+    auth_manager.cpp
     response.cpp
     publisher.cpp
     file_handler.cpp
-    login_handler.cpp
+    #login_handler.cpp
     projects_handler.cpp
     file_util.cpp
     request_util.cpp
     cis_util.cpp
     child_process.cpp
-    cis_dirs.cpp
+    dirs.cpp
     init.cpp
     rights_manager.cpp
-    websocket_handler.cpp)
+    websocket_handler.cpp
+    websocket_event_handlers.cpp)
 
+add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 #set_property(TARGET ${PROJECT_NAME}

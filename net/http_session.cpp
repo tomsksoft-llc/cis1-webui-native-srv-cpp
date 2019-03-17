@@ -5,18 +5,18 @@
 #include <boost/beast/websocket.hpp>
 
 #include "fail.h"
-#include "router.h"
+#include "web_app.h"
 
 namespace websocket = beast::websocket;         // from <boost/beast/websocket.hpp>
 
 http_session::http_session(
     tcp::socket socket,
-    std::shared_ptr<router const> const& router)
+    std::shared_ptr<web_app const> const& app)
     : socket_(std::move(socket))
     , strand_(socket_.get_executor())
     , timer_(socket_.get_executor().context(),
         (std::chrono::steady_clock::time_point::max)())
-    , router_(router)
+    , app_(app)
     , queue_(*this)
 {
 }
@@ -115,19 +115,17 @@ void http_session::on_read(beast::error_code ec)
     // See if it is a WebSocket Upgrade
     if(websocket::is_upgrade(req_))
     {
-        //TODO: call middleware and check token (in path)
-        
         // Make timer expire immediately, by setting expiry to time_point::min we can detect
         // the upgrade to websocket in the timer handler
         timer_.expires_at((std::chrono::steady_clock::time_point::min)());
 
         // Create a WebSocket websocket_session by transferring the socket
-        router_->handle_upgrade(std::move(socket_), std::move(req_));
+        app_->handle_upgrade(std::move(socket_), std::move(req_));
         return;
     }
 
     // Send the response
-    router_->handle(std::move(req_), queue_);
+    app_->handle(std::move(req_), queue_);
 
     // If we aren't at the queue limit, try to pipeline another request
     if(!queue_.is_full())

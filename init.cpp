@@ -19,8 +19,6 @@ init_params parse_args(int argc, char* argv[])
         result.public_port = pt.get<unsigned short>("http.port");
         result.doc_root = pt.get<std::string>("http.doc_root");
         auto opt_cis_root = pt.get_optional<std::string>("cis.base_dir");
-        result.cis_address = net::ip::make_address(pt.get<std::string>("cis.ip"));
-        result.cis_port = pt.get<unsigned short>("cis.port");
         if(opt_cis_root)
         {
             result.cis_root = opt_cis_root.value();
@@ -29,6 +27,9 @@ init_params parse_args(int argc, char* argv[])
         {
             result.cis_root = std::getenv("cis_base_dir");
         }
+        result.cis_address = net::ip::make_address(pt.get<std::string>("cis.ip"));
+        result.cis_port = pt.get<unsigned short>("cis.port");
+        result.db_root = pt.get<std::string>("db.root");
     }
     else
     {
@@ -38,6 +39,7 @@ init_params parse_args(int argc, char* argv[])
         result.cis_port = static_cast<unsigned short>(8081);
         result.doc_root = ".";
         result.cis_root = std::getenv("cis_base_dir");
+        result.db_root = ".";
     }
     return result;
 }

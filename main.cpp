@@ -1,188 +1,126 @@
-#include <iostream>
-#include <thread>
+#include <functional>
+#ifdef ENABLE_THREADING
 #include <vector>
-#include <string>
-#include <algorithm>
+#include <thread>
+#endif
 
 #include <boost/asio.hpp>
 #include <boost/beast.hpp>
-#include <cstdlib>
 
-#include "net/listener.h"
-#include "net/http_session.h"
-#include "net/queued_websocket_session.h"
-#include "net/router.h"
-#include "response.h"
-#include "file_handler.h"
-#include "login_handler.h"
-#include "projects_handler.h"
-#include "cis_dirs.h"
 #include "init.h"
+#include "dirs.h"
+#include "web_app.h"
+// Business logic
+#include "auth_manager.h"
+// Middleware
+#include "http_router.h"
+#include "websocket_router.h"
+#include "cookie_parser.h"
+#include "file_handler.h"
+// HTTP handlers
+#include "projects_handler.h"
+// WebSocket handlers
 #include "websocket_handler.h"
-#include "rights_manager.h"
-#include "file_util.h"
+#include "websocket_event_handlers.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace net = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
+using namespace std::placeholders;
 
 int main(int argc, char* argv[])
 {
-    // Check command line arguments.
+    // Load config
     auto [address,
           port,
           cis_address,
           cis_port,
           doc_root,
-          cis_root] = parse_args(argc, argv);
+          cis_root,
+          db_path] = parse_args(argc, argv);
     cis::set_root_dir(cis_root.c_str());
+    db::set_root_dir(db_path.c_str());
     // The io_context is required for all I/O
     net::io_context ioc{};
+   
+    // Configure and run public http interface
+    auto app = std::make_shared<web_app>(ioc);
+    
+    auto authentication_handler = std::make_shared<auth_manager>();
+    auto files = std::make_shared<file_handler>(doc_root);
+    auto projects = std::make_shared<projects_handler>();
+    auto public_router = std::make_shared<http_router>();
+    auto& index_route = public_router->add_route("/");
+    index_route.append_handler(
+            std::bind(&file_handler::single_file, files, _1, _2, _3, "/index.html"));
+    public_router->add_catch_route()
+        .append_handler(
+                std::bind(&file_handler::operator(), files, _1, _2, _3));
+    auto ws_router = std::make_shared<websocket_router>();
+    auto& ws_route = ws_router->add_route("/ws(\\?.+)*");
+    websocket_handler ws_handler;
+    ws_handler.add_event(1, std::bind(&handle_auth, authentication_handler, _1, _2, _3));
+    ws_handler.add_event(3, std::bind(&handle_token, authentication_handler, _1, _2, _3));
 
-    auto authenticate_fn = 
-        [](const std::string& uname, const std::string& pass)
-        {
-            if(uname == "uname" && pass == "pass")
+    ws_route.append_handler([&ws_handler](
+                tcp::socket& socket,
+                web_app::request_t& req,
+                web_app::context_t& ctx)
             {
-                return "SomeToken";
-            }
-            else
-            {
-                return "";
-            }
-        };
-    auto authorize_fn = 
-        [](const std::string& token)
-        {
-            if(token == "SomeToken")
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        };
+                queued_websocket_session::accept_handler(
+                        std::move(socket),
+                        std::move(req),
+                        std::bind(&websocket_handler::handle, ws_handler, ctx, _1, _2, _3, _4));
+                return web_app::handle_result::done;
+            });
+
+    app->append_handler(&cookie_parser::parse);
+    app->append_handler(
+            std::bind(
+                &auth_manager::operator(),
+                authentication_handler,
+                _1, _2, _3));
+    app->append_handler(
+            std::bind(
+                &http_router::operator(),
+                public_router,
+                _1, _2, _3));
+    app->append_ws_handler(
+            std::bind(
+                &websocket_router::operator(),
+                ws_router,
+                _1, _2, _3));
+    app->listen(tcp::endpoint{address, port});
+
+    // Configure and run cis http interface
+    auto cis_app = std::make_shared<web_app>(ioc);
+    auto cis_router = std::make_shared<http_router>();
+    cis_app->append_handler(
+            std::bind(
+                &http_router::operator(),
+                cis_router,
+                _1, _2,_3));
+    auto& projects_route = cis_router->add_route("/projects");
+    projects_route.append_handler(
+            std::bind(
+                &projects_handler::operator(),
+                projects,
+                _1, _2, _3));
+    cis_app->listen(tcp::endpoint{cis_address, cis_port});
+
+    /*
     rights_manager rm;
     auto passwd_path = path_cat(std::getenv("HOME"), "/rights.pwd");
-    /*
     rm.add_resource("projects.internal.read", true);
     rm.add_resource("projects.internal.write", false);
     rm.set_right("enjection", "projects.internal.read", true);
     rm.set_right("enjection", "projects.internal.write", true);
     rm.set_right("david", "projects.internal.write", true);
-    */
 
     rm.load_from_file(passwd_path);
 
-    file_handler fh(doc_root);
     projects_handler ph;
-    login_handler lh(authenticate_fn, authorize_fn);
-    // Example of basic websocket handler
-    websocket_handler ws_handler;
-
-    ws_handler.add_event(1, [&authenticate_fn](
-                //TODO: context -> username [and probably something other]
-                const boost::property_tree::ptree& data,
-                websocket_queue& queue)
-            {
-                //TODO validate
-                auto login = data.get<std::string>("login");
-                auto pass = data.get<std::string>("pass");
-                std::string token = authenticate_fn(login, pass);
-                if(!token.empty())
-                {
-                    auto reply = std::make_shared<std::string>(token);
-                    queue.send_text(
-                            boost::asio::buffer(reply->data(), reply->size()), [reply](){});
-                }
-                else
-                {
-                    auto reply = std::make_shared<std::string>("wrong user or password");
-                    queue.send_text(
-                            boost::asio::buffer(reply->data(), reply->size()), [reply](){});
-                }
-            });
-
-    auto ws_msg_handler = 
-        [&ws_handler](
-                bool text,
-                beast::flat_buffer& buffer,
-                size_t bytes_transferred,
-                websocket_queue& queue)
-        {
-            ws_handler.handle(text, buffer, bytes_transferred, queue);
-        };
-
-    // Create router for requests
-    auto base_router = std::make_shared<router>();
-    base_router->add_route("/", 
-            [&fh, &lh](
-                http::request<http::string_body>&& req,
-                http_session::queue& queue)
-            {
-                if(!lh.authorize(req))
-                {
-                    fh.handle(std::move(req), queue, "/index.html");
-                }
-                else
-                {
-                    fh.handle(std::move(req), queue, "/index_auth_ok.html");
-                }
-            });
-    base_router->add_route("/projects", 
-            [&ph](auto&&... args)
-            {
-                ph.get_projects(std::forward<decltype(args)>(args)...);
-            });
-    /*
-    base_router->add_route("/run/<string>/<string>"_R, 
-            //-> "^/run/([^/?#]+)/([^/?#]+)" 
-            //(substitute "<string>" to "([^/?#]+)", make {std::string, std::string} arg
-            // get groups 0 to ..n and assign it to arg)
-            [&ph, &ioc](
-                http::request<http::string_body>&& req,
-                http_session::queue& queue,
-                const std::string& project
-                const std::string& job)
-            {
-                ph.run(ioc, "internal", "core_test");
-            });*/
-    base_router->add_route("/login", 
-            [&lh](auto&&... args)
-            {
-                lh.handle(std::forward<decltype(args)>(args)...);
-            });
-    base_router->add_catch_route(
-            [&fh](auto&&... args)
-            {
-                fh.handle(std::forward<decltype(args)>(args)...);
-            });
-    base_router->add_ws_route("/ws", 
-            [&ws_msg_handler](auto&&... args)
-            {
-                queued_websocket_session::accept_handler(std::forward<decltype(args)>(args)..., ws_msg_handler);
-            });
-
-    // Create and launch a listening port
-    auto accept_handler = 
-    [&base_router](tcp::socket&& socket){
-        std::make_shared<http_session>(
-            std::move(socket),
-            base_router)->run();
-    };
-    auto l = std::make_shared<listener>(
-        ioc,
-        accept_handler);
-    beast::error_code ec;
-    l->listen(tcp::endpoint{address, port}, ec);
-    if(ec)
-    {
-        return EXIT_FAILURE;
-    }
-    l->run();
-    l.reset();
-
+ 
     auto cis_router = std::make_shared<router>();
     cis_router->add_route("/projects",
             [&ph](http::request<http::string_body>&& req,
@@ -207,6 +145,7 @@ int main(int argc, char* argv[])
     }
     l->run();
     l.reset();
+    */
 
     // Capture SIGINT and SIGTERM to perform a clean shutdown
     net::signal_set signals(ioc, SIGINT, SIGTERM);
@@ -215,7 +154,6 @@ int main(int argc, char* argv[])
         {
             ioc.stop();
         });
-
 #ifdef ENABLE_THREADING
     // Run the I/O service on the requested number of threads
     std::vector<std::thread> v;

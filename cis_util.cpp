@@ -4,9 +4,13 @@
 #include <iostream>
 
 #include <boost/process.hpp>
+#include <rapidjson/writer.h>
+#include <rapidjson/stringbuffer.h>
 
 #include "child_process.h"
-#include "cis_dirs.h"
+#include "dirs.h"
+
+#include <unistd.h>
 
 namespace fs = std::filesystem;
 
@@ -14,11 +18,15 @@ project::project(std::string n)
     : name(std::move(n))
 {}
 
-pt::ptree project::to_ptree()
+rapidjson::Document project::to_json(
+        rapidjson::Document document,
+        rapidjson::Value value)
 {
-    pt::ptree result;
-    result.put("", name);
-    return result; 
+    document.SetObject();
+    value.SetString(name.c_str(), name.length(), document.GetAllocator());
+    document.AddMember("name", value, document.GetAllocator());
+
+    return document;
 }
 
 project_list::project_list(const std::string& path)
@@ -43,23 +51,30 @@ void project_list::fetch()
     {}
 }
 
-pt::ptree project_list::to_ptree()
+rapidjson::Document project_list::to_json(
+        rapidjson::Document document,
+        rapidjson::Value value)
 {
-    pt::ptree result;
+    document.SetObject();
+    value.SetArray();
+    rapidjson::Value array_value;
     for(auto& project : projects_)
     {
-        result.push_back(std::make_pair("", project.to_ptree()));
+        array_value.CopyFrom(project.to_json(), document.GetAllocator());
+        value.PushBack(array_value, document.GetAllocator());
     }
-    return result;
+    document.AddMember("projects", value, document.GetAllocator());
+
+    return document;
 }
 
 std::string project_list::to_json_string()
 {
-    pt::ptree json_tree;
-    json_tree.add_child("projects", to_ptree());
-    std::stringstream json;
-    pt::write_json(json, json_tree);
-    return json.str();
+    auto document = to_json();
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    document.Accept(writer);
+    return buffer.GetString();
 }
 
 void run_job(

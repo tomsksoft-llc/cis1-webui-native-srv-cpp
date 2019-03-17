@@ -45,6 +45,9 @@ public:
             http::request<http::string_body>&& req,
             request_handler_t handler);
     explicit queued_websocket_session(tcp::socket socket, request_handler_t handler);
+#ifndef NDEBUG
+    ~queued_websocket_session();
+#endif
     void on_accept_success() override;
     std::shared_ptr<queued_websocket_session> shared_from_this();
 

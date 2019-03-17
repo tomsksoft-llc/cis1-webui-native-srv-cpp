@@ -67,7 +67,8 @@ bool login_handler::authorize(http::request<http::string_body>& req)
     auto cookies_it = req.find("Cookie");
     if(cookies_it != req.cend())
     {
-        auto cookies = parse_cookies(cookies_it->value().to_string());
+        std::string cookies_str{cookies_it->value()};
+        auto cookies = parse_cookies(cookies_str);
         if(cookies.count("AuthToken"))
         {
             return authorize_(cookies["AuthToken"]);

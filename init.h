@@ -11,6 +11,7 @@ struct init_params
     unsigned short cis_port;
     std::string doc_root;
     std::string cis_root;
+    std::string db_root;
 };
 
 init_params parse_args(int argc, char* argv[]);

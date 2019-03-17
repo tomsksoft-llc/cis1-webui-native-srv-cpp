@@ -2,53 +2,62 @@
 
 #include <string>
 
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/property_tree/json_parser.hpp>
+#ifndef NDEBUG
+#include <iostream>
+#endif
 
 void websocket_handler::handle(
+        web_app::context_t& ctx,
         bool text,
         beast::flat_buffer& buffer,
         size_t bytes_transferred,
         websocket_queue& queue)
 {
     if(text)
-    {
-        using namespace boost::iostreams;
-
+    {     
         std::string str;
         str.resize(bytes_transferred);
         boost::asio::buffer_copy(
                 boost::asio::buffer(str.data(), bytes_transferred),
                 buffer.data(),
                 bytes_transferred);
+#ifndef NDEBUG
+        auto user = ctx.count("user") ? std::any_cast<std::string>(ctx["user"]) : std::string();
+        std::cout << "[" << user << "]:" << str << std::endl;
+#endif
+        rapidjson::Document document;
+        document.Parse(str.c_str());
         
-        basic_array_source<char> input_source(str.data(), bytes_transferred);
-        stream<basic_array_source<char>> input_stream(input_source);
-     
-        boost::property_tree::ptree tree;
-        try
+        if(document.HasParseError())
         {
-            boost::property_tree::read_json(input_stream, tree);
-        }
-        catch(...) //TODO
-        {
-            //send json_parse_err
+            //TODO send wrong json err
             return;
         }
-        //TODO validate
-        if(auto event_id = tree.get_optional<int>("eventId"); event_id)
+
+        if(document.HasMember("eventId") && document["eventId"].IsInt())
         {
-            if(auto it = event_handlers_.find(event_id.value()); it != event_handlers_.end())
+            if(auto it = event_handlers_.find(document["eventId"].GetInt());
+                    it != event_handlers_.end())
             {
-                it->second(tree.get_child("data"), queue);
+                if(document.HasMember("data") && document["data"].IsObject())
+                {
+                    rapidjson::Document data;
+                    data.CopyFrom(document["data"], data.GetAllocator());
+                    it->second(data, queue, ctx);
+                }
+                else
+                {
+                    //TODO send no data field error
+                }
             }
         }
+
+        //TODO send wrong event id err
     }
 }
 void websocket_handler::add_event(
         int event_id,
-        std::function<void(const boost::property_tree::ptree&, websocket_queue&)> cb)
+        std::function<event_handler_t> cb)
 {
     event_handlers_.try_emplace(event_id, cb);
 }

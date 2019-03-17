@@ -11,7 +11,7 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
-class router;
+class web_app;
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace http = beast::http;                   // from <boost/beast/http.hpp>
@@ -113,7 +113,7 @@ class http_session : public std::enable_shared_from_this<http_session>
         net::io_context::executor_type> strand_;
     net::steady_timer timer_;
     beast::flat_buffer buffer_;
-    std::shared_ptr<router const> router_;
+    std::shared_ptr<web_app const> app_;
     http::request<http::string_body> req_;
     http_session_queue queue_;
     friend class http_session_queue;
@@ -122,7 +122,7 @@ public:
     // Take ownership of the socket
     explicit http_session(
         tcp::socket socket,
-        std::shared_ptr<router const> const& router);
+        std::shared_ptr<web_app const> const& app);
 
     // Start the asynchronous operation
     void run();

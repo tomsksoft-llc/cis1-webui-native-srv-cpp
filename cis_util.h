@@ -4,15 +4,15 @@
 #include <vector>
 
 #include <boost/asio/io_context.hpp>
-#include <boost/property_tree/json_parser.hpp>
-
-namespace pt = boost::property_tree;
+#include <rapidjson/document.h>
 
 struct project
 {
     project(std::string name);
     std::string name;
-    pt::ptree to_ptree();
+    rapidjson::Document to_json(
+        rapidjson::Document document = {},
+        rapidjson::Value value = {});
 };
 
 class project_list
@@ -21,7 +21,9 @@ class project_list
     std::vector<project> projects_;
 public:
     project_list(const std::string& path);
-    pt::ptree to_ptree();
+    rapidjson::Document to_json(
+        rapidjson::Document document = {},
+        rapidjson::Value value = {});
     std::string to_json_string();
     void fetch();
 };

@@ -10,6 +10,9 @@ basic_websocket_session::basic_websocket_session(tcp::socket socket)
 {
 }
 
+basic_websocket_session::~basic_websocket_session()
+{}
+
 void basic_websocket_session::on_accept(beast::error_code ec)
 {
     // Happens when the timer closes the socket

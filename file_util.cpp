@@ -44,7 +44,7 @@ std::string path_cat(
         return std::string(path);
     std::string result(base);
 #if BOOST_MSVC
-    char constexpr path_separator = '\\';
+    constexpr char path_separator = '\\';
     if(result.back() == path_separator)
         result.resize(result.size() - 1);
     result.append(path.data(), path.size());
@@ -52,7 +52,7 @@ std::string path_cat(
         if(c == '/')
             c = path_separator;
 #else
-    char constexpr path_separator = '/';
+    constexpr char path_separator = '/';
     if(result.back() == path_separator)
         result.resize(result.size() - 1);
     result.append(path.data(), path.size());
