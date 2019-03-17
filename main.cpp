@@ -12,7 +12,6 @@
 #include "net/http_session.h"
 #include "net/queued_websocket_session.h"
 #include "net/router.h"
-#include "fail.h"
 #include "response.h"
 #include "file_handler.h"
 #include "login_handler.h"

@@ -7,7 +7,7 @@ set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS regex filesystem REQUIRED)
 
 set(${PROJECT_NAME}_SRC
-    fail.cpp
+    net/fail.cpp
     net/http_session.cpp
     net/listener.cpp
     net/basic_websocket_session.cpp

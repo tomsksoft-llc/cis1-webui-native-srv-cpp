@@ -11,8 +11,6 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
-//#include "router.h"
-
 class router;
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
