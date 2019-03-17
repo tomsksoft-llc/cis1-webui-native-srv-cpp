@@ -21,6 +21,7 @@
 #include "init.h"
 #include "websocket_handler.h"
 #include "rights_manager.h"
+#include "file_util.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace net = boost::asio;                    // from <boost/asio.hpp>
@@ -64,6 +65,7 @@ int main(int argc, char* argv[])
             }
         };
     rights_manager rm;
+    auto passwd_path = path_cat(std::getenv("HOME"), "/rights.pwd");
     /*
     rm.add_resource("projects.internal.read", true);
     rm.add_resource("projects.internal.write", false);
@@ -72,7 +74,7 @@ int main(int argc, char* argv[])
     rm.set_right("david", "projects.internal.write", true);
     */
 
-    rm.load_from_file("/tmp/rights.pwd");
+    rm.load_from_file(passwd_path);
 
     file_handler fh(doc_root);
     projects_handler ph;
@@ -80,22 +82,34 @@ int main(int argc, char* argv[])
     // Example of basic websocket handler
     websocket_handler ws_handler;
 
-    ws_handler.add_event(3, 
-            [&rm](){
-                std::cout << "got event 1" << std::endl;
-                rm.save_to_file({"/tmp/rights.pwd"});
-                if(rm.check_right("enjection", "projects.internal.read").value())
+    ws_handler.add_event(1, [&authenticate_fn](
+                const boost::property_tree::ptree& data,
+                websocket_queue& queue)
+            {
+                //TODO validate
+                auto login = data.get<std::string>("login");
+                auto pass = data.get<std::string>("pass");
+                std::string token = authenticate_fn(login, pass);
+                if(!token.empty())
                 {
-                    std::cout << "authorized" << std::endl;
+                    auto reply = std::make_shared<std::string>(token);
+                    queue.send_text(
+                            boost::asio::buffer(reply->data(), reply->size()), [reply](){});
                 }
                 else
                 {
-                    std::cout << "not authorized" << std::endl;
+                    auto reply = std::make_shared<std::string>("wrong user or password");
+                    queue.send_text(
+                            boost::asio::buffer(reply->data(), reply->size()), [reply](){});
                 }
             });
 
     auto ws_msg_handler = 
-        [&ws_handler](bool text, beast::flat_buffer& buffer, size_t bytes_transferred, websocket_queue& queue)
+        [&ws_handler](
+                bool text,
+                beast::flat_buffer& buffer,
+                size_t bytes_transferred,
+                websocket_queue& queue)
         {
             ws_handler.handle(text, buffer, bytes_transferred, queue);
         };

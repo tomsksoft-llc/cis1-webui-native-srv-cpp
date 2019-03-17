@@ -25,7 +25,8 @@ set(${PROJECT_NAME}_SRC
     child_process.cpp
     cis_dirs.cpp
     init.cpp
-    rights_manager.cpp)
+    rights_manager.cpp
+    websocket_handler.cpp)
 
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
