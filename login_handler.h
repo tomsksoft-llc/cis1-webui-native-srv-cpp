@@ -17,5 +17,7 @@ public:
     void handle(
             http::request<http::string_body>&& req,
             http_session::queue& queue);
+    //authenticate(user, password) -> (token, user) ; save token
+    //authenticate(token) -> (user)
     bool authorize(http::request<http::string_body>& req);
 };

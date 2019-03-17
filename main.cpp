@@ -83,6 +83,7 @@ int main(int argc, char* argv[])
     websocket_handler ws_handler;
 
     ws_handler.add_event(1, [&authenticate_fn](
+                //TODO: context -> username [and probably something other]
                 const boost::property_tree::ptree& data,
                 websocket_queue& queue)
             {

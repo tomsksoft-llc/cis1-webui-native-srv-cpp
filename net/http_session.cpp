@@ -115,6 +115,8 @@ void http_session::on_read(beast::error_code ec)
     // See if it is a WebSocket Upgrade
     if(websocket::is_upgrade(req_))
     {
+        //TODO: call middleware and check token (in path)
+        
         // Make timer expire immediately, by setting expiry to time_point::min we can detect
         // the upgrade to websocket in the timer handler
         timer_.expires_at((std::chrono::steady_clock::time_point::min)());
