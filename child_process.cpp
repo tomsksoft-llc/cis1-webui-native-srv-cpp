@@ -27,7 +27,6 @@ void child_process::run(
         const std::function<void(int, std::vector<char>&, const std::error_code&)>& cb)
 {
     namespace bp = boost::process;
-    auto self = shared_from_this();
     proc_ = new bp::child(
         bp::search_path(programm),
         env_,
@@ -37,7 +36,7 @@ void child_process::run(
         bp::start_dir = start_dir_.c_str(),
         bp::args = args,
         bp::on_exit = 
-        [&, cb, self](int exit, const std::error_code& ec)
+        [&, cb, self = shared_from_this()](int exit, const std::error_code& ec)
         {
             cb(exit, buffer_, ec);
         });

@@ -28,12 +28,11 @@ void web_app::set_ws_error_handler(const ws_handler_t& handler)
 
 void web_app::listen(const tcp::endpoint& endpoint)
 {
-    auto this_ptr = shared_from_this();
     auto accept_handler = 
-    [this_ptr](tcp::socket&& socket){
+    [self = shared_from_this()](tcp::socket&& socket){
         std::make_shared<http_session>(
             std::move(socket),
-            this_ptr)->run();
+            self)->run();
     };
     auto l = std::make_shared<listener>(
         ioc_,
