@@ -1,6 +1,9 @@
 #include "auth_manager.h"
 
+#include <chrono>
 #include <fstream>
+#include <sstream>
+#include <functional>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -43,7 +46,16 @@ std::string auth_manager::authenticate(const std::string& user, const std::strin
     if(auto it = users_.find(user);
             it != users_.cend() && it->second == pass)
     {
-        return "SomeToken";
+        auto unix_timestamp = std::chrono::seconds(std::time(NULL));
+        std::ostringstream os;
+        os << unix_timestamp.count();
+        std::string token = user + os.str();
+        os.clear();
+        static const std::hash<std::string> hash_fn;
+        os << hash_fn(token);
+        tokens_[os.str()] = user;
+        save_on_disk();
+        return os.str();
     }
     return "";
 }

@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     websocket_handler ws_handler;
     ws_handler.add_event(1, std::bind(&handle_auth, authentication_handler, _1, _2, _3));
     ws_handler.add_event(3, std::bind(&handle_token, authentication_handler, _1, _2, _3));
-    ws_handler.add_event(5, std::bind(&projects_handler::operator(), projects, _1, _2, _3));
+    ws_handler.add_event(21, std::bind(&projects_handler::operator(), projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
                 tcp::socket& socket,
@@ -108,45 +108,6 @@ int main(int argc, char* argv[])
                 projects,
                 _1, _2, _3));
     cis_app->listen(tcp::endpoint{cis_address, cis_port});
-
-    /*
-    rights_manager rm;
-    auto passwd_path = path_cat(std::getenv("HOME"), "/rights.pwd");
-    rm.add_resource("projects.internal.read", true);
-    rm.add_resource("projects.internal.write", false);
-    rm.set_right("enjection", "projects.internal.read", true);
-    rm.set_right("enjection", "projects.internal.write", true);
-    rm.set_right("david", "projects.internal.write", true);
-
-    rm.load_from_file(passwd_path);
-
-    projects_handler ph;
- 
-    auto cis_router = std::make_shared<router>();
-    cis_router->add_route("/projects",
-            [&ph](http::request<http::string_body>&& req,
-                http_session::queue& queue)
-            {
-                ph.update();
-                return queue.send(response::accepted(std::move(req)));
-            });
-    auto cis_accept_handler = 
-    [&cis_router](tcp::socket&& socket){
-        std::make_shared<http_session>(
-            std::move(socket),
-            cis_router)->run();
-    };
-    l = std::make_shared<listener>(
-        ioc,
-        cis_accept_handler);
-    l->listen(tcp::endpoint{cis_address, cis_port}, ec);
-    if(ec)
-    {
-        return EXIT_FAILURE;
-    }
-    l->run();
-    l.reset();
-    */
 
     // Capture SIGINT and SIGTERM to perform a clean shutdown
     net::signal_set signals(ioc, SIGINT, SIGTERM);

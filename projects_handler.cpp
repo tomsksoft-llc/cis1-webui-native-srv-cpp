@@ -17,12 +17,12 @@ projects_handler::projects_handler()
 void projects_handler::operator()(
             const rapidjson::Document& data,
             websocket_queue& queue,
-            web_app::context_t& ctx)
+            web_app::context_t& /*ctx*/)
 {
     rapidjson::Document document;
     rapidjson::Value value;
     document.SetObject();
-    value.SetInt(6);
+    value.SetInt(22);
     document.AddMember("eventId", value, document.GetAllocator());
     rapidjson::Value data_value;
     data_value.SetObject();
