@@ -19,6 +19,7 @@ public:
             web_app::context_t& ctx);
     std::string authenticate(const std::string& user, const std::string& pass);
     std::string authenticate(const std::string& token);
+    void delete_token(const std::string& token);
     std::optional<std::string> add_user(std::string user, std::string pass);
     void save_on_disk();
 private:

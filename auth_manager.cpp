@@ -69,6 +69,11 @@ std::string auth_manager::authenticate(const std::string& token)
     return "";
 }
 
+void auth_manager::delete_token(const std::string& token)
+{
+    tokens_.erase(token);
+}
+
 std::optional<std::string> auth_manager::add_user(
         std::string user,
         std::string pass)
