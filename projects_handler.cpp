@@ -8,13 +8,15 @@
 #include "dirs.h"
 #include "response.h"
 
+using namespace std::string_literals;
+
 projects_handler::projects_handler()
     : projects_(path_cat(cis::get_root_dir(), cis::PROJECTS))
 {
     projects_.fetch();
 }
 
-void projects_handler::operator()(
+void projects_handler::get_project_list(
             const rapidjson::Document& data,
             websocket_queue& queue,
             web_app::context_t& /*ctx*/)
@@ -40,6 +42,34 @@ void projects_handler::operator()(
             [buffer](){});
 }
 
+void projects_handler::get_subproject_list(
+            const rapidjson::Document& data,
+            websocket_queue& queue,
+            web_app::context_t& /*ctx*/)
+{
+    auto project = data.HasMember("project") && data["project"].IsString() ?
+        data["project"].GetString() : ""s;
+    rapidjson::Document document;
+    rapidjson::Value value;
+    document.SetObject();
+    value.SetInt(24);
+    document.AddMember("eventId", value, document.GetAllocator());
+    rapidjson::Value data_value;
+    data_value.SetObject();
+    auto projects_json = projects_.to_json();
+    value.CopyFrom(projects_json, document.GetAllocator());
+    data_value.AddMember("subprojects", value, document.GetAllocator());
+    value.SetString("");
+    data_value.AddMember("errorMessage", value, document.GetAllocator());
+    document.AddMember("data", data_value, document.GetAllocator());
+    auto buffer = std::make_shared<rapidjson::StringBuffer>();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
+    document.Accept(writer);
+    queue.send_text(
+            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
+            [buffer](){});
+}
+
 void projects_handler::run(
         boost::asio::io_context& ctx,
         const std::string& project,
@@ -54,12 +84,11 @@ web_app::handle_result projects_handler::update(
         web_app::context_t& /*ctx*/)
 {
     beast::error_code ec;
-        // Handle an unknown error
+    // Handle an unknown error
     if(ec)
     {
         queue.send(response::server_error(std::move(req), ec.message()));
         return web_app::handle_result::done;
-    
     }
 
     projects_.fetch();

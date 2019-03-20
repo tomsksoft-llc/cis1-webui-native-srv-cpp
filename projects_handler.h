@@ -9,7 +9,11 @@ class projects_handler
     project_list projects_;
 public:
     projects_handler();
-    void operator()(
+    void get_project_list(
+            const rapidjson::Document& data,
+            websocket_queue& queue,
+            web_app::context_t& ctx);
+    void get_subproject_list(
             const rapidjson::Document& data,
             websocket_queue& queue,
             web_app::context_t& ctx);
