@@ -11,15 +11,15 @@ class child_process
 public:
     child_process(
             boost::asio::io_context& ctx,
-            boost::process::environment env);
+            const boost::process::environment& env);
     ~child_process();
     void run(
             const std::string& programm,
             std::vector<std::string> args,
-            std::function<void(
+            const std::function<void(
                 int,
                 std::vector<char>&,
-                const std::error_code&)> cb);
+                const std::error_code&)>& cb);
 private:
     boost::asio::io_context& ctx_;
     boost::process::environment env_;

@@ -28,7 +28,7 @@ protected:
 public:
     // Take ownership of the socket
     explicit basic_websocket_session(tcp::socket socket);
-    virtual ~basic_websocket_session();
+    virtual ~basic_websocket_session() = default;
 
     // Start the asynchronous operation
     template<class Body, class Allocator>

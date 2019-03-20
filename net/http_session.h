@@ -122,7 +122,7 @@ public:
     // Take ownership of the socket
     explicit http_session(
         tcp::socket socket,
-        std::shared_ptr<web_app const> const& app);
+        const std::shared_ptr<web_app const>& app);
 
     // Start the asynchronous operation
     void run();

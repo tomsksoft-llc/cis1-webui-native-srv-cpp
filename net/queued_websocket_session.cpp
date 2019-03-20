@@ -28,7 +28,7 @@ void websocket_queue::send()
 
 void websocket_queue::send_text(boost::asio::const_buffer buffer, std::function<void()> on_write)
 {
-    messages_.push_back({true, buffer, on_write});
+    messages_.push_back({true, buffer, std::move(on_write)});
     if(messages_.size() == 1)
     {
         send();
@@ -67,7 +67,7 @@ void queued_websocket_session::accept_handler(
 
 queued_websocket_session::queued_websocket_session(tcp::socket socket, request_handler_t handler)
     : basic_websocket_session(std::move(socket))
-    , handler_(handler)
+    , handler_(std::move(handler))
     , queue_(*this)
 {}
 

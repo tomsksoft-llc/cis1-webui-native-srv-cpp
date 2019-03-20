@@ -23,7 +23,7 @@ web_app::handle_result websocket_router::handlers_chain::handle(
     return web_app::handle_result::next;
 }
 
-void websocket_router::handlers_chain::append_handler(web_app::ws_handler_t handler)
+void websocket_router::handlers_chain::append_handler(const web_app::ws_handler_t& handler)
 {
     handlers_.push_back(handler);
 }
@@ -48,7 +48,7 @@ web_app::handle_result websocket_router::operator()(
 
 using namespace std::string_literals;
 
-websocket_router::handlers_chain& websocket_router::add_route(std::string route)
+websocket_router::handlers_chain& websocket_router::add_route(const std::string& route)
 {
     auto&& inserted = routes_.emplace_back(
             "^"s + route + "$"s,

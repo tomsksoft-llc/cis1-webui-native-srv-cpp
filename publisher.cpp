@@ -34,7 +34,7 @@ subscriber::~subscriber()
     }
 }
 
-void subscriber::subscribe(const std::string& topic, std::function<void(const std::any&)> cb)
+void subscriber::subscribe(const std::string& topic, const std::function<void(const std::any&)>& cb)
 {
     subscriptions_[topic] = cb;
     publisher_->subscribe(topic, this);

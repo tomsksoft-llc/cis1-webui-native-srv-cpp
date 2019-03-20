@@ -23,7 +23,7 @@ class subscriber
 public:
     subscriber(publisher* pub);
     ~subscriber();
-    void subscribe(const std::string& topic, std::function<void(const std::any&)> cb);
+    void subscribe(const std::string& topic, const std::function<void(const std::any&)>& cb);
     void unsubscribe(const std::string& topic);
     void notify(const std::string& topic, const std::any& data);
 private:

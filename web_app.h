@@ -41,11 +41,11 @@ private:
     ws_handler_t ws_error_handler_;
 public:
     web_app(boost::asio::io_context& ioc);
-    void append_handler(handler_t handler);
-    void append_ws_handler(ws_handler_t handler);
-    void set_error_handler(handler_t handler);
-    void set_ws_error_handler(ws_handler_t handler);
-    void listen(tcp::endpoint endpoint);
+    void append_handler(const handler_t& handler);
+    void append_ws_handler(const ws_handler_t& handler);
+    void set_error_handler(const handler_t& handler);
+    void set_ws_error_handler(const ws_handler_t& handler);
+    void listen(const tcp::endpoint& endpoint);
     void handle(
             http::request<http::string_body>&& req,
             http_session::queue& queue) const;

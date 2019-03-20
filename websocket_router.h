@@ -27,13 +27,13 @@ public:
                 tcp::socket& socket,
                 web_app::request_t& req,
                 web_app::context_t& ctx);
-        void append_handler(web_app::ws_handler_t handler);
+        void append_handler(const web_app::ws_handler_t& handler);
     };
     web_app::handle_result operator()(
             tcp::socket& socket,
             web_app::request_t& req,
             web_app::context_t& ctx);
-    handlers_chain& add_route(std::string route);
+    handlers_chain& add_route(const std::string& route);
     handlers_chain& add_catch_route();
 private:
     std::vector<std::pair<boost::regex, std::unique_ptr<handlers_chain>>> routes_;

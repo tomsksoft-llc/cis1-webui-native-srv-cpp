@@ -61,6 +61,7 @@ int main(int argc, char* argv[])
     websocket_handler ws_handler;
     ws_handler.add_event(1, std::bind(&handle_auth, authentication_handler, _1, _2, _3));
     ws_handler.add_event(3, std::bind(&handle_token, authentication_handler, _1, _2, _3));
+    ws_handler.add_event(5, std::bind(&projects_handler::operator(), projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
                 tcp::socket& socket,
@@ -103,7 +104,7 @@ int main(int argc, char* argv[])
     auto& projects_route = cis_router->add_route("/projects");
     projects_route.append_handler(
             std::bind(
-                &projects_handler::operator(),
+                &projects_handler::update,
                 projects,
                 _1, _2, _3));
     cis_app->listen(tcp::endpoint{cis_address, cis_port});

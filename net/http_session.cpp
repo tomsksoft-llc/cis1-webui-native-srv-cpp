@@ -11,7 +11,7 @@ namespace websocket = beast::websocket;         // from <boost/beast/websocket.h
 
 http_session::http_session(
     tcp::socket socket,
-    std::shared_ptr<web_app const> const& app)
+    const std::shared_ptr<web_app const>& app)
     : socket_(std::move(socket))
     , strand_(socket_.get_executor())
     , timer_(socket_.get_executor().context(),

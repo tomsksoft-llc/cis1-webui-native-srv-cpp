@@ -21,8 +21,8 @@ auth_manager::auth_manager()
 }
 
 web_app::handle_result auth_manager::operator()(
-        web_app::request_t& req,
-        web_app::queue_t& queue,
+        web_app::request_t& /*req*/,
+        web_app::queue_t& /*queue*/,
         web_app::context_t& ctx)
 {
     if(auto& cookies = 

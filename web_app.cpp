@@ -6,27 +6,27 @@ web_app::web_app(boost::asio::io_context& ioc)
     : ioc_(ioc)
 {}
 
-void web_app::append_handler(handler_t handler)
+void web_app::append_handler(const handler_t& handler)
 {
     handlers_.push_back(handler);
 }
 
-void web_app::append_ws_handler(ws_handler_t handler)
+void web_app::append_ws_handler(const ws_handler_t& handler)
 {
     ws_handlers_.push_back(handler);
 }
 
-void web_app::set_error_handler(handler_t handler)
+void web_app::set_error_handler(const handler_t& handler)
 {
     error_handler_ = handler;
 }
 
-void web_app::set_ws_error_handler(ws_handler_t handler)
+void web_app::set_ws_error_handler(const ws_handler_t& handler)
 {
     ws_error_handler_ = handler;
 }
 
-void web_app::listen(tcp::endpoint endpoint)
+void web_app::listen(const tcp::endpoint& endpoint)
 {
     auto this_ptr = shared_from_this();
     auto accept_handler = 

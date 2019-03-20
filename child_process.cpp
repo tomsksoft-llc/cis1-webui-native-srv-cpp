@@ -5,7 +5,7 @@
 
 child_process::child_process(
         boost::asio::io_context& ctx,
-        boost::process::environment env)
+        const boost::process::environment& env)
     : ctx_(ctx)
     , env_(env)
     , start_dir_(path_cat(cis::get_root_dir(), cis::CORE))
@@ -24,7 +24,7 @@ child_process::~child_process()
 void child_process::run(
         const std::string& programm,
         std::vector<std::string> args,
-        std::function<void(int, std::vector<char>&, const std::error_code&)> cb)
+        const std::function<void(int, std::vector<char>&, const std::error_code&)>& cb)
 {
     namespace bp = boost::process;
     auto self = shared_from_this();

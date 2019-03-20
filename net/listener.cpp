@@ -10,10 +10,10 @@ listener::listener(
     std::function<void(tcp::socket&&)> accept_socket)
     : acceptor_(ioc)
     , socket_(ioc)
-    , accept_socket_(accept_socket)
+    , accept_socket_(std::move(accept_socket))
 {}
 
-void listener::listen(tcp::endpoint endpoint, beast::error_code& ec)
+void listener::listen(const tcp::endpoint& endpoint, beast::error_code& ec)
 {
 
     // Open the acceptor

@@ -23,7 +23,7 @@ web_app::handle_result http_router::handlers_chain::handle(
     return web_app::handle_result::next;
 }
 
-void http_router::handlers_chain::append_handler(web_app::handler_t handler)
+void http_router::handlers_chain::append_handler(const web_app::handler_t& handler)
 {
     handlers_.push_back(handler);
 }
@@ -49,7 +49,7 @@ web_app::handle_result http_router::operator()(
 
 using namespace std::string_literals;
 
-http_router::handlers_chain& http_router::add_route(std::string route)
+http_router::handlers_chain& http_router::add_route(const std::string& route)
 {
     auto&& inserted = routes_.emplace_back(
             "^"s + route + "$"s,

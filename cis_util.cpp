@@ -55,15 +55,13 @@ rapidjson::Document project_list::to_json(
         rapidjson::Document document,
         rapidjson::Value value)
 {
-    document.SetObject();
-    value.SetArray();
+    document.SetArray();
     rapidjson::Value array_value;
     for(auto& project : projects_)
     {
         array_value.CopyFrom(project.to_json(), document.GetAllocator());
-        value.PushBack(array_value, document.GetAllocator());
+        document.PushBack(array_value, document.GetAllocator());
     }
-    document.AddMember("projects", value, document.GetAllocator());
 
     return document;
 }

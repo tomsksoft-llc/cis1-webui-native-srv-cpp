@@ -26,12 +26,12 @@ std::map<std::string, std::string> parse_request_query(const std::string& body)
     return result;
 }
 
-std::map<std::string, std::string> parse_cookies(const std::string& body)
+std::map<std::string, std::string> parse_cookies(const std::string& cookies)
 {
     std::map<std::string, std::string> result;
     static boost::regex r("(.*?)=(.*?)($|;|,(?! ))");
-    auto start = body.cbegin();
-    auto end = body.cend();
+    auto start = cookies.cbegin();
+    auto end = cookies.cend();
     boost::match_results<std::string::const_iterator> what;
     boost::match_flag_type flags = boost::match_default;
     while(regex_search(start, end, what, r, flags))

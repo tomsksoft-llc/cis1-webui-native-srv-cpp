@@ -7,20 +7,24 @@
 
 namespace pt = boost::property_tree;
 
-void rights_manager::add_resource(std::string resource_name, bool default_value)
+void rights_manager::add_resource(
+        const std::string& resource_name,
+        bool default_value)
 {
     resources_.try_emplace(resource_name, default_value);
 }
 
 void rights_manager::set_right(
-        std::string username,
-        std::string resource_name,
+        const std::string& username,
+        const std::string& resource_name,
         bool value)
 {
     user_rights_[username][resource_name] = value;
 }
 
-std::optional<bool> rights_manager::check_right(std::string username, std::string resource_name)
+std::optional<bool> rights_manager::check_right(
+        const std::string& username,
+        const std::string& resource_name)
 {
     if(auto user = user_rights_.find(username); user != user_rights_.end())
     {

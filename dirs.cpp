@@ -32,4 +32,4 @@ const char* get_root_dir()
     return root_dir;
 }
 
-} // namespace cis
+} // namespace db

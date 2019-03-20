@@ -21,7 +21,7 @@ public:
         net::io_context& ioc,
         std::function<void(tcp::socket&&)> accept_socket);
 
-    void listen(tcp::endpoint endpoint, beast::error_code& ec);
+    void listen(const tcp::endpoint& endpoint, beast::error_code& ec);
 
     // Start accepting incoming connections
     void run();
