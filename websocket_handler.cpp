@@ -55,6 +55,14 @@ void websocket_handler::handle(
         //TODO send wrong event id err
     }
 }
+
+void websocket_handler::add_event_handler(
+        ws_request_id event_id,
+        std::function<event_handler_t> cb)
+{
+    add_event(static_cast<int>(event_id), cb);
+}
+
 void websocket_handler::add_event(
         int event_id,
         std::function<event_handler_t> cb)

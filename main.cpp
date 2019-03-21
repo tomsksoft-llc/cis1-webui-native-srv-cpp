@@ -59,10 +59,10 @@ int main(int argc, char* argv[])
     auto ws_router = std::make_shared<websocket_router>();
     auto& ws_route = ws_router->add_route("/ws(\\?.+)*");
     websocket_handler ws_handler;
-    ws_handler.add_event(1, std::bind(&handle_auth, authentication_handler, _1, _2, _3));
-    ws_handler.add_event(3, std::bind(&handle_token, authentication_handler, _1, _2, _3));
-    ws_handler.add_event(5, std::bind(&handle_logout, authentication_handler, _1, _2, _3));
-    ws_handler.add_event(21, std::bind(&projects_handler::get_project_list, projects, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::auth_login_pass, std::bind(&handle_auth, authentication_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::auth_token, std::bind(&handle_token, authentication_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::auth_logout, std::bind(&handle_logout, authentication_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::projects_list, std::bind(&projects_handler::get_project_list, projects, _1, _2, _3));
     ws_handler.add_event(23, std::bind(&projects_handler::get_subproject_list, projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
