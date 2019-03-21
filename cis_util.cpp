@@ -25,6 +25,8 @@ rapidjson::Document project::to_json(
     document.SetObject();
     value.SetString(name.c_str(), name.length(), document.GetAllocator());
     document.AddMember("name", value, document.GetAllocator());
+    value.SetArray();
+    document.AddMember("subprojects", value, document.GetAllocator());
 
     return document;
 }

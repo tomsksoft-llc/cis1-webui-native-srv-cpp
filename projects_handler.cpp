@@ -11,7 +11,7 @@
 using namespace std::string_literals;
 
 projects_handler::projects_handler()
-    : projects_(path_cat(cis::get_root_dir(), cis::PROJECTS))
+    : projects_(path_cat(cis::get_root_dir(), cis::projects))
 {
     projects_.fetch();
 }

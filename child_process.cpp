@@ -8,7 +8,7 @@ child_process::child_process(
         const boost::process::environment& env)
     : ctx_(ctx)
     , env_(env)
-    , start_dir_(path_cat(cis::get_root_dir(), cis::CORE))
+    , start_dir_(path_cat(cis::get_root_dir(), cis::core))
 {
     buffer_.resize(1024);
 }
