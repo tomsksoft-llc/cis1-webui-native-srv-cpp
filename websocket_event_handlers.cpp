@@ -90,7 +90,8 @@ void handle_logout(
     auto token = data.HasMember("token") && data["token"].IsString() ?
         data["token"].GetString() : ""s;
     std::string token_username = authentication_handler->authenticate(token);
-    std::string& connection_username = std::any_cast<std::string&>(ctx["user"]);
+    std::string connection_username = ctx.count("user") ? std::any_cast<std::string>(ctx["user"]) : ""s;
+    //std::string& connection_username = std::any_cast<std::string&>(ctx["user"]);
 
     rapidjson::Document document;
     rapidjson::Value value;
