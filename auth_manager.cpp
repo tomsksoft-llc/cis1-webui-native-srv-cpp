@@ -93,6 +93,10 @@ void auth_manager::load_users(std::filesystem::path users_file)
     rapidjson::Document document;
     document.ParseStream(isw);
     //TODO document.HasParseErrors() ...
+    if(!document.IsObject())
+    {
+        return;
+    }
     for(auto& member : document.GetObject())
     {
         users_[member.name.GetString()] = member.value.GetString();
@@ -106,6 +110,10 @@ void auth_manager::load_tokens(std::filesystem::path tokens_file)
     rapidjson::Document document;
     document.ParseStream(isw);
     //TODO document.HasParseErrors() ...
+    if(!document.IsObject())
+    {
+        return;
+    }
     for(auto& member : document.GetObject())
     {
         tokens_[member.name.GetString()] = member.value.GetString();
