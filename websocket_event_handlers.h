@@ -1,7 +1,6 @@
 #pragma once
 
 #include "request_context.h"
-#include "web_app.h"
 #include "auth_manager.h"
 #include "net/queued_websocket_session.h"
 

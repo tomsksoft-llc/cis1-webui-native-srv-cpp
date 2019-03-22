@@ -2,9 +2,9 @@
 
 #include "request_util.h"
 
-web_app::handle_result cookie_parser::parse(
-        web_app::request_t& req,
-        web_app::queue_t& /*queue*/,
+handle_result cookie_parser::parse(
+        http::request<http::string_body>& req,
+        http_session::queue& /*queue*/,
         request_context& ctx)
 {
     std::string cookies_string{};
@@ -13,5 +13,5 @@ web_app::handle_result cookie_parser::parse(
         cookies_string = it->value();
     }
     ctx.cookies = parse_cookies(cookies_string);
-    return web_app::handle_result::next;
+    return handle_result::next;
 }

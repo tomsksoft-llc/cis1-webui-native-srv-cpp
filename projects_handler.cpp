@@ -3,7 +3,6 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
-#include "net/http_session.h"
 #include "file_util.h"
 #include "dirs.h"
 #include "response.h"
@@ -78,9 +77,9 @@ void projects_handler::run(
     ::run_job(ctx, project, job);
 }  
 
-web_app::handle_result projects_handler::update(
-        web_app::request_t& req,
-        web_app::queue_t& queue,
+handle_result projects_handler::update(
+        http::request<http::string_body>& req,
+        http_session::queue& queue,
         request_context& /*ctx*/)
 {
     beast::error_code ec;
@@ -88,7 +87,7 @@ web_app::handle_result projects_handler::update(
     if(ec)
     {
         queue.send(response::server_error(std::move(req), ec.message()));
-        return web_app::handle_result::done;
+        return handle_result::done;
     }
 
     projects_.fetch();
@@ -101,5 +100,5 @@ web_app::handle_result projects_handler::update(
     res.prepare_payload();
     res.keep_alive(req.keep_alive());
     queue.send(std::move(res));
-    return web_app::handle_result::done;
+    return handle_result::done;
 }

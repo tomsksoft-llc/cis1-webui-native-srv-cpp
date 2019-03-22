@@ -23,9 +23,9 @@ auth_manager::auth_manager()
     load_tokens(path_cat(db_path, tokens_file_path));
 }
 
-web_app::handle_result auth_manager::operator()(
-        web_app::request_t& /*req*/,
-        web_app::queue_t& /*queue*/,
+handle_result auth_manager::operator()(
+        http::request<http::string_body>& /*req*/,
+        http_session::queue& /*queue*/,
         request_context& ctx)
 {
     if(const auto& cookies = ctx.cookies; cookies.count("token"))
@@ -36,7 +36,7 @@ web_app::handle_result auth_manager::operator()(
             ctx.username = user;
         }
     }
-    return web_app::handle_result::next;
+    return handle_result::next;
 }
 
 std::string auth_manager::authenticate(const std::string& user, const std::string& pass)

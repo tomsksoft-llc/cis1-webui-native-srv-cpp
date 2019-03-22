@@ -7,8 +7,6 @@
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
 
-namespace pt = boost::property_tree;
-
 void rights_manager::add_resource(
         const std::string& resource_name,
         bool default_value)

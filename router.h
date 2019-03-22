@@ -9,7 +9,8 @@
 #include <boost/asio.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
-#include "web_app.h"
+#include "net/http_session.h"
+#include "handle_result.h"
 #include "response.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
@@ -21,34 +22,35 @@ template <typename... Args>
 class router
 {
 public:
-    using handler_t = std::function<web_app::handle_result(web_app::request_t& req, Args...)>;
+    using request_t = http::request<http::string_body>;
+    using handler_t = std::function<handle_result(request_t& req, Args...)>;
     class handlers_chain
     {
         std::vector<handler_t> handlers_;
     public:
-        web_app::handle_result handle(web_app::request_t& req, Args... args)
+        handle_result handle(request_t& req, Args... args)
         {
             for(auto& handler : handlers_)
             {
                 auto result = handler(req, std::forward<decltype(args)>(args)...);
                 switch(result)
                 {
-                    case web_app::handle_result::next:
+                    case handle_result::next:
                         break;
-                    case web_app::handle_result::done:
-                        return web_app::handle_result::done;
-                    case web_app::handle_result::error:
-                        return web_app::handle_result::error;
+                    case handle_result::done:
+                        return handle_result::done;
+                    case handle_result::error:
+                        return handle_result::error;
                 };
             }
-            return web_app::handle_result::next;
+            return handle_result::next;
         }
         void append_handler(const handler_t& handler)
         {
             handlers_.push_back(handler);
         }
     };
-    web_app::handle_result operator()(web_app::request_t& req, Args... args)
+    handle_result operator()(request_t& req, Args... args)
     {
         std::string target{req.target()}; //TODO: use string_view somehow
         for(auto&& [regexp, chain] : routes_)
@@ -57,11 +59,11 @@ public:
             if(boost::regex_match(target, what, regexp))
             {
                 chain->handle(req, std::forward<decltype(args)>(args)...);
-                return web_app::handle_result::done;
+                return handle_result::done;
             }
         }
         //queue.send(response::not_found(std::move(req)));
-        return web_app::handle_result::done;
+        return handle_result::done;
     };
     handlers_chain& add_route(const std::string& route)
     {

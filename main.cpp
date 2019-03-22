@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
                         std::move(socket),
                         std::move(req),
                         std::bind(&websocket_handler::handle, ws_handler, ctx, _1, _2, _3, _4));
-                return web_app::handle_result::done;
+                return handle_result::done;
             });
 
     app->append_handler(&cookie_parser::parse);

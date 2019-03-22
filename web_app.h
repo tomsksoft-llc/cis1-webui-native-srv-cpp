@@ -10,17 +10,12 @@
 
 #include "net/http_session.h"
 #include "request_context.h"
+#include "handle_result.h"
 
 class web_app
     : public std::enable_shared_from_this<web_app>
 {
 public:
-    enum class handle_result
-    {
-        done,
-        next,
-        error
-    };
     using request_t = http::request<http::string_body>;
     using queue_t = http_session::queue;
     using context_t = request_context;
