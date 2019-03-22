@@ -9,7 +9,7 @@ void handle_auth(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
         websocket_queue& queue,
-        web_app::context_t& ctx)
+        request_context& ctx)
 {
     auto login = data.HasMember("login") && data["login"].IsString() ?
         data["login"].GetString() : ""s;
@@ -28,7 +28,7 @@ void handle_auth(
     data_value.AddMember("token", value, document.GetAllocator());
     if(!token.empty())
     {
-        ctx["user"] = std::string(login);
+        ctx.username = std::string(login);
         value.SetString("");
     }
     else
@@ -49,7 +49,7 @@ void handle_token(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
         websocket_queue& queue,
-        web_app::context_t& ctx)
+        request_context& ctx)
 {
     auto token = data.HasMember("token") && data["token"].IsString() ?
         data["token"].GetString() : ""s;
@@ -64,7 +64,7 @@ void handle_token(
     data_value.SetObject();
     if(!username.empty())
     {
-        ctx["user"] = username;
+        ctx.username = username;
         value.SetString("");
     }
     else
@@ -85,12 +85,12 @@ void handle_logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
         websocket_queue& queue,
-        web_app::context_t& ctx)
+        request_context& ctx)
 {
     auto token = data.HasMember("token") && data["token"].IsString() ?
         data["token"].GetString() : ""s;
     std::string token_username = authentication_handler->authenticate(token);
-    std::string connection_username = ctx.count("user") ? std::any_cast<std::string>(ctx["user"]) : ""s;
+    const std::string& connection_username = ctx.username;
     //std::string& connection_username = std::any_cast<std::string&>(ctx["user"]);
 
     rapidjson::Document document;
@@ -102,7 +102,12 @@ void handle_logout(
     data_value.SetObject();
     if(token_username == connection_username)
     {
-        //TODO clean ctx
+        if(token == ctx.active_token)
+        {
+            //TODO clean subs?
+            ctx.active_token = "";
+            ctx.username = "";
+        }
         authentication_handler->delete_token(token);
         value.SetString("");
     }

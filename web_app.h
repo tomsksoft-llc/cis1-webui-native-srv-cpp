@@ -9,6 +9,7 @@
 #include <boost/asio.hpp>
 
 #include "net/http_session.h"
+#include "request_context.h"
 
 class web_app
     : public std::enable_shared_from_this<web_app>
@@ -22,7 +23,8 @@ public:
     };
     using request_t = http::request<http::string_body>;
     using queue_t = http_session::queue;
-    using context_t = std::map<std::string, std::any>;
+    //using context_t = std::map<std::string, std::any>;
+    using context_t = request_context;
     using handler_t = 
         std::function<handle_result(
             request_t&,

@@ -9,6 +9,7 @@
 
 #include "init.h"
 #include "dirs.h"
+#include "request_context.h"
 #include "web_app.h"
 // Business logic
 #include "auth_manager.h"
@@ -67,7 +68,7 @@ int main(int argc, char* argv[])
     ws_route.append_handler([&ws_handler](
                 web_app::request_t& req,
                 tcp::socket& socket,
-                web_app::context_t& ctx)
+                request_context& ctx)
             {
                 queued_websocket_session::accept_handler(
                         std::move(socket),

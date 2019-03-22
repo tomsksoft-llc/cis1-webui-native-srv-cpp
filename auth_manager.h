@@ -5,6 +5,7 @@
 #include <map>
 #include <optional>
 
+#include "request_context.h"
 #include "web_app.h"
 
 class auth_manager
@@ -16,7 +17,7 @@ public:
     web_app::handle_result operator()(
             web_app::request_t& req,
             web_app::queue_t& queue,
-            web_app::context_t& ctx);
+            request_context& ctx);
     std::string authenticate(const std::string& user, const std::string& pass);
     std::string authenticate(const std::string& token);
     void delete_token(const std::string& token);

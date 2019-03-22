@@ -7,7 +7,7 @@
 #endif
 
 void websocket_handler::handle(
-        web_app::context_t& ctx,
+        request_context& ctx,
         bool text,
         beast::flat_buffer& buffer,
         size_t bytes_transferred,
@@ -22,7 +22,7 @@ void websocket_handler::handle(
                 buffer.data(),
                 bytes_transferred);
 #ifndef NDEBUG
-        auto user = ctx.count("user") ? std::any_cast<std::string>(ctx["user"]) : std::string();
+        const auto& user = ctx.username;
         std::cout << "[" << user << "]:" << str << std::endl;
 #endif
         rapidjson::Document document;

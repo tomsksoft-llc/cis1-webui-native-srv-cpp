@@ -19,7 +19,7 @@ projects_handler::projects_handler()
 void projects_handler::get_project_list(
             const rapidjson::Document& data,
             websocket_queue& queue,
-            web_app::context_t& /*ctx*/)
+            request_context& /*ctx*/)
 {
     rapidjson::Document document;
     rapidjson::Value value;
@@ -45,7 +45,7 @@ void projects_handler::get_project_list(
 void projects_handler::get_subproject_list(
             const rapidjson::Document& data,
             websocket_queue& queue,
-            web_app::context_t& /*ctx*/)
+            request_context& /*ctx*/)
 {
     auto project = data.HasMember("project") && data["project"].IsString() ?
         data["project"].GetString() : ""s;
@@ -81,7 +81,7 @@ void projects_handler::run(
 web_app::handle_result projects_handler::update(
         web_app::request_t& req,
         web_app::queue_t& queue,
-        web_app::context_t& /*ctx*/)
+        request_context& /*ctx*/)
 {
     beast::error_code ec;
     // Handle an unknown error

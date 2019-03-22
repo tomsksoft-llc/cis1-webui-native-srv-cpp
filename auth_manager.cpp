@@ -26,16 +26,14 @@ auth_manager::auth_manager()
 web_app::handle_result auth_manager::operator()(
         web_app::request_t& /*req*/,
         web_app::queue_t& /*queue*/,
-        web_app::context_t& ctx)
+        request_context& ctx)
 {
-    if(auto& cookies = 
-            std::any_cast<std::map<std::string, std::string>&>(ctx["cookies"]);
-            cookies.count("token"))
+    if(const auto& cookies = ctx.cookies; cookies.count("token"))
     {
-        auto user = authenticate(cookies["token"]);
+        auto user = authenticate(cookies.at("token"));
         if(!user.empty())
         {
-            ctx["user"] = user;
+            ctx.username = user;
         }
     }
     return web_app::handle_result::next;
