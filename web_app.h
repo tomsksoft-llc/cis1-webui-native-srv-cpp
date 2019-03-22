@@ -30,8 +30,8 @@ public:
             context_t&)>;
     using ws_handler_t = 
         std::function<handle_result(
-                tcp::socket&,
                 request_t&,
+                tcp::socket&,
                 context_t&)>;
 private:
     boost::asio::io_context& ioc_;

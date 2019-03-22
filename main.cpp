@@ -13,8 +13,7 @@
 // Business logic
 #include "auth_manager.h"
 // Middleware
-#include "http_router.h"
-#include "websocket_router.h"
+#include "router.h"
 #include "cookie_parser.h"
 #include "file_handler.h"
 // HTTP handlers
@@ -66,8 +65,8 @@ int main(int argc, char* argv[])
     ws_handler.add_event(23, std::bind(&projects_handler::get_subproject_list, projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
-                tcp::socket& socket,
                 web_app::request_t& req,
+                tcp::socket& socket,
                 web_app::context_t& ctx)
             {
                 queued_websocket_session::accept_handler(

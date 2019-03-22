@@ -14,8 +14,6 @@ set(${PROJECT_NAME}_SRC
     net/basic_websocket_session.cpp
     net/queued_websocket_session.cpp
     net/socket_util.cpp
-    http_router.cpp
-    websocket_router.cpp
     web_app.cpp
     cookie_parser.cpp
     auth_manager.cpp

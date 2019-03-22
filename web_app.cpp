@@ -74,7 +74,7 @@ void web_app::handle_upgrade(
     context_t ctx{};
     for(auto& handler : ws_handlers_)
     {
-        auto result = handler(socket, req, ctx);
+        auto result = handler(req, socket, ctx);
         switch(result)
         {
             case handle_result::next:
@@ -82,7 +82,7 @@ void web_app::handle_upgrade(
             case handle_result::done:
                 return;
             case handle_result::error:
-                ws_error_handler_(socket, req, ctx);
+                ws_error_handler_(req, socket, ctx);
                 return;
         };
     }
