@@ -6,7 +6,7 @@
 #include <rapidjson/document.h>
 
 #include "net/queued_websocket_session.h"
-#include "web_app.h" //for web_app:context_t
+#include "request_context.h"
 #include "websocket_event_list.h"
 
 class websocket_handler
@@ -15,9 +15,9 @@ public:
     using event_handler_t = void(
             const rapidjson::Document&,
             websocket_queue&,
-            web_app::context_t& ctx);
+            request_context& ctx);
     void handle(
-            web_app::context_t& ctx,
+            request_context& ctx,
             bool text,
             beast::flat_buffer& buffer,
             size_t bytes_transferred,

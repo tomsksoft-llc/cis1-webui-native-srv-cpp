@@ -11,6 +11,7 @@
 
 #include "net/http_session.h"
 #include "handle_result.h"
+#include "request_context.h"
 #include "response.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
@@ -84,5 +85,5 @@ private:
     std::vector<std::pair<boost::regex, std::unique_ptr<handlers_chain>>> routes_;
 };
 
-using http_router = router<web_app::queue_t&, web_app::context_t&>;
-using websocket_router = router<tcp::socket&, web_app::context_t&>;
+using http_router = router<http_session::queue&, request_context&>;
+using websocket_router = router<tcp::socket&, request_context&>;

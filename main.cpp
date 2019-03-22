@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     ws_handler.add_event(23, std::bind(&projects_handler::get_subproject_list, projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
-                web_app::request_t& req,
+                http::request<http::string_body>& req,
                 tcp::socket& socket,
                 request_context& ctx)
             {
