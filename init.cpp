@@ -38,7 +38,15 @@ init_params parse_args(int argc, char* argv[])
         result.cis_address = net::ip::make_address("127.0.0.1");
         result.cis_port = static_cast<unsigned short>(8081);
         result.doc_root = ".";
-        result.cis_root = std::getenv("cis_base_dir");
+        if(const auto* cis_base_dir = std::getenv("cis_base_dir");
+                cis_base_dir != nullptr)
+        {
+            result.cis_root = cis_base_dir;
+        }
+        else
+        {
+            result.cis_root = "./cis";
+        }
         result.db_root = ".";
     }
     return result;
