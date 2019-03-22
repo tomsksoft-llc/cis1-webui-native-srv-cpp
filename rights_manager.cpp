@@ -2,8 +2,10 @@
 
 #include <fstream>
 
-#include <boost/property_tree/ptree.hpp> //TODO Replace with RapidJSON
-#include <boost/property_tree/json_parser.hpp>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/istreamwrapper.h>
+#include <rapidjson/ostreamwrapper.h>
 
 namespace pt = boost::property_tree;
 
@@ -43,52 +45,70 @@ std::optional<bool> rights_manager::check_right(
 
 void rights_manager::save_to_file(const std::filesystem::path& file)
 {
-    pt::ptree tree;
-    pt::ptree resources_node;
-    for(auto& resource : resources_)
+    rapidjson::Document document;
+    rapidjson::Value document_value;
+    document.SetObject();
+    document_value.SetObject();
+    rapidjson::Value key;
+    rapidjson::Value value;
+    for(auto& [resource, right] : resources_)
     {
-        resources_node.put(pt::ptree::path_type(resource.first, '\0'), resource.second);
+        key.SetString(resource.c_str(), resource.length(), document.GetAllocator());
+        value.SetBool(right);
+        document_value.AddMember(key, value, document.GetAllocator());
     }
-    tree.add_child("resources", resources_node);
+    document.AddMember("resources", document_value, document.GetAllocator());
 
-    pt::ptree user_rights_node;
-    for(auto& user : user_rights_)
+    for(auto& [user, rights] : user_rights_)
     {
-        pt::ptree user_node;
-        for(auto& resource : user.second)
+        key.SetString(user.c_str(), user.length(), document.GetAllocator());
+        value.SetObject();
+        rapidjson::Value second_key;
+        rapidjson::Value second_value;
+        for(auto& [resource, right] : rights)
         {
-            user_node.put(pt::ptree::path_type(resource.first, '\0'), resource.second);
+            second_key.SetString(
+                    resource.c_str(),
+                    resource.length(),
+                    document.GetAllocator());
+            second_value.SetBool(right);
+            value.AddMember(key, value, document.GetAllocator());
         }
-        user_rights_node.add_child(user.first, user_node);
+        document_value.AddMember(key, value, document.GetAllocator());
     }
-    tree.add_child("user_rights", user_rights_node);
-    std::ofstream ofs(file);
-    pt::write_json(ofs, tree);
+    document.AddMember("user_rights", document_value, document.GetAllocator());
+    std::ofstream db(file);
+    rapidjson::OStreamWrapper osw(db);
+    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
+    document.Accept(writer);
 }
 
 void rights_manager::load_from_file(const std::filesystem::path& file)
 {
-    pt::ptree tree;
+    std::ifstream db(file);
+    rapidjson::IStreamWrapper isw(db);
+    rapidjson::Document document;
+    document.ParseStream(isw);
+    //TODO document.HasParseErrors() ...
+    if(!document.IsObject())
     {
-        std::ifstream ifs(file);
-        pt::read_json(ifs, tree);
+        return;
+    }
+    auto resources_obj = document["resources"].GetObject();
+    for(auto& member : resources_obj)
+    {
+        resources_[member.name.GetString()] = member.value.GetBool();
     }
 
-    auto resources_node = tree.get_child("resources");
-    for(auto& resource_node : resources_node)
+    auto user_rights_obj = document["user_rights"].GetObject();
+    for(auto& member : user_rights_obj)
     {
-        resources_[resource_node.first] = 
-                resource_node.second.get_value<bool>();
-    }
-
-    auto user_rights_node = tree.get_child("user_rights");
-    for(auto& user_node : user_rights_node)
-    {
-        auto [it, success] = user_rights_.try_emplace(user_node.first);
-        for(auto& right_node : user_node.second)
+        auto user = member.name.GetString();
+        auto rights = member.value.GetObject();
+        for(auto& resource_right : rights)
         {
-            it->second[right_node.first] = 
-                right_node.second.get_value<bool>();
+            user_rights_[user][resource_right.name.GetString()]
+                = resource_right.value.GetBool();
         }
     }
 }
