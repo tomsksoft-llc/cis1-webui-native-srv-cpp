@@ -2,8 +2,6 @@
 
 #include <chrono>
 #include <fstream>
-#include <sstream>
-#include <functional>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>

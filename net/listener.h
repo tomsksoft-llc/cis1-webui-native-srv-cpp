@@ -1,11 +1,9 @@
 #pragma once
 
 #include <memory>
-#include <string>
 
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
-#include <boost/asio/ip/tcp.hpp>
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace net = boost::asio;                    // from <boost/asio.hpp>

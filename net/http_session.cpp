@@ -2,8 +2,6 @@
 
 #include <chrono>
 
-#include <boost/beast/websocket.hpp>
-
 #include "fail.h"
 #include "web_app.h"
 

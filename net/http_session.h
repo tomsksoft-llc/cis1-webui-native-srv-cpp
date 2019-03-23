@@ -1,15 +1,11 @@
 #pragma once
 
 #include <memory>
-#include <vector>
 #include <functional>
-#include <string>
 #include <deque>
 
 #include <boost/beast.hpp>
-#include <boost/beast/http.hpp>
 #include <boost/asio.hpp>
-#include <boost/asio/ip/tcp.hpp>
 
 class web_app;
 

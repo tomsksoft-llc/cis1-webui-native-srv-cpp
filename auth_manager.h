@@ -8,7 +8,6 @@
 #include "net/http_session.h"
 #include "handle_result.h"
 #include "request_context.h"
-#include "web_app.h"
 
 class auth_manager
 {
