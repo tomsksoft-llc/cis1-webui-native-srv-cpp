@@ -127,9 +127,10 @@ void ws_handle_logout(
 
 void ws_handle_list_projects(
         const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
         websocket_queue& queue,
-        request_context& /*ctx*/)
+        request_context& ctx)
 {
     rapidjson::Document document;
     rapidjson::Value value;
@@ -138,8 +139,19 @@ void ws_handle_list_projects(
     document.AddMember("eventId", value, document.GetAllocator());
     rapidjson::Value data_value;
     data_value.SetObject();
-    auto projects_json = projects->to_json();
-    value.CopyFrom(projects_json, document.GetAllocator());
+    
+    value.SetArray();
+    rapidjson::Value array_value;
+    for(auto& project : projects->projects)
+    {
+        if(auto perm = rights->check_right(ctx.username, "project." + project.name);
+                perm.has_value() && perm.value())
+        {
+            array_value.CopyFrom(project.to_json(), document.GetAllocator());
+            value.PushBack(array_value, document.GetAllocator());
+        }
+    }
+
     data_value.AddMember("projects", value, document.GetAllocator());
     value.SetString("");
     data_value.AddMember("errorMessage", value, document.GetAllocator());

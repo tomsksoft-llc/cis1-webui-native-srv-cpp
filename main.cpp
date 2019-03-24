@@ -13,6 +13,7 @@
 #include "web_app.h"
 // Business logic
 #include "auth_manager.h"
+#include "rights_manager.h"
 #include "cis_util.h"
 // Middleware
 #include "router.h"
@@ -48,6 +49,7 @@ int main(int argc, char* argv[])
     auto app = std::make_shared<web_app>(ioc);
     
     auto authentication_handler = std::make_shared<auth_manager>();
+    auto authorization_handler = std::make_shared<rights_manager>();
     auto files = std::make_shared<file_handler>(doc_root);
     auto projects = std::make_shared<project_list>();
     auto public_router = std::make_shared<http_router>();
@@ -67,7 +69,7 @@ int main(int argc, char* argv[])
     ws_handler.add_event_handler(ws_request_id::auth_logout,
             std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3));
     ws_handler.add_event_handler(ws_request_id::projects_list,
-            std::bind(&ws_handle_list_projects, projects, _1, _2, _3));
+            std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
                 http::request<http::string_body>& req,

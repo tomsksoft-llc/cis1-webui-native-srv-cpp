@@ -19,8 +19,8 @@ struct project
 class project_list
 {
     const std::string cis_projects_path_;
-    std::vector<project> projects_;
 public:
+    std::vector<project> projects;
     project_list();
     rapidjson::Document to_json(
         rapidjson::Document document = {},

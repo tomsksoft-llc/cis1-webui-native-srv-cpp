@@ -7,11 +7,22 @@
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
 
+#include "file_util.h"
+#include "dirs.h"
+
+constexpr const char* rights_file_path = "/rights.pwd";
+
+rights_manager::rights_manager()
+{
+    load_rights(path_cat(db::get_root_dir(), rights_file_path));
+}
+
 void rights_manager::add_resource(
         const std::string& resource_name,
         bool default_value)
 {
     resources_.try_emplace(resource_name, default_value);
+    save_rights(path_cat(db::get_root_dir(), rights_file_path));
 }
 
 void rights_manager::set_right(
@@ -20,6 +31,7 @@ void rights_manager::set_right(
         bool value)
 {
     user_rights_[username][resource_name] = value;
+    save_rights(path_cat(db::get_root_dir(), rights_file_path));
 }
 
 std::optional<bool> rights_manager::check_right(
@@ -41,7 +53,7 @@ std::optional<bool> rights_manager::check_right(
     return std::nullopt;
 }
 
-void rights_manager::save_to_file(const std::filesystem::path& file)
+void rights_manager::save_rights(const std::filesystem::path& file)
 {
     rapidjson::Document document;
     rapidjson::Value document_value;
@@ -56,7 +68,8 @@ void rights_manager::save_to_file(const std::filesystem::path& file)
         document_value.AddMember(key, value, document.GetAllocator());
     }
     document.AddMember("resources", document_value, document.GetAllocator());
-
+    
+    document_value.SetObject();
     for(auto& [user, rights] : user_rights_)
     {
         key.SetString(user.c_str(), user.length(), document.GetAllocator());
@@ -70,7 +83,7 @@ void rights_manager::save_to_file(const std::filesystem::path& file)
                     resource.length(),
                     document.GetAllocator());
             second_value.SetBool(right);
-            value.AddMember(key, value, document.GetAllocator());
+            value.AddMember(second_key, second_value, document.GetAllocator());
         }
         document_value.AddMember(key, value, document.GetAllocator());
     }
@@ -81,7 +94,7 @@ void rights_manager::save_to_file(const std::filesystem::path& file)
     document.Accept(writer);
 }
 
-void rights_manager::load_from_file(const std::filesystem::path& file)
+void rights_manager::load_rights(const std::filesystem::path& file)
 {
     std::ifstream db(file);
     rapidjson::IStreamWrapper isw(db);

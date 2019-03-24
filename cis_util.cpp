@@ -49,19 +49,19 @@ project_list::project_list()
 
 void project_list::fetch()
 {
-    projects_.clear();
+    projects.clear();
     try
     {
         for(auto& p: fs::directory_iterator(cis_projects_path_))
         {
             if(p.is_directory())
             {
-                projects_.emplace_back(p.path().filename().string());
+                projects.emplace_back(p.path().filename().string());
                 for(auto& sp: fs::directory_iterator(p))
                 {
                     if(sp.is_directory())
                     {
-                        projects_.back().subprojects.emplace_back(sp.path().filename().string());
+                        projects.back().subprojects.emplace_back(sp.path().filename().string());
                     }
                 }
             }
@@ -77,7 +77,7 @@ rapidjson::Document project_list::to_json(
 {
     document.SetArray();
     rapidjson::Value array_value;
-    for(auto& project : projects_)
+    for(auto& project : projects)
     {
         array_value.CopyFrom(project.to_json(), document.GetAllocator());
         document.PushBack(array_value, document.GetAllocator());
