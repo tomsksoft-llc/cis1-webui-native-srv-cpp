@@ -13,12 +13,13 @@
 #include "web_app.h"
 // Business logic
 #include "auth_manager.h"
+#include "cis_util.h"
 // Middleware
 #include "router.h"
 #include "cookie_parser.h"
 #include "file_handler.h"
 // HTTP handlers
-#include "projects_handler.h"
+//#include "projects_handler.h"
 #include "http_handlers.h"
 // WebSocket handlers
 #include "websocket_handler.h"
@@ -49,7 +50,7 @@ int main(int argc, char* argv[])
     
     auto authentication_handler = std::make_shared<auth_manager>();
     auto files = std::make_shared<file_handler>(doc_root);
-    auto projects = std::make_shared<projects_handler>();
+    auto projects = std::make_shared<project_list>();
     auto public_router = std::make_shared<http_router>();
     auto& index_route = public_router->add_route("/");
     index_route.append_handler(
@@ -67,7 +68,7 @@ int main(int argc, char* argv[])
     ws_handler.add_event_handler(ws_request_id::auth_logout,
             std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3));
     ws_handler.add_event_handler(ws_request_id::projects_list,
-            std::bind(&projects_handler::get_project_list, projects, _1, _2, _3));
+            std::bind(&ws_handle_list_projects, projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
                 http::request<http::string_body>& req,
@@ -110,7 +111,7 @@ int main(int argc, char* argv[])
     auto& projects_route = cis_router->add_route("/projects");
     projects_route.append_handler(
             std::bind(
-                &projects_handler::update,
+                &handle_update_projects,
                 projects,
                 _1, _2, _3));
     cis_app->listen(tcp::endpoint{cis_address, cis_port});

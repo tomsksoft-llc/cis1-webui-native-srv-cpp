@@ -21,7 +21,6 @@ set(${PROJECT_NAME}_SRC
     publisher.cpp
     file_handler.cpp
     #login_handler.cpp
-    projects_handler.cpp
     file_util.cpp
     request_util.cpp
     cis_util.cpp

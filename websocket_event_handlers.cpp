@@ -124,3 +124,30 @@ void ws_handle_logout(
             boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
             [buffer](){});
 }
+
+void ws_handle_list_projects(
+        const std::shared_ptr<project_list>& projects,
+        const rapidjson::Document& data,
+        websocket_queue& queue,
+        request_context& /*ctx*/)
+{
+    rapidjson::Document document;
+    rapidjson::Value value;
+    document.SetObject();
+    value.SetInt(22);
+    document.AddMember("eventId", value, document.GetAllocator());
+    rapidjson::Value data_value;
+    data_value.SetObject();
+    auto projects_json = projects->to_json();
+    value.CopyFrom(projects_json, document.GetAllocator());
+    data_value.AddMember("projects", value, document.GetAllocator());
+    value.SetString("");
+    data_value.AddMember("errorMessage", value, document.GetAllocator());
+    document.AddMember("data", data_value, document.GetAllocator());
+    auto buffer = std::make_shared<rapidjson::StringBuffer>();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
+    document.Accept(writer);
+    queue.send_text(
+            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
+            [buffer](){});
+}

@@ -21,7 +21,7 @@ class project_list
     const std::string cis_projects_path_;
     std::vector<project> projects_;
 public:
-    project_list(const std::string& path);
+    project_list();
     rapidjson::Document to_json(
         rapidjson::Document document = {},
         rapidjson::Value value = {});

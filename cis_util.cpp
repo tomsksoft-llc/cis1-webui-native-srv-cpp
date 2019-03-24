@@ -9,6 +9,7 @@
 
 #include "child_process.h"
 #include "dirs.h"
+#include "file_util.h"
 
 #include <unistd.h>
 
@@ -40,9 +41,10 @@ rapidjson::Document project::to_json(
     return document;
 }
 
-project_list::project_list(const std::string& path)
-    : cis_projects_path_(path)
+project_list::project_list()
+    : cis_projects_path_(path_cat(cis::get_root_dir(), cis::projects))
 {
+    fetch();
 }
 
 void project_list::fetch()
