@@ -15,10 +15,6 @@ public:
             const rapidjson::Document& data,
             websocket_queue& queue,
             request_context& ctx);
-    void get_subproject_list(
-            const rapidjson::Document& data,
-            websocket_queue& queue,
-            request_context& ctx);
     void run(
             boost::asio::io_context& ctx,
             const std::string& project,

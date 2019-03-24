@@ -68,7 +68,6 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3));
     ws_handler.add_event_handler(ws_request_id::projects_list,
             std::bind(&projects_handler::get_project_list, projects, _1, _2, _3));
-    ws_handler.add_event(23, std::bind(&projects_handler::get_subproject_list, projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
                 http::request<http::string_body>& req,
