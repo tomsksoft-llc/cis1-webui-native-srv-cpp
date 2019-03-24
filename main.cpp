@@ -19,6 +19,7 @@
 #include "file_handler.h"
 // HTTP handlers
 #include "projects_handler.h"
+#include "http_handlers.h"
 // WebSocket handlers
 #include "websocket_handler.h"
 #include "websocket_event_handlers.h"
@@ -59,10 +60,14 @@ int main(int argc, char* argv[])
     auto ws_router = std::make_shared<websocket_router>();
     auto& ws_route = ws_router->add_route("/ws(\\?.+)*");
     websocket_handler ws_handler;
-    ws_handler.add_event_handler(ws_request_id::auth_login_pass, std::bind(&handle_auth, authentication_handler, _1, _2, _3));
-    ws_handler.add_event_handler(ws_request_id::auth_token, std::bind(&handle_token, authentication_handler, _1, _2, _3));
-    ws_handler.add_event_handler(ws_request_id::auth_logout, std::bind(&handle_logout, authentication_handler, _1, _2, _3));
-    ws_handler.add_event_handler(ws_request_id::projects_list, std::bind(&projects_handler::get_project_list, projects, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::auth_login_pass,
+            std::bind(&ws_handle_authenticate, authentication_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::auth_token,
+            std::bind(&ws_handle_token, authentication_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::auth_logout,
+            std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::projects_list,
+            std::bind(&projects_handler::get_project_list, projects, _1, _2, _3));
     ws_handler.add_event(23, std::bind(&projects_handler::get_subproject_list, projects, _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
@@ -80,7 +85,7 @@ int main(int argc, char* argv[])
     app->append_handler(&cookie_parser::parse);
     app->append_handler(
             std::bind(
-                &auth_manager::operator(),
+                &handle_authenticate,
                 authentication_handler,
                 _1, _2, _3));
     app->append_handler(

@@ -29,6 +29,7 @@ set(${PROJECT_NAME}_SRC
     dirs.cpp
     init.cpp
     rights_manager.cpp
+    http_handlers.cpp
     websocket_handler.cpp
     websocket_event_handlers.cpp)
 

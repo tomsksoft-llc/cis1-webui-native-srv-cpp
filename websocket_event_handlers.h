@@ -6,19 +6,19 @@
 
 #include <rapidjson/document.h>
 
-void handle_auth(
+void ws_handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
         websocket_queue& queue,
         request_context& ctx);
 
-void handle_token(
+void ws_handle_token(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
         websocket_queue& queue,
         request_context& ctx);
 
-void handle_logout(
+void ws_handle_logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
         websocket_queue& queue,

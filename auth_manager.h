@@ -15,10 +15,6 @@ class auth_manager
     std::map<std::string, std::string> tokens_;
 public:
     auth_manager();
-    handle_result operator()(
-            http::request<http::string_body>& req,
-            http_session::queue& queue,
-            request_context& ctx);
     std::string authenticate(const std::string& user, const std::string& pass);
     std::string authenticate(const std::string& token);
     void delete_token(const std::string& token);

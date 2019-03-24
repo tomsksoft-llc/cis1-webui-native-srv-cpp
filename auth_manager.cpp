@@ -21,22 +21,6 @@ auth_manager::auth_manager()
     load_tokens(path_cat(db_path, tokens_file_path));
 }
 
-handle_result auth_manager::operator()(
-        http::request<http::string_body>& /*req*/,
-        http_session::queue& /*queue*/,
-        request_context& ctx)
-{
-    if(const auto& cookies = ctx.cookies; cookies.count("token"))
-    {
-        auto user = authenticate(cookies.at("token"));
-        if(!user.empty())
-        {
-            ctx.username = user;
-        }
-    }
-    return handle_result::next;
-}
-
 std::string auth_manager::authenticate(const std::string& user, const std::string& pass)
 {
     if(auto it = users_.find(user);
