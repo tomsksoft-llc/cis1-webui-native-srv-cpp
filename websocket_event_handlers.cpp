@@ -28,7 +28,8 @@ void ws_handle_authenticate(
     data_value.AddMember("token", value, document.GetAllocator());
     if(!token.empty())
     {
-        ctx.username = std::string(login);
+        ctx.username = login;
+        ctx.active_token = token;
         value.SetString("");
     }
     else
@@ -65,6 +66,7 @@ void ws_handle_token(
     if(!username.empty())
     {
         ctx.username = username;
+        ctx.active_token = token;
         value.SetString("");
     }
     else
