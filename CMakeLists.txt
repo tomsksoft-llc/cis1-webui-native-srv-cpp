@@ -20,7 +20,6 @@ set(${PROJECT_NAME}_SRC
     response.cpp
     publisher.cpp
     file_handler.cpp
-    #login_handler.cpp
     file_util.cpp
     request_util.cpp
     cis_util.cpp

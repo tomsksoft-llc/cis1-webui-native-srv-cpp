@@ -19,7 +19,6 @@
 #include "cookie_parser.h"
 #include "file_handler.h"
 // HTTP handlers
-//#include "projects_handler.h"
 #include "http_handlers.h"
 // WebSocket handlers
 #include "websocket_handler.h"
