@@ -10,6 +10,7 @@ struct project
 {
     project(std::string name);
     std::string name;
+    std::vector<std::string> subprojects;
     rapidjson::Document to_json(
         rapidjson::Document document = {},
         rapidjson::Value value = {});

@@ -26,6 +26,15 @@ rapidjson::Document project::to_json(
     value.SetString(name.c_str(), name.length(), document.GetAllocator());
     document.AddMember("name", value, document.GetAllocator());
     value.SetArray();
+    rapidjson::Value array_value;
+    rapidjson::Value name;
+    for(auto& subproject : subprojects)
+    {
+        name.SetString(subproject.c_str(), subproject.length(), document.GetAllocator());
+        array_value.SetObject();
+        array_value.AddMember("name", name, document.GetAllocator());
+        value.PushBack(array_value, document.GetAllocator());
+    }
     document.AddMember("subprojects", value, document.GetAllocator());
 
     return document;
@@ -46,6 +55,13 @@ void project_list::fetch()
             if(p.is_directory())
             {
                 projects_.emplace_back(p.path().filename().string());
+                for(auto& sp: fs::directory_iterator(p))
+                {
+                    if(sp.is_directory())
+                    {
+                        projects_.back().subprojects.emplace_back(sp.path().filename().string());
+                    }
+                }
             }
         }
     }
