@@ -6,6 +6,8 @@ enum class ws_request_id
     auth_token      = 3,
     auth_logout     = 5,
     projects_list   = 21,
+    subprojects_list= 23,
+    builds_list     = 25
 };
 
 enum class ws_response_id
@@ -13,5 +15,7 @@ enum class ws_response_id
     auth_login_pass = 2,
     auth_token      = 4,
     auth_logout     = 6,
-    projects_list   = 22
+    projects_list   = 22,
+    subprojects_list= 24,
+    builds_list     = 26
 };

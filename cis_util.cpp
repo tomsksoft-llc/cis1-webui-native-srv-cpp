@@ -15,30 +15,67 @@
 
 namespace fs = std::filesystem;
 
-project::project(std::string n)
-    : name(std::move(n))
+build::build(
+        const std::string& build_name,
+        const std::string& build_status,
+        const std::string& build_date)
+    : name(build_name)
+    , status(build_status)
+    , date(build_date)
 {}
 
-rapidjson::Document project::to_json(
-        rapidjson::Document document,
-        rapidjson::Value value)
+bool build::comp::operator()(const build& lhs, const build& rhs) const
 {
-    document.SetObject();
-    value.SetString(name.c_str(), name.length(), document.GetAllocator());
-    document.AddMember("name", value, document.GetAllocator());
-    value.SetArray();
-    rapidjson::Value array_value;
-    rapidjson::Value name;
-    for(auto& subproject : subprojects)
-    {
-        name.SetString(subproject.c_str(), subproject.length(), document.GetAllocator());
-        array_value.SetObject();
-        array_value.AddMember("name", name, document.GetAllocator());
-        value.PushBack(array_value, document.GetAllocator());
-    }
-    document.AddMember("subprojects", value, document.GetAllocator());
+    return lhs.name < rhs.name;
+}
 
-    return document;
+bool build::comp::operator()(const build& lhs, const std::string& rhs) const
+{
+    return lhs.name < rhs;
+}
+
+bool build::comp::operator()(const std::string& lhs, const build& rhs) const
+{
+    return lhs < rhs.name;
+}
+
+subproject::subproject(const std::string& subproject_name)
+    : name(subproject_name)
+{}
+
+bool subproject::comp::operator()(const subproject& lhs, const subproject& rhs) const
+{
+    return lhs.name < rhs.name;
+}
+
+bool subproject::comp::operator()(const subproject& lhs, const std::string& rhs) const
+{
+    return lhs.name < rhs;
+}
+
+bool subproject::comp::operator()(const std::string& lhs, const subproject& rhs) const
+{
+    return lhs < rhs.name;
+}
+
+
+project::project(const std::string& project_name)
+        : name(project_name)
+{}
+
+bool project::comp::operator()(const project& lhs, const project& rhs) const
+{
+    return lhs.name < rhs.name;
+}
+
+bool project::comp::operator()(const project& lhs, const std::string& rhs) const
+{
+    return lhs.name < rhs;
+}
+
+bool project::comp::operator()(const std::string& lhs, const project& rhs) const
+{
+    return lhs < rhs.name;
 }
 
 project_list::project_list()
@@ -52,16 +89,40 @@ void project_list::fetch()
     projects.clear();
     try
     {
-        for(auto& p: fs::directory_iterator(cis_projects_path_))
+        for(auto& project: fs::directory_iterator(cis_projects_path_))
         {
-            if(p.is_directory())
+            if(project.is_directory())
             {
-                projects.emplace_back(p.path().filename().string());
-                for(auto& sp: fs::directory_iterator(p))
+                auto [project_it, result] = projects.emplace(
+                        std::piecewise_construct,
+                        std::make_tuple(project.path().filename()),
+                        std::make_tuple());
+                if(result == false)
                 {
-                    if(sp.is_directory())
+                    continue; //FIXME
+                }
+                for(auto& subproject: fs::directory_iterator(project))
+                {
+                    if(subproject.is_directory())
                     {
-                        projects.back().subprojects.emplace_back(sp.path().filename().string());
+                        auto [subproject_it, result] = project_it->second.emplace(
+                            std::piecewise_construct,
+                            std::make_tuple(subproject.path().filename()),
+                            std::make_tuple());
+                        if(result == false)
+                        {
+                            continue; //FIXME
+                        }
+                        for(auto& build: fs::directory_iterator(subproject))
+                        {
+                            if(build.is_directory())
+                            {
+                                    subproject_it->second.emplace(
+                                            build.path().filename(),
+                                            "ok",
+                                            "today");
+                            }
+                        }
                     }
                 }
             }
@@ -71,51 +132,35 @@ void project_list::fetch()
     {}
 }
 
-rapidjson::Document project_list::to_json(
+rapidjson::Document to_json(
+        const project& p,
         rapidjson::Document document,
         rapidjson::Value value)
 {
-    document.SetArray();
-    rapidjson::Value array_value;
-    for(auto& project : projects)
-    {
-        array_value.CopyFrom(project.to_json(), document.GetAllocator());
-        document.PushBack(array_value, document.GetAllocator());
-    }
-
+    document.SetObject();
+    value.SetString(p.name.c_str(), p.name.length(), document.GetAllocator());
+    document.AddMember("name", value, document.GetAllocator());
     return document;
 }
 
-std::string project_list::to_json_string()
+rapidjson::Document to_json(
+        const subproject& s,
+        rapidjson::Document document,
+        rapidjson::Value value)
 {
-    auto document = to_json();
-    rapidjson::StringBuffer buffer;
-    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-    document.Accept(writer);
-    return buffer.GetString();
+    document.SetObject();
+    value.SetString(s.name.c_str(), s.name.length(), document.GetAllocator());
+    document.AddMember("name", value, document.GetAllocator());
+    return document;
 }
 
-void run_job(
-        boost::asio::io_context& ctx,
-        const std::string& project,
-        const std::string& name)
+rapidjson::Document to_json(
+        const build& b,
+        rapidjson::Document document,
+        rapidjson::Value value)
 {
-    auto env = boost::this_process::environment();
-    env["cis_base_dir"] = cis::get_root_dir();
-    std::make_shared<child_process>(ctx, env)->run(
-            "sh",
-            {"startjob", project + "/" + name},
-            [](int exit, std::vector<char>& buffer, const std::error_code& ec)
-            {
-                if(!ec)
-                {
-                    std::cout << "process exited with " << exit << std::endl;
-                    std::cout << "std_out contain:" << std::endl;
-                    std::cout.write(buffer.data(), buffer.size());
-                }
-                else
-                {
-                    std::cout << "error" << std::endl;
-                }
-            });
+    document.SetObject();
+    value.SetString(b.name.c_str(), b.name.length(), document.GetAllocator());
+    document.AddMember("name", value, document.GetAllocator());    return document;
+    return document;
 }

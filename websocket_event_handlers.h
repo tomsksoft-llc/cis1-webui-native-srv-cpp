@@ -32,3 +32,17 @@ void ws_handle_list_projects(
         const rapidjson::Document& data,
         websocket_queue& queue,
         request_context& ctx);
+
+void ws_handle_list_subprojects(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        const rapidjson::Document& data,
+        websocket_queue& queue,
+        request_context& ctx);
+
+void ws_handle_list_builds(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        const rapidjson::Document& data,
+        websocket_queue& queue,
+        request_context& ctx);

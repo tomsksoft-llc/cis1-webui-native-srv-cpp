@@ -3,6 +3,8 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
+#include "websocket_event_list.h"
+
 using namespace std::string_literals;
 
 void ws_handle_authenticate(
@@ -93,7 +95,6 @@ void ws_handle_logout(
         data["token"].GetString() : ""s;
     std::string token_username = authentication_handler->authenticate(token);
     const std::string& connection_username = ctx.username;
-    //std::string& connection_username = std::any_cast<std::string&>(ctx["user"]);
 
     rapidjson::Document document;
     rapidjson::Value value;
@@ -137,24 +138,108 @@ void ws_handle_list_projects(
     rapidjson::Document document;
     rapidjson::Value value;
     document.SetObject();
-    value.SetInt(22);
+    value.SetInt(static_cast<int>(ws_response_id::projects_list));
     document.AddMember("eventId", value, document.GetAllocator());
     rapidjson::Value data_value;
     data_value.SetObject();
-    
-    value.SetArray();
     rapidjson::Value array_value;
-    for(auto& project : projects->projects)
+    value.SetArray();
+    for(auto& [project, subprojects] : projects->projects)
     {
         if(auto perm = rights->check_right(ctx.username, "project." + project.name);
                 perm.has_value() && perm.value())
         {
-            array_value.CopyFrom(project.to_json(), document.GetAllocator());
+            array_value.CopyFrom(to_json(project), document.GetAllocator());
             value.PushBack(array_value, document.GetAllocator());
         }
     }
-
     data_value.AddMember("projects", value, document.GetAllocator());
+    value.SetString("");
+    data_value.AddMember("errorMessage", value, document.GetAllocator());
+    document.AddMember("data", data_value, document.GetAllocator());
+    auto buffer = std::make_shared<rapidjson::StringBuffer>();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
+    document.Accept(writer);
+    queue.send_text(
+            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
+            [buffer](){});
+}
+
+void ws_handle_list_subprojects(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        const rapidjson::Document& data,
+        websocket_queue& queue,
+        request_context& ctx)
+{    
+    auto project_name = data.HasMember("project") && data["project"].IsString() ?
+        data["project"].GetString() : ""s;
+
+    rapidjson::Document document;
+    rapidjson::Value value;
+    document.SetObject();
+    value.SetInt(static_cast<int>(ws_response_id::subprojects_list));
+    document.AddMember("eventId", value, document.GetAllocator());
+    rapidjson::Value data_value;
+    data_value.SetObject();
+    rapidjson::Value array_value;
+    value.SetArray();
+    if(auto perm = rights->check_right(ctx.username, "project." + project_name);
+                perm.has_value() && perm.value())
+    {
+        auto project_it = projects->projects.find(project_name);
+        for(auto& [subproject, builds] : project_it->second)
+        {
+
+                array_value.CopyFrom(to_json(subproject), document.GetAllocator());
+                value.PushBack(array_value, document.GetAllocator());
+        }
+    }
+    data_value.AddMember("subprojects", value, document.GetAllocator());
+    value.SetString("");
+    data_value.AddMember("errorMessage", value, document.GetAllocator());
+    document.AddMember("data", data_value, document.GetAllocator());
+    auto buffer = std::make_shared<rapidjson::StringBuffer>();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
+    document.Accept(writer);
+    queue.send_text(
+            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
+            [buffer](){});
+}
+
+void ws_handle_list_builds(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        const rapidjson::Document& data,
+        websocket_queue& queue,
+        request_context& ctx)
+{
+    auto project_name = data.HasMember("project") && data["project"].IsString() ?
+        data["project"].GetString() : ""s;
+    auto subproject_name = data.HasMember("subproject") && data["subproject"].IsString() ?
+        data["subproject"].GetString() : ""s;
+    
+    rapidjson::Document document;
+    rapidjson::Value value;
+    document.SetObject();
+    value.SetInt(static_cast<int>(ws_response_id::builds_list));
+    document.AddMember("eventId", value, document.GetAllocator());
+    rapidjson::Value data_value;
+    data_value.SetObject();
+    rapidjson::Value array_value;
+    value.SetArray();
+    if(auto perm = rights->check_right(ctx.username, "project." + project_name);
+                perm.has_value() && perm.value())
+    {
+        auto project_it = projects->projects.find(project_name);
+        auto subproject_it = project_it->second.find(subproject_name);
+        for(auto& build : subproject_it->second)
+        {
+
+                array_value.CopyFrom(to_json(build), document.GetAllocator());
+                value.PushBack(array_value, document.GetAllocator());
+        }
+    }    data_value.AddMember("builds", value, document.GetAllocator());
     value.SetString("");
     data_value.AddMember("errorMessage", value, document.GetAllocator());
     document.AddMember("data", data_value, document.GetAllocator());
