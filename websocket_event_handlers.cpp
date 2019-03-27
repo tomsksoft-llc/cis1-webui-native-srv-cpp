@@ -65,6 +65,7 @@ void ws_handle_authenticate(
                 queue,
                 ws_response_id::auth_login_pass,
                 "Invalid JSON.");
+        return;
     }
 
     std::string token = authentication_handler->authenticate(login.value(), pass.value());
@@ -110,6 +111,7 @@ void ws_handle_token(
                 queue,
                 ws_response_id::auth_token,
                 "Invalid JSON.");
+        return;
     }
 
     std::string username = authentication_handler->authenticate(token.value());
@@ -145,6 +147,7 @@ void ws_handle_logout(
                 queue,
                 ws_response_id::auth_logout,
                 "Invalid JSON.");
+        return;
     }
 
     std::string token_username = authentication_handler->authenticate(token.value());
@@ -218,6 +221,7 @@ void ws_handle_list_subprojects(
                 queue,
                 ws_response_id::subprojects_list,
                 "Invalid JSON.");
+        return;
     }
 
     auto project_it = projects->projects.find(project_name.value());
@@ -276,6 +280,7 @@ void ws_handle_list_builds(
                 queue,
                 ws_response_id::builds_list,
                 "Invalid JSON.");
+        return;
     }
    
     auto project_it = projects->projects.find(project_name.value());
@@ -346,6 +351,7 @@ void ws_handle_run_job(
                 queue,
                 ws_response_id::run_job,
                 "Invalid JSON.");
+        return;
     }
    
     auto project_it = projects->projects.find(project_name.value());
