@@ -184,19 +184,30 @@ void ws_handle_list_subprojects(
     data_value.SetObject();
     rapidjson::Value array_value;
     value.SetArray();
-    if(auto perm = rights->check_right(ctx.username, "project." + project_name);
-                perm.has_value() && perm.value())
+    auto project_it = projects->projects.find(project_name);
+    if(project_it != projects->projects.cend())
     {
-        auto project_it = projects->projects.find(project_name);
-        for(auto& [subproject, builds] : project_it->second)
+        if(auto perm = rights->check_right(ctx.username, "project." + project_name);
+                    perm.has_value() && perm.value())
         {
+            for(auto& [subproject, builds] : project_it->second)
+            {
 
-                array_value.CopyFrom(to_json(subproject), document.GetAllocator());
-                value.PushBack(array_value, document.GetAllocator());
+                    array_value.CopyFrom(to_json(subproject), document.GetAllocator());
+                    value.PushBack(array_value, document.GetAllocator());
+            }
+            data_value.AddMember("subprojects", value, document.GetAllocator());
+            value.SetString("");
+        }
+        else
+        {
+            value.SetString("Action not permitted.");
         }
     }
-    data_value.AddMember("subprojects", value, document.GetAllocator());
-    value.SetString("");
+    else
+    {
+        value.SetString("Project doesen't exist.");
+    }
     data_value.AddMember("errorMessage", value, document.GetAllocator());
     document.AddMember("data", data_value, document.GetAllocator());
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
@@ -228,19 +239,38 @@ void ws_handle_list_builds(
     data_value.SetObject();
     rapidjson::Value array_value;
     value.SetArray();
-    if(auto perm = rights->check_right(ctx.username, "project." + project_name);
-                perm.has_value() && perm.value())
+    auto project_it = projects->projects.find(project_name);
+    if(project_it != projects->projects.cend())
     {
-        auto project_it = projects->projects.find(project_name);
         auto subproject_it = project_it->second.find(subproject_name);
-        for(auto& build : subproject_it->second)
+        if(subproject_it != project_it->second.cend())
         {
+            if(auto perm = rights->check_right(ctx.username, "project." + project_name);
+                        perm.has_value() && perm.value())
+            {
+                for(auto& build : subproject_it->second)
+                {
 
-                array_value.CopyFrom(to_json(build), document.GetAllocator());
-                value.PushBack(array_value, document.GetAllocator());
+                        array_value.CopyFrom(to_json(build), document.GetAllocator());
+                        value.PushBack(array_value, document.GetAllocator());
+                }
+                data_value.AddMember("builds", value, document.GetAllocator());
+                value.SetString("");
+            }
+            else
+            {
+                value.SetString("Action not permitted.");
+            }
         }
-    }    data_value.AddMember("builds", value, document.GetAllocator());
-    value.SetString("");
+        else
+        {
+            value.SetString("Subproject doesn't exist.");
+        }
+    }
+    else
+    {
+        value.SetString("Project doesen't exist.");
+    }
     data_value.AddMember("errorMessage", value, document.GetAllocator());
     document.AddMember("data", data_value, document.GetAllocator());
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
