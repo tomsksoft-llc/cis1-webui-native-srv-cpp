@@ -12,6 +12,7 @@ enum class ws_request_id
 
 enum class ws_response_id
 {
+    common_error    = -1,
     auth_login_pass = 2,
     auth_token      = 4,
     auth_logout     = 6,
