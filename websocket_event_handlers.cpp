@@ -1,5 +1,7 @@
 #include "websocket_event_handlers.h"
 
+#include <chrono>
+
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
@@ -11,9 +13,9 @@ std::optional<std::string> get_string(
         const rapidjson::Document& value,
         const char* name)
 {
-    if(value.HasMember("login") && value["login"].IsString())
+    if(value.HasMember(name) && value[name].IsString())
     {
-        return value["login"].GetString();
+        return value[name].GetString();
     }
     return std::nullopt;
 }
@@ -368,6 +370,14 @@ void ws_handle_run_job(
                 queue,
                 ws_response_id::run_job,
                 "");
+            auto timer = std::make_shared<boost::asio::steady_timer>(
+                    io_ctx,
+                    std::chrono::steady_clock::now() + std::chrono::seconds(1));
+            timer->async_wait(
+                    [timer, projects](const boost::system::error_code& ec)
+                    {
+                        projects->fetch();
+                    });
         }
         else
         {
