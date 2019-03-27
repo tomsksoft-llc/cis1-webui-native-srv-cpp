@@ -84,11 +84,14 @@ void websocket_handler::handle(
                 }
             }
         }
-        send_error(
-                queue,
-                ws_response_id::common_error,
-                "Request doesn't contain 'eventId' member.");
-        return;
+        else
+        {
+            send_error(
+                    queue,
+                    ws_response_id::common_error,
+                    "Request doesn't contain 'eventId' member.");
+            return;
+        }
     }
 }
 
