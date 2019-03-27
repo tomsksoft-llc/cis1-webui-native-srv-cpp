@@ -12,10 +12,10 @@ struct build
 {
     explicit build(
             const std::string& build_name,
-            const std::string& build_status,
+            int build_status,
             const std::string& build_date);
     std::string name;
-    std::string status;
+    int status;
     std::string date;
     struct comp
     {

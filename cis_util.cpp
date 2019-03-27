@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <iostream>
+#include <fstream>
 
 #include <boost/process.hpp>
 #include <rapidjson/writer.h>
@@ -17,7 +18,7 @@ namespace fs = std::filesystem;
 
 build::build(
         const std::string& build_name,
-        const std::string& build_status,
+        int build_status,
         const std::string& build_date)
     : name(build_name)
     , status(build_status)
@@ -117,10 +118,16 @@ void project_list::fetch()
                         {
                             if(build.is_directory())
                             {
-                                    subproject_it->second.emplace(
-                                            build.path().filename(),
-                                            "ok",
-                                            "today");
+                                std::ifstream exitcode_file(path_cat(build.path().c_str(), "/exitcode.txt"));
+                                int exitcode;
+                                exitcode_file >> exitcode;
+                                std::ifstream output_file(path_cat(build.path().c_str(), "/output.txt"));
+                                std::string date;
+                                output_file >> date;
+                                subproject_it->second.emplace(
+                                        build.path().filename(),
+                                        exitcode,
+                                        date.substr(0, 10));
                             }
                         }
                     }
@@ -161,6 +168,10 @@ rapidjson::Document to_json(
 {
     document.SetObject();
     value.SetString(b.name.c_str(), b.name.length(), document.GetAllocator());
-    document.AddMember("name", value, document.GetAllocator());    return document;
+    document.AddMember("name", value, document.GetAllocator());
+    value.SetInt(b.status);
+    document.AddMember("status", value, document.GetAllocator());
+    value.SetString(b.date.c_str(), b.date.length(), document.GetAllocator());
+    document.AddMember("date", value, document.GetAllocator());
     return document;
 }
