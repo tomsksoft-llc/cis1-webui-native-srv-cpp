@@ -280,3 +280,58 @@ void ws_handle_list_builds(
             boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
             [buffer](){});
 }
+
+void ws_handle_run_job(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        boost::asio::io_context& io_ctx,
+        const rapidjson::Document& data,
+        websocket_queue& queue,
+        request_context& ctx)
+{
+    auto project_name = data.HasMember("project") && data["project"].IsString() ?
+        data["project"].GetString() : ""s;
+    auto subproject_name = data.HasMember("subproject") && data["subproject"].IsString() ?
+        data["subproject"].GetString() : ""s;
+    rapidjson::Document document;
+    rapidjson::Value value;
+    document.SetObject();
+    value.SetInt(static_cast<int>(ws_response_id::run_job));
+    document.AddMember("eventId", value, document.GetAllocator());
+    rapidjson::Value data_value;
+    data_value.SetObject();
+    auto project_it = projects->projects.find(project_name);
+    if(project_it != projects->projects.cend())
+    {
+        auto subproject_it = project_it->second.find(subproject_name);
+        if(subproject_it != project_it->second.cend())
+        {
+            if(auto perm = rights->check_right(ctx.username, "project." + project_name);
+                        perm.has_value() && perm.value())
+            {
+                run_job(io_ctx, project_name, subproject_name);
+                value.SetString("");
+            }
+            else
+            {
+                value.SetString("Action not permitted.");
+            }
+        }
+        else
+        {
+            value.SetString("Subproject doesn't exist.");
+        }
+    }
+    else
+    {
+        value.SetString("Project doesen't exist.");
+    }
+    data_value.AddMember("errorMessage", value, document.GetAllocator());
+    document.AddMember("data", data_value, document.GetAllocator());
+    auto buffer = std::make_shared<rapidjson::StringBuffer>();
+    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
+    document.Accept(writer);
+    queue.send_text(
+            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
+            [buffer](){});
+}

@@ -175,3 +175,32 @@ rapidjson::Document to_json(
     document.AddMember("date", value, document.GetAllocator());
     return document;
 }
+
+void run_job(
+        boost::asio::io_context& ctx,
+        const std::string& project,
+        const std::string& name)
+{
+    auto env = boost::this_process::environment();
+    env["cis_base_dir"] = cis::get_root_dir();
+    auto cp = std::make_shared<child_process>(ctx, env);
+    cp->run(
+            "sh",
+            {"startjob", path_cat(project, "/" + name)},
+            [project, name](int exit, std::vector<char>& buffer, const std::error_code& ec)
+            {
+                std::cout << "job " + project
+                            + "/" + name + " finished" << std::endl;
+                if(!ec)
+                {
+                    std::cout << "process exited with " << exit << std::endl;
+                    std::cout << "std_out contain:" << std::endl;
+                    std::cout.write(buffer.data(), buffer.size());
+                }
+                else
+                {
+                    std::cout << "error" << std::endl;
+                }
+                //TODO update builds (emit cis_updated or something)
+            });
+}

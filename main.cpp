@@ -74,6 +74,8 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_list_subprojects, projects, authorization_handler, _1, _2, _3));
     ws_handler.add_event_handler(ws_request_id::builds_list,
             std::bind(&ws_handle_list_builds, projects, authorization_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::run_job,
+            std::bind(&ws_handle_run_job, projects, authorization_handler, std::ref(ioc), _1, _2, _3));
 
     ws_route.append_handler([&ws_handler](
                 http::request<http::string_body>& req,
