@@ -100,7 +100,10 @@ void rights_manager::load_rights(const std::filesystem::path& file)
     rapidjson::IStreamWrapper isw(db);
     rapidjson::Document document;
     document.ParseStream(isw);
-    //TODO document.HasParseErrors() ...
+    if(document.HasParseError())
+    {
+        throw "Can't load user rights!"; //TODO
+    }
     if(!document.IsObject())
     {
         return;

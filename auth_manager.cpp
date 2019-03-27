@@ -74,7 +74,10 @@ void auth_manager::load_users(std::filesystem::path users_file)
     rapidjson::IStreamWrapper isw(users_db);
     rapidjson::Document document;
     document.ParseStream(isw);
-    //TODO document.HasParseErrors() ...
+    if(document.HasParseError())
+    {
+        throw "Can't load users!"; //TODO
+    }
     if(!document.IsObject())
     {
         return;
@@ -91,7 +94,10 @@ void auth_manager::load_tokens(std::filesystem::path tokens_file)
     rapidjson::IStreamWrapper isw(tokens_db);
     rapidjson::Document document;
     document.ParseStream(isw);
-    //TODO document.HasParseErrors() ...
+    if(document.HasParseError())
+    {
+        throw "Can't load tokens!"; //TODO
+    }
     if(!document.IsObject())
     {
         return;
