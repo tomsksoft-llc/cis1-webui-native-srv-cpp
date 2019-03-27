@@ -7,45 +7,94 @@
 
 using namespace std::string_literals;
 
-void ws_handle_authenticate(
-        const std::shared_ptr<auth_manager>& authentication_handler,
-        const rapidjson::Document& data,
-        websocket_queue& queue,
-        request_context& ctx)
+std::optional<std::string> get_string(
+        const rapidjson::Document& value,
+        const char* name)
 {
-    auto login = data.HasMember("login") && data["login"].IsString() ?
-        data["login"].GetString() : ""s;
-    auto pass = data.HasMember("pass") && data["pass"].IsString() ?
-        data["pass"].GetString() : ""s;
-    std::string token = authentication_handler->authenticate(login, pass);
+    if(value.HasMember("login") && value["login"].IsString())
+    {
+        return value["login"].GetString();
+    }
+    return std::nullopt;
+}
 
+void make_response(
+        websocket_queue& queue,
+        ws_response_id id,
+        std::string error_message,
+        std::function<void(rapidjson::Document&, rapidjson::Value&)> data_builder = {})
+{
     rapidjson::Document document;
     rapidjson::Value value;
     document.SetObject();
-    value.SetInt(2);
+    value.SetInt(static_cast<int>(id));
     document.AddMember("eventId", value, document.GetAllocator());
-    rapidjson::Value data_value;
-    data_value.SetObject();
-    value.SetString(token.c_str(), token.length(), document.GetAllocator());
-    data_value.AddMember("token", value, document.GetAllocator());
-    if(!token.empty())
+    value.SetObject();
+    if(data_builder)
     {
-        ctx.username = login;
-        ctx.active_token = token;
-        value.SetString("");
+        data_builder(document, value);
     }
-    else
-    {
-        value.SetString("Wrong username or password");
-    }
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
+    value.AddMember(
+            "errorMessage",
+            rapidjson::Value().SetString(
+                error_message.c_str(),
+                error_message.length(),
+                document.GetAllocator()),
+            document.GetAllocator());
+    document.AddMember("data", value, document.GetAllocator());
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
     rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
     document.Accept(writer);
     queue.send_text(
             boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
             [buffer](){});
+};
+
+void ws_handle_authenticate(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        const rapidjson::Document& data,
+        websocket_queue& queue,
+        request_context& ctx)
+{
+    auto login = get_string(data, "login");
+    auto pass = get_string(data, "pass");
+    
+    if(!login || !pass)
+    {
+        make_response(
+                queue,
+                ws_response_id::auth_login_pass,
+                "Invalid JSON.");
+    }
+
+    std::string token = authentication_handler->authenticate(login.value(), pass.value());
+    
+    if(!token.empty())
+    {
+        ctx.username = login.value();
+        ctx.active_token = token;
+        make_response(
+                queue,
+                ws_response_id::auth_login_pass,
+                "",
+                [&](rapidjson::Document& document, rapidjson::Value& value)
+                {
+                    value.AddMember(
+                            "token",
+                            rapidjson::Value().SetString(
+                                token.c_str(),
+                                token.length(),
+                                document.GetAllocator()),
+                            document.GetAllocator());
+                });
+    }
+    else
+    {
+        make_response(
+                queue,
+                ws_response_id::auth_login_pass,
+                "Wrong username or password.");
+    }
 }
 
 void ws_handle_token(
@@ -54,35 +103,33 @@ void ws_handle_token(
         websocket_queue& queue,
         request_context& ctx)
 {
-    auto token = data.HasMember("token") && data["token"].IsString() ?
-        data["token"].GetString() : ""s;
-    std::string username = authentication_handler->authenticate(token);
+    auto token = get_string(data, "token");
+    if(!token)
+    {
+        make_response(
+                queue,
+                ws_response_id::auth_token,
+                "Invalid JSON.");
+    }
 
-    rapidjson::Document document;
-    rapidjson::Value value;
-    document.SetObject();
-    value.SetInt(4);
-    document.AddMember("eventId", value, document.GetAllocator());
-    rapidjson::Value data_value;
-    data_value.SetObject();
+    std::string username = authentication_handler->authenticate(token.value());
+    
     if(!username.empty())
     {
         ctx.username = username;
-        ctx.active_token = token;
-        value.SetString("");
+        ctx.active_token = token.value();
+        make_response(
+                queue,
+                ws_response_id::auth_token,
+                "");
     }
     else
     {
-        value.SetString("Invalid token");
+        make_response(
+                queue,
+                ws_response_id::auth_token,
+                "Invalid token.");
     }
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-    queue.send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
 }
 
 void ws_handle_logout(
@@ -91,18 +138,18 @@ void ws_handle_logout(
         websocket_queue& queue,
         request_context& ctx)
 {
-    auto token = data.HasMember("token") && data["token"].IsString() ?
-        data["token"].GetString() : ""s;
-    std::string token_username = authentication_handler->authenticate(token);
+    auto token = get_string(data, "token");
+    if(!token)
+    {
+        make_response(
+                queue,
+                ws_response_id::auth_logout,
+                "Invalid JSON.");
+    }
+
+    std::string token_username = authentication_handler->authenticate(token.value());
     const std::string& connection_username = ctx.username;
 
-    rapidjson::Document document;
-    rapidjson::Value value;
-    document.SetObject();
-    value.SetInt(6);
-    document.AddMember("eventId", value, document.GetAllocator());
-    rapidjson::Value data_value;
-    data_value.SetObject();
     if(token_username == connection_username)
     {
         if(token == ctx.active_token)
@@ -111,21 +158,19 @@ void ws_handle_logout(
             ctx.active_token = "";
             ctx.username = "";
         }
-        authentication_handler->delete_token(token);
-        value.SetString("");
+        authentication_handler->delete_token(token.value());
+        make_response(
+                queue,
+                ws_response_id::auth_logout,
+                "");
     }
     else
     {
-        value.SetString("Invalid token");
+        make_response(
+                queue,
+                ws_response_id::auth_logout,
+                "Invalid token.");
     }
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-    queue.send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
 }
 
 void ws_handle_list_projects(
@@ -135,34 +180,28 @@ void ws_handle_list_projects(
         websocket_queue& queue,
         request_context& ctx)
 {
-    rapidjson::Document document;
-    rapidjson::Value value;
-    document.SetObject();
-    value.SetInt(static_cast<int>(ws_response_id::projects_list));
-    document.AddMember("eventId", value, document.GetAllocator());
-    rapidjson::Value data_value;
-    data_value.SetObject();
-    rapidjson::Value array_value;
-    value.SetArray();
-    for(auto& [project, subprojects] : projects->projects)
-    {
-        if(auto perm = rights->check_right(ctx.username, "project." + project.name);
-                perm.has_value() && perm.value())
-        {
-            array_value.CopyFrom(to_json(project), document.GetAllocator());
-            value.PushBack(array_value, document.GetAllocator());
-        }
-    }
-    data_value.AddMember("projects", value, document.GetAllocator());
-    value.SetString("");
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-    queue.send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
+    make_response(
+            queue,
+            ws_response_id::projects_list,
+            "",
+            [&](rapidjson::Document& document, rapidjson::Value& value)
+            {
+                rapidjson::Value array;
+                array.SetArray();
+                for(auto& [project, subprojects] : projects->projects)
+                {
+                    if(auto perm = rights->check_right(ctx.username, "project." + project.name);
+                            perm.has_value() && perm.value())
+                    {
+                        array.PushBack(
+                                rapidjson::Value().CopyFrom(
+                                    to_json(project),
+                                    document.GetAllocator()),
+                                document.GetAllocator());
+                    }
+                }
+                value.AddMember("projects", array, document.GetAllocator());
+            });
 }
 
 void ws_handle_list_subprojects(
@@ -172,50 +211,54 @@ void ws_handle_list_subprojects(
         websocket_queue& queue,
         request_context& ctx)
 {    
-    auto project_name = data.HasMember("project") && data["project"].IsString() ?
-        data["project"].GetString() : ""s;
-
-    rapidjson::Document document;
-    rapidjson::Value value;
-    document.SetObject();
-    value.SetInt(static_cast<int>(ws_response_id::subprojects_list));
-    document.AddMember("eventId", value, document.GetAllocator());
-    rapidjson::Value data_value;
-    data_value.SetObject();
-    rapidjson::Value array_value;
-    value.SetArray();
-    auto project_it = projects->projects.find(project_name);
-    if(project_it != projects->projects.cend())
+    auto project_name = get_string(data, "project");
+    if(!project_name)
     {
-        if(auto perm = rights->check_right(ctx.username, "project." + project_name);
-                    perm.has_value() && perm.value())
-        {
-            for(auto& [subproject, builds] : project_it->second)
-            {
+        make_response(
+                queue,
+                ws_response_id::subprojects_list,
+                "Invalid JSON.");
+    }
 
-                    array_value.CopyFrom(to_json(subproject), document.GetAllocator());
-                    value.PushBack(array_value, document.GetAllocator());
-            }
-            data_value.AddMember("subprojects", value, document.GetAllocator());
-            value.SetString("");
-        }
-        else
-        {
-            value.SetString("Action not permitted.");
-        }
+    auto project_it = projects->projects.find(project_name.value());
+    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
+    auto permitted = perm.has_value() ? perm.value() : true;
+
+    if(project_it != projects->projects.cend() && permitted)
+    {
+        make_response(
+                queue,
+                ws_response_id::subprojects_list,
+                "",
+                [&](rapidjson::Document& document, rapidjson::Value& value)
+                {
+                    rapidjson::Value array;
+                    array.SetArray();
+                    for(auto& [subproject, builds] : project_it->second)
+                    {
+                        array.PushBack(
+                                rapidjson::Value().CopyFrom(
+                                    to_json(subproject),
+                                    document.GetAllocator()),
+                                document.GetAllocator());
+                    }
+                    value.AddMember("subprojects", array, document.GetAllocator());
+                });
+    }
+    else if(!permitted)
+    {
+        make_response(
+                queue,
+                ws_response_id::subprojects_list,
+                "Action not permitted.");
     }
     else
     {
-        value.SetString("Project doesen't exist.");
+        make_response(
+                queue,
+                ws_response_id::subprojects_list,
+                "Project doesn't exists.");
     }
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-    queue.send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
 }
 
 void ws_handle_list_builds(
@@ -225,60 +268,66 @@ void ws_handle_list_builds(
         websocket_queue& queue,
         request_context& ctx)
 {
-    auto project_name = data.HasMember("project") && data["project"].IsString() ?
-        data["project"].GetString() : ""s;
-    auto subproject_name = data.HasMember("subproject") && data["subproject"].IsString() ?
-        data["subproject"].GetString() : ""s;
-    
-    rapidjson::Document document;
-    rapidjson::Value value;
-    document.SetObject();
-    value.SetInt(static_cast<int>(ws_response_id::builds_list));
-    document.AddMember("eventId", value, document.GetAllocator());
-    rapidjson::Value data_value;
-    data_value.SetObject();
-    rapidjson::Value array_value;
-    value.SetArray();
-    auto project_it = projects->projects.find(project_name);
-    if(project_it != projects->projects.cend())
+    auto project_name = get_string(data, "project");
+    auto subproject_name = get_string(data, "subproject");
+    if(!project_name || !subproject_name)
     {
-        auto subproject_it = project_it->second.find(subproject_name);
+        make_response(
+                queue,
+                ws_response_id::builds_list,
+                "Invalid JSON.");
+    }
+   
+    auto project_it = projects->projects.find(project_name.value());
+    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
+    auto permitted = perm.has_value() ? perm.value() : true;
+
+    if(project_it != projects->projects.cend() && permitted)
+    {
+        auto subproject_it = project_it->second.find(subproject_name.value());
         if(subproject_it != project_it->second.cend())
         {
-            if(auto perm = rights->check_right(ctx.username, "project." + project_name);
-                        perm.has_value() && perm.value())
-            {
-                for(auto& build : subproject_it->second)
+            make_response(
+                queue,
+                ws_response_id::builds_list,
+                "",
+                [&](rapidjson::Document& document, rapidjson::Value& value)
                 {
-
-                        array_value.CopyFrom(to_json(build), document.GetAllocator());
-                        value.PushBack(array_value, document.GetAllocator());
-                }
-                data_value.AddMember("builds", value, document.GetAllocator());
-                value.SetString("");
-            }
-            else
-            {
-                value.SetString("Action not permitted.");
-            }
+                    rapidjson::Value array;
+                    array.SetArray();
+                    for(auto& build : subproject_it->second)
+                    {
+                        array.PushBack(
+                                rapidjson::Value().CopyFrom(
+                                    to_json(build),
+                                    document.GetAllocator()),
+                                document.GetAllocator());
+                    }
+                    value.AddMember("builds", array, document.GetAllocator());
+                });
         }
         else
         {
-            value.SetString("Subproject doesn't exist.");
+            make_response(
+                queue,
+                ws_response_id::builds_list,
+                "Subproject doesn't exists.");
         }
+    }
+    else if(!permitted)
+    {
+        make_response(
+                queue,
+                ws_response_id::builds_list,
+                "Action not permitted.");
     }
     else
     {
-        value.SetString("Project doesen't exist.");
+        make_response(
+                queue,
+                ws_response_id::builds_list,
+                "Project doesn't exists.");
     }
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-    queue.send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
 }
 
 void ws_handle_run_job(
@@ -289,49 +338,51 @@ void ws_handle_run_job(
         websocket_queue& queue,
         request_context& ctx)
 {
-    auto project_name = data.HasMember("project") && data["project"].IsString() ?
-        data["project"].GetString() : ""s;
-    auto subproject_name = data.HasMember("subproject") && data["subproject"].IsString() ?
-        data["subproject"].GetString() : ""s;
-    rapidjson::Document document;
-    rapidjson::Value value;
-    document.SetObject();
-    value.SetInt(static_cast<int>(ws_response_id::run_job));
-    document.AddMember("eventId", value, document.GetAllocator());
-    rapidjson::Value data_value;
-    data_value.SetObject();
-    auto project_it = projects->projects.find(project_name);
-    if(project_it != projects->projects.cend())
+    auto project_name = get_string(data, "project");
+    auto subproject_name = get_string(data, "subproject");
+    if(!project_name || !subproject_name)
     {
-        auto subproject_it = project_it->second.find(subproject_name);
+        make_response(
+                queue,
+                ws_response_id::run_job,
+                "Invalid JSON.");
+    }
+   
+    auto project_it = projects->projects.find(project_name.value());
+    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
+    auto permitted = perm.has_value() ? perm.value() : true;
+
+    if(project_it != projects->projects.cend() && permitted)
+    {
+        auto subproject_it = project_it->second.find(subproject_name.value());
         if(subproject_it != project_it->second.cend())
         {
-            if(auto perm = rights->check_right(ctx.username, "project." + project_name);
-                        perm.has_value() && perm.value())
-            {
-                run_job(io_ctx, project_name, subproject_name);
-                value.SetString("");
-            }
-            else
-            {
-                value.SetString("Action not permitted.");
-            }
+            run_job(io_ctx, project_name.value(), subproject_name.value());
+            make_response(
+                queue,
+                ws_response_id::run_job,
+                "");
         }
         else
         {
-            value.SetString("Subproject doesn't exist.");
+            make_response(
+                queue,
+                ws_response_id::run_job,
+                "Subproject doesn't exists.");
         }
+    }
+    else if(!permitted)
+    {
+        make_response(
+                queue,
+                ws_response_id::run_job,
+                "Action not permitted.");
     }
     else
     {
-        value.SetString("Project doesen't exist.");
+        make_response(
+                queue,
+                ws_response_id::run_job,
+                "Project doesn't exists.");
     }
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-    queue.send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
 }
