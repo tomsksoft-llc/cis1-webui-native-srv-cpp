@@ -102,6 +102,12 @@ void project_list::run()
 
 void project_list::on_timer(boost::system::error_code ec)
 {
+    if(ec && ec != boost::asio::error::operation_aborted)
+    {
+        std::cerr << "project_list::on_timer() error" << ": " << ec.message() << "\n";
+        return;
+    }
+
     if(timer_.expiry() <= std::chrono::steady_clock::now())
     {
         fetch();
