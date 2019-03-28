@@ -79,10 +79,41 @@ bool project::comp::operator()(const std::string& lhs, const project& rhs) const
     return lhs < rhs.name;
 }
 
-project_list::project_list()
+project_list::project_list(boost::asio::io_context& ioc)
     : cis_projects_path_(path_cat(cis::get_root_dir(), cis::projects))
+    , strand_(ioc.get_executor())
+    , timer_(ioc,
+            (std::chrono::steady_clock::time_point::max)())
 {
     fetch();
+}
+
+void project_list::run()
+{
+    timer_.expires_after(std::chrono::seconds(15));
+    timer_.async_wait(
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &project_list::on_timer,
+                shared_from_this(),
+                std::placeholders::_1)));
+}
+
+void project_list::on_timer(boost::system::error_code ec)
+{
+    if(timer_.expiry() <= std::chrono::steady_clock::now())
+    {
+        fetch();
+        timer_.expires_after(std::chrono::seconds(15));
+    }
+    timer_.async_wait(
+        boost::asio::bind_executor(
+            strand_,
+            std::bind(
+                &project_list::on_timer,
+                shared_from_this(),
+                std::placeholders::_1)));
 }
 
 void project_list::fetch()
@@ -137,6 +168,14 @@ void project_list::fetch()
     }
     catch(std::filesystem::filesystem_error& err)
     {}
+}
+
+void project_list::defer_fetch()
+{
+    if(timer_.expiry() > std::chrono::steady_clock::now() + std::chrono::seconds(1))
+    {
+        timer_.expires_after(std::chrono::seconds(1));
+    }
 }
 
 rapidjson::Document to_json(

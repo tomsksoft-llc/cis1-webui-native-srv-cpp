@@ -370,14 +370,7 @@ void ws_handle_run_job(
                 queue,
                 ws_response_id::run_job,
                 "");
-            auto timer = std::make_shared<boost::asio::steady_timer>(
-                    io_ctx,
-                    std::chrono::steady_clock::now() + std::chrono::seconds(1));
-            timer->async_wait(
-                    [timer, projects](const boost::system::error_code& ec)
-                    {
-                        projects->fetch();
-                    });
+            projects->defer_fetch();
         }
         else
         {

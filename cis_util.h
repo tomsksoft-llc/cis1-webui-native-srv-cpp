@@ -4,8 +4,9 @@
 #include <map>
 #include <set>
 #include <filesystem>
+#include <memory>
 
-#include <boost/asio/io_context.hpp>
+#include <boost/asio.hpp>
 #include <rapidjson/document.h>
 
 struct build
@@ -64,12 +65,20 @@ struct project
 };
 
 class project_list
+    : public std::enable_shared_from_this<project_list>
 {
     std::filesystem::path cis_projects_path_;
+    boost::asio::strand<
+        boost::asio::io_context::executor_type> strand_;
+    boost::asio::steady_timer timer_;
+
+    void on_timer(boost::system::error_code ec);
 public:
-    project_list();
+    project_list(boost::asio::io_context& ioc);
+    void run();
     project::map_t projects;
     void fetch();
+    void defer_fetch();
 };
 
 rapidjson::Document to_json(
