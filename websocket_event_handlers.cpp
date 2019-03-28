@@ -193,7 +193,7 @@ void ws_handle_list_projects(
             {
                 rapidjson::Value array;
                 array.SetArray();
-                for(auto& [project, subprojects] : projects->projects)
+                for(auto& [project, jobs] : projects->projects)
                 {
                     if(auto perm = rights->check_right(ctx.username, "project." + project.name);
                             perm.has_value() && perm.value())
@@ -209,7 +209,7 @@ void ws_handle_list_projects(
             });
 }
 
-void ws_handle_list_subprojects(
+void ws_handle_list_jobs(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
@@ -221,7 +221,7 @@ void ws_handle_list_subprojects(
     {
         make_response(
                 queue,
-                ws_response_id::subprojects_list,
+                ws_response_id::jobs_list,
                 "Invalid JSON.");
         return;
     }
@@ -234,35 +234,35 @@ void ws_handle_list_subprojects(
     {
         make_response(
                 queue,
-                ws_response_id::subprojects_list,
+                ws_response_id::jobs_list,
                 "",
                 [&](rapidjson::Document& document, rapidjson::Value& value)
                 {
                     rapidjson::Value array;
                     array.SetArray();
-                    for(auto& [subproject, builds] : project_it->second)
+                    for(auto& [job, builds] : project_it->second)
                     {
                         array.PushBack(
                                 rapidjson::Value().CopyFrom(
-                                    to_json(subproject),
+                                    to_json(job),
                                     document.GetAllocator()),
                                 document.GetAllocator());
                     }
-                    value.AddMember("subprojects", array, document.GetAllocator());
+                    value.AddMember("jobs", array, document.GetAllocator());
                 });
     }
     else if(!permitted)
     {
         make_response(
                 queue,
-                ws_response_id::subprojects_list,
+                ws_response_id::jobs_list,
                 "Action not permitted.");
     }
     else
     {
         make_response(
                 queue,
-                ws_response_id::subprojects_list,
+                ws_response_id::jobs_list,
                 "Project doesn't exists.");
     }
 }
@@ -275,8 +275,8 @@ void ws_handle_list_builds(
         request_context& ctx)
 {
     auto project_name = get_string(data, "project");
-    auto subproject_name = get_string(data, "subproject");
-    if(!project_name || !subproject_name)
+    auto job_name = get_string(data, "job");
+    if(!project_name || !job_name)
     {
         make_response(
                 queue,
@@ -291,8 +291,8 @@ void ws_handle_list_builds(
 
     if(project_it != projects->projects.cend() && permitted)
     {
-        auto subproject_it = project_it->second.find(subproject_name.value());
-        if(subproject_it != project_it->second.cend())
+        auto job_it = project_it->second.find(job_name.value());
+        if(job_it != project_it->second.cend())
         {
             make_response(
                 queue,
@@ -302,7 +302,7 @@ void ws_handle_list_builds(
                 {
                     rapidjson::Value array;
                     array.SetArray();
-                    for(auto& build : subproject_it->second)
+                    for(auto& build : job_it->second)
                     {
                         array.PushBack(
                                 rapidjson::Value().CopyFrom(
@@ -318,7 +318,7 @@ void ws_handle_list_builds(
             make_response(
                 queue,
                 ws_response_id::builds_list,
-                "Subproject doesn't exists.");
+                "Job doesn't exists.");
         }
     }
     else if(!permitted)
@@ -346,8 +346,8 @@ void ws_handle_run_job(
         request_context& ctx)
 {
     auto project_name = get_string(data, "project");
-    auto subproject_name = get_string(data, "subproject");
-    if(!project_name || !subproject_name)
+    auto job_name = get_string(data, "job");
+    if(!project_name || !job_name)
     {
         make_response(
                 queue,
@@ -362,10 +362,10 @@ void ws_handle_run_job(
 
     if(project_it != projects->projects.cend() && permitted)
     {
-        auto subproject_it = project_it->second.find(subproject_name.value());
-        if(subproject_it != project_it->second.cend())
+        auto job_it = project_it->second.find(job_name.value());
+        if(job_it != project_it->second.cend())
         {
-            run_job(io_ctx, project_name.value(), subproject_name.value());
+            run_job(io_ctx, project_name.value(), job_name.value());
             make_response(
                 queue,
                 ws_response_id::run_job,
@@ -377,7 +377,7 @@ void ws_handle_run_job(
             make_response(
                 queue,
                 ws_response_id::run_job,
-                "Subproject doesn't exists.");
+                "Job doesn't exists.");
         }
     }
     else if(!permitted)

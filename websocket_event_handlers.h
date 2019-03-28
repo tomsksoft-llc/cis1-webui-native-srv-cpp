@@ -33,7 +33,7 @@ void ws_handle_list_projects(
         websocket_queue& queue,
         request_context& ctx);
 
-void ws_handle_list_subprojects(
+void ws_handle_list_jobs(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,

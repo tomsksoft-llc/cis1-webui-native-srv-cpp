@@ -71,8 +71,8 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3));
     ws_handler.add_event_handler(ws_request_id::projects_list,
             std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3));
-    ws_handler.add_event_handler(ws_request_id::subprojects_list,
-            std::bind(&ws_handle_list_subprojects, projects, authorization_handler, _1, _2, _3));
+    ws_handler.add_event_handler(ws_request_id::jobs_list,
+            std::bind(&ws_handle_list_jobs, projects, authorization_handler, _1, _2, _3));
     ws_handler.add_event_handler(ws_request_id::builds_list,
             std::bind(&ws_handle_list_builds, projects, authorization_handler, _1, _2, _3));
     ws_handler.add_event_handler(ws_request_id::run_job,
