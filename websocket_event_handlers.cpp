@@ -147,7 +147,7 @@ void ws_handle_logout(
     {
         make_response(
                 queue,
-                ws_response_id::auth_logout,
+                ws_response_id::logout,
                 "Invalid JSON.");
         return;
     }
@@ -166,14 +166,14 @@ void ws_handle_logout(
         authentication_handler->delete_token(token.value());
         make_response(
                 queue,
-                ws_response_id::auth_logout,
+                ws_response_id::logout,
                 "");
     }
     else
     {
         make_response(
                 queue,
-                ws_response_id::auth_logout,
+                ws_response_id::logout,
                 "Invalid token.");
     }
 }
@@ -187,7 +187,7 @@ void ws_handle_list_projects(
 {
     make_response(
             queue,
-            ws_response_id::projects_list,
+            ws_response_id::list_projects,
             "",
             [&](rapidjson::Document& document, rapidjson::Value& value)
             {
@@ -221,7 +221,7 @@ void ws_handle_list_jobs(
     {
         make_response(
                 queue,
-                ws_response_id::jobs_list,
+                ws_response_id::list_jobs,
                 "Invalid JSON.");
         return;
     }
@@ -234,7 +234,7 @@ void ws_handle_list_jobs(
     {
         make_response(
                 queue,
-                ws_response_id::jobs_list,
+                ws_response_id::list_jobs,
                 "",
                 [&](rapidjson::Document& document, rapidjson::Value& value)
                 {
@@ -255,14 +255,14 @@ void ws_handle_list_jobs(
     {
         make_response(
                 queue,
-                ws_response_id::jobs_list,
+                ws_response_id::list_jobs,
                 "Action not permitted.");
     }
     else
     {
         make_response(
                 queue,
-                ws_response_id::jobs_list,
+                ws_response_id::list_jobs,
                 "Project doesn't exists.");
     }
 }
@@ -280,7 +280,7 @@ void ws_handle_list_builds(
     {
         make_response(
                 queue,
-                ws_response_id::builds_list,
+                ws_response_id::list_builds,
                 "Invalid JSON.");
         return;
     }
@@ -296,7 +296,7 @@ void ws_handle_list_builds(
         {
             make_response(
                 queue,
-                ws_response_id::builds_list,
+                ws_response_id::list_builds,
                 "",
                 [&](rapidjson::Document& document, rapidjson::Value& value)
                 {
@@ -317,7 +317,7 @@ void ws_handle_list_builds(
         {
             make_response(
                 queue,
-                ws_response_id::builds_list,
+                ws_response_id::list_builds,
                 "Job doesn't exists.");
         }
     }
@@ -325,14 +325,14 @@ void ws_handle_list_builds(
     {
         make_response(
                 queue,
-                ws_response_id::builds_list,
+                ws_response_id::list_builds,
                 "Action not permitted.");
     }
     else
     {
         make_response(
                 queue,
-                ws_response_id::builds_list,
+                ws_response_id::list_builds,
                 "Project doesn't exists.");
     }
 }

@@ -58,7 +58,7 @@ void websocket_handler::handle(
         
         if(document.HasParseError())
         {
-            send_error(queue, ws_response_id::common_error, "Invalid JSON.");
+            send_error(queue, ws_response_id::generic_error, "Invalid JSON.");
             return;
         }
 
@@ -88,7 +88,7 @@ void websocket_handler::handle(
         {
             send_error(
                     queue,
-                    ws_response_id::common_error,
+                    ws_response_id::generic_error,
                     "Request doesn't contain 'eventId' member.");
             return;
         }
