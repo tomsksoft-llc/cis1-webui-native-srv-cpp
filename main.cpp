@@ -62,6 +62,7 @@ int main(int argc, char* argv[])
                 std::bind(&file_handler::operator(), files, _1, _2, _3));
     auto ws_router = std::make_shared<websocket_router>();
     auto& ws_route = ws_router->add_route("/ws(\\?.+)*");
+
     websocket_handler ws_handler;
     ws_handler.add_event_handler(ws_request_id::auth_login_pass,
             std::bind(&ws_handle_authenticate, authentication_handler, _1, _2, _3, _4));

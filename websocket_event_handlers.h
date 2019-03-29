@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <optional>
+
 #include "request_context.h"
 #include "net/queued_websocket_session.h"
 #include "auth_manager.h"
@@ -8,56 +11,56 @@
 
 #include <rapidjson/document.h>
 
-void ws_handle_authenticate(
+std::optional<std::string> ws_handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx);
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
 
-void ws_handle_token(
+std::optional<std::string> ws_handle_token(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx);
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
 
-void ws_handle_logout(
+std::optional<std::string> ws_handle_logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx);
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
 
-void ws_handle_list_projects(
+std::optional<std::string> ws_handle_list_projects(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx);
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
 
-void ws_handle_list_jobs(
+std::optional<std::string> ws_handle_list_jobs(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx);
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
 
-void ws_handle_list_builds(
+std::optional<std::string> ws_handle_list_builds(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx);
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
 
-void ws_handle_run_job(
+std::optional<std::string> ws_handle_run_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx);
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);

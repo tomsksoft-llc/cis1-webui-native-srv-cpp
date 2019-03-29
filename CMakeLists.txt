@@ -29,7 +29,8 @@ set(${PROJECT_NAME}_SRC
     rights_manager.cpp
     http_handlers.cpp
     websocket_handler.cpp
-    websocket_event_handlers.cpp)
+    websocket_event_handlers.cpp
+    base_websocket_event_handler.cpp)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})

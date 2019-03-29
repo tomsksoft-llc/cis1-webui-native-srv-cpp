@@ -128,7 +128,7 @@ void queued_websocket_session::on_read(
     // Note that there is activity
     activity();
     
-    handler_(ws_.got_text(), in_buffer_, bytes_transferred, queue_);
+    handler_(ws_.got_text(), in_buffer_, bytes_transferred, get_queue());
 
     in_buffer_.consume(in_buffer_.size());
 
@@ -158,4 +158,9 @@ void queued_websocket_session::on_write(
     {
         do_read();
     }
+}
+
+std::shared_ptr<websocket_queue> queued_websocket_session::get_queue()
+{
+    return std::shared_ptr<websocket_queue>(shared_from_this(), &queue_);
 }

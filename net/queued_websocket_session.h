@@ -33,7 +33,7 @@ class queued_websocket_session
     : public basic_websocket_session
 {
 public:
-    using request_handler_t = std::function<void(bool, beast::flat_buffer&, size_t, websocket_queue&)>;
+    using request_handler_t = std::function<void(bool, beast::flat_buffer&, size_t, std::shared_ptr<websocket_queue>)>;
 private:
     request_handler_t handler_;
     websocket_queue queue_;
@@ -60,4 +60,6 @@ public:
     void on_write(
         beast::error_code ec,
         std::size_t bytes_transferred);
+
+    std::shared_ptr<websocket_queue> get_queue();
 };

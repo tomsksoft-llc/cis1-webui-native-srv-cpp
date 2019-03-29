@@ -10,7 +10,7 @@
 using namespace std::string_literals;
 
 std::optional<std::string> get_string(
-        const rapidjson::Document& value,
+        const rapidjson::Value& value,
         const char* name)
 {
     if(value.HasMember(name) && value[name].IsString())
@@ -20,47 +20,19 @@ std::optional<std::string> get_string(
     return std::nullopt;
 }
 
-void make_response(
-        websocket_queue& queue,
-        rapidjson::Document& document,
-        ws_response_id id,
-        std::string error_message,
-        std::function<void(rapidjson::Document&, rapidjson::Value&)> data_builder = {})
-{
-    rapidjson::Value value;
-    value.SetObject();
-    if(data_builder)
-    {
-        data_builder(document, value);
-    }
-    value.AddMember(
-            "errorMessage",
-            rapidjson::Value().SetString(
-                error_message.c_str(),
-                error_message.length(),
-                document.GetAllocator()),
-            document.GetAllocator());
-    document.AddMember("data", value, document.GetAllocator());
-};
-
-void ws_handle_authenticate(
+std::optional<std::string> ws_handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx)
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
 {
-    auto login = get_string(data, "login");
-    auto pass = get_string(data, "pass");
+    auto login = get_string(request_data, "login");
+    auto pass = get_string(request_data, "pass");
     
     if(!login || !pass)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::auth_login_pass,
-                "Invalid JSON.");
-        return;
+        return "Invalid JSON.";
     }
 
     std::string token = authentication_handler->authenticate(login.value(), pass.value());
@@ -69,48 +41,32 @@ void ws_handle_authenticate(
     {
         ctx.username = login.value();
         ctx.active_token = token;
-        make_response(
-                queue,
-                response,
-                ws_response_id::auth_login_pass,
-                "",
-                [&](rapidjson::Document& document, rapidjson::Value& value)
-                {
-                    value.AddMember(
-                            "token",
-                            rapidjson::Value().SetString(
-                                token.c_str(),
-                                token.length(),
-                                document.GetAllocator()),
-                            document.GetAllocator());
-                });
+        response_data.AddMember(
+                "token",
+                rapidjson::Value().SetString(
+                    token.c_str(),
+                    token.length(),
+                    allocator),
+                allocator);
+        return std::nullopt;
     }
     else
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::auth_login_pass,
-                "Wrong username or password.");
+        return "Wrong username or password.";
     }
 }
 
-void ws_handle_token(
+std::optional<std::string> ws_handle_token(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx)
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
 {
-    auto token = get_string(data, "token");
+    auto token = get_string(request_data, "token");
     if(!token)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::auth_token,
-                "Invalid JSON.");
-        return;
+        return "Invalid JSON.";
     }
 
     std::string username = authentication_handler->authenticate(token.value());
@@ -119,38 +75,25 @@ void ws_handle_token(
     {
         ctx.username = username;
         ctx.active_token = token.value();
-        make_response(
-                queue,
-                response,
-                ws_response_id::auth_token,
-                "");
+        return std::nullopt;
     }
     else
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::auth_token,
-                "Invalid token.");
+        return "Invalid token.";
     }
 }
 
-void ws_handle_logout(
+std::optional<std::string> ws_handle_logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx)
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
 {
-    auto token = get_string(data, "token");
+    auto token = get_string(request_data, "token");
     if(!token)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::logout,
-                "Invalid JSON.");
-        return;
+        return "Invalid JSON.";
     }
 
     std::string token_username = authentication_handler->authenticate(token.value());
@@ -165,72 +108,52 @@ void ws_handle_logout(
             ctx.username = "";
         }
         authentication_handler->delete_token(token.value());
-        make_response(
-                queue,
-                response,
-                ws_response_id::logout,
-                "");
+        return std::nullopt;
     }
     else
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::logout,
-                "Invalid token.");
+        return "Invalid JSON.";
     }
 }
 
-void ws_handle_list_projects(
+std::optional<std::string> ws_handle_list_projects(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx)
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
 {
-    make_response(
-            queue,
-            response,
-            ws_response_id::list_projects,
-            "",
-            [&](rapidjson::Document& document, rapidjson::Value& value)
-            {
-                rapidjson::Value array;
-                array.SetArray();
-                for(auto& [project, jobs] : projects->projects)
-                {
-                    if(auto perm = rights->check_right(ctx.username, "project." + project.name);
-                            perm.has_value() && perm.value())
-                    {
-                        array.PushBack(
-                                rapidjson::Value().CopyFrom(
-                                    to_json(project),
-                                    document.GetAllocator()),
-                                document.GetAllocator());
-                    }
-                }
-                value.AddMember("projects", array, document.GetAllocator());
-            });
+    rapidjson::Value array;
+    array.SetArray();
+    for(auto& [project, jobs] : projects->projects)
+    {
+        if(auto perm = rights->check_right(ctx.username, "project." + project.name);
+                perm.has_value() && perm.value())
+        {
+            array.PushBack(
+                    rapidjson::Value().CopyFrom(
+                        to_json(project),
+                        allocator),
+                    allocator);
+        }
+    }
+    response_data.AddMember("projects", array, allocator);
+    return std::nullopt;
 }
 
-void ws_handle_list_jobs(
+std::optional<std::string> ws_handle_list_jobs(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx)
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
 {    
-    auto project_name = get_string(data, "project");
+    auto project_name = get_string(request_data, "project");
     if(!project_name)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::list_jobs,
-                "Invalid JSON.");
-        return;
+        return "Invalid JSON.";
     }
 
     auto project_it = projects->projects.find(project_name.value());
@@ -239,62 +162,42 @@ void ws_handle_list_jobs(
 
     if(project_it != projects->projects.cend() && permitted)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::list_jobs,
-                "",
-                [&](rapidjson::Document& document, rapidjson::Value& value)
-                {
-                    rapidjson::Value array;
-                    array.SetArray();
-                    for(auto& [job, builds] : project_it->second)
-                    {
-                        array.PushBack(
-                                rapidjson::Value().CopyFrom(
-                                    to_json(job),
-                                    document.GetAllocator()),
-                                document.GetAllocator());
-                    }
-                    value.AddMember("jobs", array, document.GetAllocator());
-                });
+        rapidjson::Value array;
+        array.SetArray();
+        for(auto& [job, builds] : project_it->second)
+        {
+            array.PushBack(
+                    rapidjson::Value().CopyFrom(
+                        to_json(job),
+                        allocator),
+                    allocator);
+        }
+        response_data.AddMember("jobs", array, allocator);
+        return std::nullopt;
     }
     else if(!permitted)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::list_jobs,
-                "Action not permitted.");
+        return "Action not permitted.";
     }
     else
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::list_jobs,
-                "Project doesn't exists.");
+        return "Project doesn't exists.";
     }
 }
 
-void ws_handle_list_builds(
+std::optional<std::string> ws_handle_list_builds(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx)
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
 {
-    auto project_name = get_string(data, "project");
-    auto job_name = get_string(data, "job");
+    auto project_name = get_string(request_data, "project");
+    auto job_name = get_string(request_data, "job");
     if(!project_name || !job_name)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::list_builds,
-                "Invalid JSON.");
-        return;
+        return "Invalid JSON.";
     }
    
     auto project_it = projects->projects.find(project_name.value());
@@ -305,73 +208,49 @@ void ws_handle_list_builds(
     {
         auto job_it = project_it->second.find(job_name.value());
         if(job_it != project_it->second.cend())
-        {
-            make_response(
-                queue,
-                response,
-                ws_response_id::list_builds,
-                "",
-                [&](rapidjson::Document& document, rapidjson::Value& value)
-                {
-                    rapidjson::Value array;
-                    array.SetArray();
-                    for(auto& build : job_it->second)
-                    {
-                        array.PushBack(
-                                rapidjson::Value().CopyFrom(
-                                    to_json(build),
-                                    document.GetAllocator()),
-                                document.GetAllocator());
-                    }
-                    value.AddMember("builds", array, document.GetAllocator());
-                });
+{
+            rapidjson::Value array;
+            array.SetArray();
+            for(auto& build : job_it->second)
+            {
+                array.PushBack(
+                        rapidjson::Value().CopyFrom(
+                            to_json(build),
+                            allocator),
+                        allocator);
+            }
+            response_data.AddMember("builds", array, allocator);
+            return std::nullopt;
         }
         else
         {
-            make_response(
-                queue,
-                response,
-                ws_response_id::list_builds,
-                "Job doesn't exists.");
+            return "Job doesn't exists.";
         }
     }
     else if(!permitted)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::list_builds,
-                "Action not permitted.");
+        return "Action not permitted.";
     }
     else
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::list_builds,
-                "Project doesn't exists.");
+        return "Project doesn't exists.";
     }
 }
 
-void ws_handle_run_job(
+std::optional<std::string> ws_handle_run_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
-        const rapidjson::Document& data,
-        rapidjson::Document& response,
-        websocket_queue& queue,
-        request_context& ctx)
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
 {
-    auto project_name = get_string(data, "project");
-    auto job_name = get_string(data, "job");
+    auto project_name = get_string(request_data, "project");
+    auto job_name = get_string(request_data, "job");
     if(!project_name || !job_name)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::run_job,
-                "Invalid JSON.");
-        return;
+        return "Invalid JSON.";
     }
    
     auto project_it = projects->projects.find(project_name.value());
@@ -384,36 +263,21 @@ void ws_handle_run_job(
         if(job_it != project_it->second.cend())
         {
             run_job(io_ctx, project_name.value(), job_name.value());
-            make_response(
-                queue,
-                response,
-                ws_response_id::run_job,
-                "");
+            return std::nullopt;
             projects->defer_fetch();
+            return std::nullopt;
         }
         else
         {
-            make_response(
-                queue,
-                response,
-                ws_response_id::run_job,
-                "Job doesn't exists.");
+            return "Job doesn't exists.";
         }
     }
     else if(!permitted)
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::run_job,
-                "Action not permitted.");
+        return "Action not permitted.";
     }
     else
     {
-        make_response(
-                queue,
-                response,
-                ws_response_id::run_job,
-                "Project doesn't exists.");
+        return "Project doesn't exists.";
     }
 }

@@ -12,7 +12,7 @@
 #endif
 
 void send_error(
-        websocket_queue& queue,
+        std::shared_ptr<websocket_queue>& queue,
         ws_response_id event_id,
         std::string error_string)
 {
@@ -29,7 +29,7 @@ void send_error(
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
     rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
     document.Accept(writer);
-    queue.send_text(
+    queue->send_text(
             boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
             [buffer](){});
 }
@@ -39,7 +39,7 @@ void websocket_handler::handle(
         bool text,
         beast::flat_buffer& buffer,
         size_t bytes_transferred,
-        websocket_queue& queue)
+        std::shared_ptr<websocket_queue> queue)
 {
     if(text)
     {     
@@ -71,22 +71,12 @@ void websocket_handler::handle(
             {
                 if(request.HasMember("data") && request["data"].IsObject())
                 {
-                    rapidjson::Document data;
-                    data.CopyFrom(request["data"], data.GetAllocator());
-                    rapidjson::Document response;
-                    rapidjson::Value value;
-                    response.SetObject();
-                    value.SetInt(event_id + 1);
-                    response.AddMember("eventId", value, response.GetAllocator());
-                    value.SetInt(request["transanctionId"].GetInt());
-                    response.AddMember("transanctionId", value, response.GetAllocator());
-                    it->second(data, response, queue, ctx);
-                    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-                    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-                    response.Accept(writer);
-                    queue.send_text(
-                            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-                            [buffer](){});
+                    it->second->handle(
+                            queue,
+                            ctx,
+                            request["data"],
+                            static_cast<ws_request_id>(event_id),
+                            request["transanctionId"].GetInt());
                 }
                 else
                 {
@@ -111,14 +101,24 @@ void websocket_handler::handle(
 
 void websocket_handler::add_event_handler(
         ws_request_id event_id,
-        std::function<event_handler_t> cb)
+        std::function<default_event_handler_t> cb)
 {
-    add_event(static_cast<int>(event_id), cb);
-}
-
-void websocket_handler::add_event(
-        int event_id,
-        std::function<event_handler_t> cb)
-{
-    event_handlers_.try_emplace(event_id, cb);
+    class handler
+        : public base_websocket_event_handler
+    {
+        std::function<default_event_handler_t> process_;
+    public:
+        handler(std::function<default_event_handler_t> p)
+            : process_(p)
+        {}
+        std::optional<std::string> process(
+                request_context& ctx,
+                const rapidjson::Value& request_data,
+                rapidjson::Value& response_data,
+                rapidjson::Document::AllocatorType& allocator) override
+        {
+            return process_(ctx, request_data, response_data, allocator);
+        }
+    };
+    event_handlers_.try_emplace(static_cast<int>(event_id), std::make_shared<handler>(cb));
 }
