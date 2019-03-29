@@ -14,6 +14,7 @@ class websocket_handler
 public:
     using event_handler_t = void(
             const rapidjson::Document&,
+            rapidjson::Document&,
             websocket_queue&,
             request_context& ctx);
     void handle(

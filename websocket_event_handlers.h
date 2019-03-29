@@ -11,18 +11,21 @@
 void ws_handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx);
 
 void ws_handle_token(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx);
 
 void ws_handle_logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx);
 
@@ -30,6 +33,7 @@ void ws_handle_list_projects(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx);
 
@@ -37,6 +41,7 @@ void ws_handle_list_jobs(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx);
 
@@ -44,6 +49,7 @@ void ws_handle_list_builds(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx);
 
@@ -52,5 +58,6 @@ void ws_handle_run_job(
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx);

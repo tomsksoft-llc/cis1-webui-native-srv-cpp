@@ -22,15 +22,12 @@ std::optional<std::string> get_string(
 
 void make_response(
         websocket_queue& queue,
+        rapidjson::Document& document,
         ws_response_id id,
         std::string error_message,
         std::function<void(rapidjson::Document&, rapidjson::Value&)> data_builder = {})
 {
-    rapidjson::Document document;
     rapidjson::Value value;
-    document.SetObject();
-    value.SetInt(static_cast<int>(id));
-    document.AddMember("eventId", value, document.GetAllocator());
     value.SetObject();
     if(data_builder)
     {
@@ -44,17 +41,12 @@ void make_response(
                 document.GetAllocator()),
             document.GetAllocator());
     document.AddMember("data", value, document.GetAllocator());
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-    queue.send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
 };
 
 void ws_handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx)
 {
@@ -65,6 +57,7 @@ void ws_handle_authenticate(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::auth_login_pass,
                 "Invalid JSON.");
         return;
@@ -78,6 +71,7 @@ void ws_handle_authenticate(
         ctx.active_token = token;
         make_response(
                 queue,
+                response,
                 ws_response_id::auth_login_pass,
                 "",
                 [&](rapidjson::Document& document, rapidjson::Value& value)
@@ -95,6 +89,7 @@ void ws_handle_authenticate(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::auth_login_pass,
                 "Wrong username or password.");
     }
@@ -103,6 +98,7 @@ void ws_handle_authenticate(
 void ws_handle_token(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx)
 {
@@ -111,6 +107,7 @@ void ws_handle_token(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::auth_token,
                 "Invalid JSON.");
         return;
@@ -124,6 +121,7 @@ void ws_handle_token(
         ctx.active_token = token.value();
         make_response(
                 queue,
+                response,
                 ws_response_id::auth_token,
                 "");
     }
@@ -131,6 +129,7 @@ void ws_handle_token(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::auth_token,
                 "Invalid token.");
     }
@@ -139,6 +138,7 @@ void ws_handle_token(
 void ws_handle_logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx)
 {
@@ -147,6 +147,7 @@ void ws_handle_logout(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::logout,
                 "Invalid JSON.");
         return;
@@ -166,6 +167,7 @@ void ws_handle_logout(
         authentication_handler->delete_token(token.value());
         make_response(
                 queue,
+                response,
                 ws_response_id::logout,
                 "");
     }
@@ -173,6 +175,7 @@ void ws_handle_logout(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::logout,
                 "Invalid token.");
     }
@@ -182,11 +185,13 @@ void ws_handle_list_projects(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx)
 {
     make_response(
             queue,
+            response,
             ws_response_id::list_projects,
             "",
             [&](rapidjson::Document& document, rapidjson::Value& value)
@@ -213,6 +218,7 @@ void ws_handle_list_jobs(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx)
 {    
@@ -221,6 +227,7 @@ void ws_handle_list_jobs(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::list_jobs,
                 "Invalid JSON.");
         return;
@@ -234,6 +241,7 @@ void ws_handle_list_jobs(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::list_jobs,
                 "",
                 [&](rapidjson::Document& document, rapidjson::Value& value)
@@ -255,6 +263,7 @@ void ws_handle_list_jobs(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::list_jobs,
                 "Action not permitted.");
     }
@@ -262,6 +271,7 @@ void ws_handle_list_jobs(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::list_jobs,
                 "Project doesn't exists.");
     }
@@ -271,6 +281,7 @@ void ws_handle_list_builds(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx)
 {
@@ -280,6 +291,7 @@ void ws_handle_list_builds(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::list_builds,
                 "Invalid JSON.");
         return;
@@ -296,6 +308,7 @@ void ws_handle_list_builds(
         {
             make_response(
                 queue,
+                response,
                 ws_response_id::list_builds,
                 "",
                 [&](rapidjson::Document& document, rapidjson::Value& value)
@@ -317,6 +330,7 @@ void ws_handle_list_builds(
         {
             make_response(
                 queue,
+                response,
                 ws_response_id::list_builds,
                 "Job doesn't exists.");
         }
@@ -325,6 +339,7 @@ void ws_handle_list_builds(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::list_builds,
                 "Action not permitted.");
     }
@@ -332,6 +347,7 @@ void ws_handle_list_builds(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::list_builds,
                 "Project doesn't exists.");
     }
@@ -342,6 +358,7 @@ void ws_handle_run_job(
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
         const rapidjson::Document& data,
+        rapidjson::Document& response,
         websocket_queue& queue,
         request_context& ctx)
 {
@@ -351,6 +368,7 @@ void ws_handle_run_job(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::run_job,
                 "Invalid JSON.");
         return;
@@ -368,6 +386,7 @@ void ws_handle_run_job(
             run_job(io_ctx, project_name.value(), job_name.value());
             make_response(
                 queue,
+                response,
                 ws_response_id::run_job,
                 "");
             projects->defer_fetch();
@@ -376,6 +395,7 @@ void ws_handle_run_job(
         {
             make_response(
                 queue,
+                response,
                 ws_response_id::run_job,
                 "Job doesn't exists.");
         }
@@ -384,6 +404,7 @@ void ws_handle_run_job(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::run_job,
                 "Action not permitted.");
     }
@@ -391,6 +412,7 @@ void ws_handle_run_job(
     {
         make_response(
                 queue,
+                response,
                 ws_response_id::run_job,
                 "Project doesn't exists.");
     }

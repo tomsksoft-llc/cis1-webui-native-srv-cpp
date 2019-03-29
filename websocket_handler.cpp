@@ -53,32 +53,46 @@ void websocket_handler::handle(
         const auto& user = ctx.username;
         std::cout << "[" << user << "]:" << str << std::endl;
 #endif
-        rapidjson::Document document;
-        document.Parse(str.c_str());
+        rapidjson::Document request;
+        request.Parse(str.c_str());
         
-        if(document.HasParseError())
+        if(request.HasParseError())
         {
             send_error(queue, ws_response_id::generic_error, "Invalid JSON.");
             return;
         }
 
-        if(document.HasMember("eventId") && document["eventId"].IsInt())
+        if(   request.HasMember("eventId") && request["eventId"].IsInt()
+           && request.HasMember("transanctionId") && request["transanctionId"].IsInt())
         {
-            if(auto it = event_handlers_.find(document["eventId"].GetInt());
+            auto event_id = request["eventId"].GetInt();
+            if(auto it = event_handlers_.find(request["eventId"].GetInt());
                     it != event_handlers_.end())
             {
-                if(document.HasMember("data") && document["data"].IsObject())
+                if(request.HasMember("data") && request["data"].IsObject())
                 {
                     rapidjson::Document data;
-                    data.CopyFrom(document["data"], data.GetAllocator());
-                    it->second(data, queue, ctx);
+                    data.CopyFrom(request["data"], data.GetAllocator());
+                    rapidjson::Document response;
+                    rapidjson::Value value;
+                    response.SetObject();
+                    value.SetInt(event_id + 1);
+                    response.AddMember("eventId", value, response.GetAllocator());
+                    value.SetInt(request["transanctionId"].GetInt());
+                    response.AddMember("transanctionId", value, response.GetAllocator());
+                    it->second(data, response, queue, ctx);
+                    auto buffer = std::make_shared<rapidjson::StringBuffer>();
+                    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
+                    response.Accept(writer);
+                    queue.send_text(
+                            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
+                            [buffer](){});
                 }
                 else
                 {
                     send_error(
                             queue,
-                            static_cast<ws_response_id>(
-                                document["eventId"].GetInt()),
+                            static_cast<ws_response_id>(event_id),
                             "Request doesn't contain 'data' member.");
                     return;
                 }
@@ -89,7 +103,7 @@ void websocket_handler::handle(
             send_error(
                     queue,
                     ws_response_id::generic_error,
-                    "Request doesn't contain 'eventId' member.");
+                    "Request doesn't contain 'eventId' or 'transanctionId' member.");
             return;
         }
     }
