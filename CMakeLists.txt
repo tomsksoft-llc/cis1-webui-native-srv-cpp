@@ -28,7 +28,7 @@ set(${PROJECT_NAME}_SRC
     init.cpp
     rights_manager.cpp
     http_handlers.cpp
-    websocket_handler.cpp
+    websocket_event_dispatcher.cpp
     websocket_event_handlers.cpp
     base_websocket_event_handler.cpp)
 

@@ -22,7 +22,7 @@
 // HTTP handlers
 #include "http_handlers.h"
 // WebSocket handlers
-#include "websocket_handler.h"
+#include "websocket_event_dispatcher.h"
 #include "websocket_event_handlers.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
@@ -63,23 +63,23 @@ int main(int argc, char* argv[])
     auto ws_router = std::make_shared<websocket_router>();
     auto& ws_route = ws_router->add_route("/ws(\\?.+)*");
 
-    websocket_handler ws_handler;
-    ws_handler.add_event_handler(ws_request_id::auth_login_pass,
+    websocket_event_dispatcher ws_dispatcher;
+    ws_dispatcher.add_event_handler(ws_request_id::auth_login_pass,
             std::bind(&ws_handle_authenticate, authentication_handler, _1, _2, _3, _4));
-    ws_handler.add_event_handler(ws_request_id::auth_token,
+    ws_dispatcher.add_event_handler(ws_request_id::auth_token,
             std::bind(&ws_handle_token, authentication_handler, _1, _2, _3, _4));
-    ws_handler.add_event_handler(ws_request_id::logout,
+    ws_dispatcher.add_event_handler(ws_request_id::logout,
             std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3, _4));
-    ws_handler.add_event_handler(ws_request_id::list_projects,
+    ws_dispatcher.add_event_handler(ws_request_id::list_projects,
             std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3, _4));
-    ws_handler.add_event_handler(ws_request_id::list_jobs,
+    ws_dispatcher.add_event_handler(ws_request_id::list_jobs,
             std::bind(&ws_handle_list_jobs, projects, authorization_handler, _1, _2, _3, _4));
-    ws_handler.add_event_handler(ws_request_id::list_builds,
+    ws_dispatcher.add_event_handler(ws_request_id::list_builds,
             std::bind(&ws_handle_list_builds, projects, authorization_handler, _1, _2, _3, _4));
-    ws_handler.add_event_handler(ws_request_id::run_job,
+    ws_dispatcher.add_event_handler(ws_request_id::run_job,
             std::bind(&ws_handle_run_job, projects, authorization_handler, std::ref(ioc), _1, _2, _3, _4));
 
-    ws_route.append_handler([&ws_handler](
+    ws_route.append_handler([&ws_dispatcher](
                 http::request<http::string_body>& req,
                 tcp::socket& socket,
                 request_context& ctx)
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
                 queued_websocket_session::accept_handler(
                         std::move(socket),
                         std::move(req),
-                        std::bind(&websocket_handler::handle, ws_handler, ctx, _1, _2, _3, _4));
+                        std::bind(&websocket_event_dispatcher::dispatch, ws_dispatcher, ctx, _1, _2, _3, _4));
                 return handle_result::done;
             });
 

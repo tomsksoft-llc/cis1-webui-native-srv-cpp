@@ -1,4 +1,4 @@
-#include "websocket_handler.h"
+#include "websocket_event_dispatcher.h"
 
 #include <string>
 
@@ -34,7 +34,7 @@ void send_error(
             [buffer](){});
 }
 
-void websocket_handler::handle(
+void websocket_event_dispatcher::dispatch(
         request_context& ctx,
         bool text,
         beast::flat_buffer& buffer,
@@ -99,7 +99,7 @@ void websocket_handler::handle(
     }
 }
 
-void websocket_handler::add_event_handler(
+void websocket_event_dispatcher::add_event_handler(
         ws_request_id event_id,
         std::function<default_event_handler_t> cb)
 {

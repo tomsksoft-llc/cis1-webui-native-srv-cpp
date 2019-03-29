@@ -10,7 +10,7 @@
 #include "websocket_event_list.h"
 #include "base_websocket_event_handler.h"
 
-class websocket_handler
+class websocket_event_dispatcher
 {
 public:
     using default_event_handler_t = std::optional<std::string>(
@@ -18,7 +18,7 @@ public:
             const rapidjson::Value& request_data,
             rapidjson::Value& response_data,
             rapidjson::Document::AllocatorType& allocator);
-    void handle(
+    void dispatch(
             request_context& ctx,
             bool text,
             beast::flat_buffer& buffer,
