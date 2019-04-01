@@ -41,6 +41,14 @@ std::optional<std::string> ws_handle_change_pass(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
+std::optional<std::string> ws_handle_list_users(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
 //cis
 
 std::optional<std::string> ws_handle_list_projects(

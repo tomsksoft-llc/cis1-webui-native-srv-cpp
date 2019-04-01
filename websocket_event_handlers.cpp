@@ -305,3 +305,68 @@ std::optional<std::string> ws_handle_change_pass(
     }
     return std::nullopt;
 }
+
+std::optional<std::string> ws_handle_list_users(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto perm = rights->check_right(ctx.username, "users.list");
+    auto permitted = perm.has_value() ? perm.value() : false;
+
+    if(permitted)
+    {
+        auto& users = authentication_handler->get_users();
+        rapidjson::Value array;
+        rapidjson::Value array_value;
+        array.SetArray();
+        for(auto& [username, user] : users)
+        {
+            array_value.SetObject();
+            array_value.AddMember(
+                    "name",
+                    rapidjson::Value().SetString(
+                        username.c_str(),
+                        username.length(),
+                        allocator),
+                    allocator);
+            array_value.AddMember(
+                    "email",
+                    rapidjson::Value().SetString(
+                        user.email.c_str(),
+                        user.email.length(),
+                        allocator),
+                    allocator);
+            array_value.AddMember(
+                    "admin",
+                    rapidjson::Value().SetBool(user.admin),
+                    allocator);
+            array_value.AddMember(
+                    "disabled",
+                    rapidjson::Value().SetBool(user.disabled),
+                    allocator);
+            if(user.api_access_key)
+            {
+                auto& key = user.api_access_key.value();
+                array_value.AddMember(
+                        "APIAccessSecretKey",
+                        rapidjson::Value().SetString(
+                            key.c_str(),
+                            key.length(),
+                            allocator),
+                        allocator);
+            }
+            else
+            {
+                array_value.AddMember("APIAccessSecretKey", "", allocator);
+            }
+            array.PushBack(array_value, allocator);
+        }
+        response_data.AddMember("users", array, allocator);
+        return std::nullopt;
+    }
+    return "Action not permitted";
+}
