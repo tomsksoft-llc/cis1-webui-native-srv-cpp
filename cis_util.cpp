@@ -40,21 +40,21 @@ bool build::comp::operator()(const std::string& lhs, const build& rhs) const
     return lhs < rhs.name;
 }
 
-subproject::subproject(const std::string& subproject_name)
-    : name(subproject_name)
+job::job(const std::string& job_name)
+    : name(job_name)
 {}
 
-bool subproject::comp::operator()(const subproject& lhs, const subproject& rhs) const
+bool job::comp::operator()(const job& lhs, const job& rhs) const
 {
     return lhs.name < rhs.name;
 }
 
-bool subproject::comp::operator()(const subproject& lhs, const std::string& rhs) const
+bool job::comp::operator()(const job& lhs, const std::string& rhs) const
 {
     return lhs.name < rhs;
 }
 
-bool subproject::comp::operator()(const std::string& lhs, const subproject& rhs) const
+bool job::comp::operator()(const std::string& lhs, const job& rhs) const
 {
     return lhs < rhs.name;
 }
@@ -139,19 +139,19 @@ void project_list::fetch()
                 {
                     continue; //FIXME
                 }
-                for(auto& subproject: fs::directory_iterator(project))
+                for(auto& job: fs::directory_iterator(project))
                 {
-                    if(subproject.is_directory())
+                    if(job.is_directory())
                     {
-                        auto [subproject_it, result] = project_it->second.emplace(
+                        auto [job_it, result] = project_it->second.emplace(
                             std::piecewise_construct,
-                            std::make_tuple(subproject.path().filename()),
+                            std::make_tuple(job.path().filename()),
                             std::make_tuple());
                         if(result == false)
                         {
                             continue; //FIXME
                         }
-                        for(auto& build: fs::directory_iterator(subproject))
+                        for(auto& build: fs::directory_iterator(job))
                         {
                             if(build.is_directory())
                             {
@@ -161,7 +161,7 @@ void project_list::fetch()
                                 std::ifstream output_file(path_cat(build.path().c_str(), "/output.txt"));
                                 std::string date;
                                 output_file >> date;
-                                subproject_it->second.emplace(
+                                job_it->second.emplace(
                                         build.path().filename(),
                                         exitcode,
                                         date.substr(0, 10));
@@ -196,7 +196,7 @@ rapidjson::Document to_json(
 }
 
 rapidjson::Document to_json(
-        const subproject& s,
+        const job& s,
         rapidjson::Document document,
         rapidjson::Value value)
 {

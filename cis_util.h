@@ -29,21 +29,21 @@ struct build
     using set_t = std::set<build, comp>;
 };
 
-struct subproject
+struct job 
 {
-    explicit subproject(
-            const std::string& subproject_name);
+    explicit job(
+            const std::string& job_name);
 
     std::string name;
     struct comp
     {
         typedef std::true_type is_transparent;
 
-        bool operator()(const subproject& lhs, const subproject& rhs) const;
-        bool operator()(const subproject& lhs, const std::string& rhs) const;
-        bool operator()(const std::string& lhs, const subproject& rhs) const;
+        bool operator()(const job& lhs, const job& rhs) const;
+        bool operator()(const job& lhs, const std::string& rhs) const;
+        bool operator()(const std::string& lhs, const job& rhs) const;
     };
-    using map_t = std::map<subproject, build::set_t, comp>;
+    using map_t = std::map<job, build::set_t, comp>;
 };
 
 
@@ -61,7 +61,7 @@ struct project
         bool operator()(const project& lhs, const std::string& rhs) const;
         bool operator()(const std::string& lhs, const project& rhs) const;
     };
-    using map_t = std::map<project, subproject::map_t, comp>;
+    using map_t = std::map<project, job::map_t, comp>;
 };
 
 class project_list
@@ -86,7 +86,7 @@ rapidjson::Document to_json(
         rapidjson::Document document = {},
         rapidjson::Value value = {});
 rapidjson::Document to_json(
-        const subproject& s,
+        const job& s,
         rapidjson::Document document = {},
         rapidjson::Value value = {});
 rapidjson::Document to_json(
