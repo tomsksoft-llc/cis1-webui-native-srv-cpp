@@ -17,12 +17,12 @@ void base_websocket_event_handler::handle(
     response.AddMember("eventId", value, response.GetAllocator());
     value.SetInt(transanction_id);
     response.AddMember("transanctionId", value, response.GetAllocator());
-    auto& response_data = response.AddMember(
+    response.AddMember(
             "data",
             value.SetObject(),
             response.GetAllocator());
 
-    auto error = process(ctx, request_data, response_data, response.GetAllocator());
+    auto error = process(ctx, request_data, response["data"], response.GetAllocator());
 
     if(error)
     {
@@ -31,11 +31,11 @@ void base_websocket_event_handler::handle(
                 error_string.c_str(),
                 error_string.length(),
                 response.GetAllocator());
-        response_data.AddMember("errorMessage", value, response.GetAllocator());
+        response["data"].AddMember("errorMessage", value, response.GetAllocator());
     }
     else
     {
-        response_data.AddMember("errorMessage", "", response.GetAllocator());
+        response["data"].AddMember("errorMessage", "", response.GetAllocator());
     }
     
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
