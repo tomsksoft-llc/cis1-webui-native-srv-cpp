@@ -102,4 +102,5 @@ void run_job(
 void rename_job(
         const std::string& project,
         const std::string& job,
-        const std::string& name);
+        const std::string& name,
+        std::error_code& ec);

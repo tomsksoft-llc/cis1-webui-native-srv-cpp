@@ -407,7 +407,12 @@ std::optional<std::string> ws_handle_rename_job(
         auto job_it = project_it->second.find(job_name.value());
         if(job_it != project_it->second.cend())
         {
-            rename_job(project_name.value(), job_name.value(), new_job_name.value());
+            std::error_code ec;
+            rename_job(project_name.value(), job_name.value(), new_job_name.value(), ec);
+            if(ec)
+            {
+                return "Error while renaming.";
+            }
             projects->fetch();
             return std::nullopt;
         }
