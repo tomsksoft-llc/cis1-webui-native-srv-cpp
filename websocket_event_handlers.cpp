@@ -370,3 +370,58 @@ std::optional<std::string> ws_handle_list_users(
     }
     return "Action not permitted";
 }
+
+std::optional<std::string> ws_handle_rename_job(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto project_name = get_string(request_data, "project");
+    auto job_name = get_string(request_data, "job");
+    auto new_job_name = get_string(request_data, "name");
+    if(!project_name || !job_name || !new_job_name)
+    {
+        return "Invalid JSON.";
+    }
+
+    if(new_job_name.value().empty())
+    {
+        return "Empty name field.";
+    }
+   
+    auto project_it = projects->projects.find(project_name.value());
+    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
+    auto permitted = perm.has_value() ? perm.value() : true;
+
+    if(project_it != projects->projects.cend() && permitted)
+    {
+        if(auto it = project_it->second.find(new_job_name.value());
+                it != project_it->second.cend())
+        {
+            return "Project with this name already exists.";
+        }
+
+        auto job_it = project_it->second.find(job_name.value());
+        if(job_it != project_it->second.cend())
+        {
+            rename_job(project_name.value(), job_name.value(), new_job_name.value());
+            projects->fetch();
+            return std::nullopt;
+        }
+        else
+        {
+            return "Job doesn't exists.";
+        }
+    }
+    else if(!permitted)
+    {
+        return "Action not permitted.";
+    }
+    else
+    {
+        return "Project doesn't exists.";
+    }
+}

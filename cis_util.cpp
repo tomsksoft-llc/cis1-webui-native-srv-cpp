@@ -249,3 +249,12 @@ void run_job(
                 //TODO update builds (emit cis_updated or something)
             });
 }
+
+void rename_job(
+        const std::string& project,
+        const std::string& job,
+        const std::string& name)
+{
+    auto project_path = path_cat(cis::get_root_dir(), path_cat(cis::projects, "/" + project));
+    std::filesystem::rename(path_cat(project_path, "/" + job), path_cat(project_path, "/" + name));
+}
