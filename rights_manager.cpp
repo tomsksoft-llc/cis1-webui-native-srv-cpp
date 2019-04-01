@@ -9,6 +9,7 @@
 
 #include "file_util.h"
 #include "dirs.h"
+#include "load_config_error.h"
 
 constexpr const char* rights_file_path = "/rights.pwd";
 
@@ -102,7 +103,7 @@ void rights_manager::load_rights(const std::filesystem::path& file)
     document.ParseStream(isw);
     if(document.HasParseError())
     {
-        throw "Can't load user rights!"; //TODO
+        throw load_config_error("Can't load user rights");
     }
     if(!document.IsObject())
     {

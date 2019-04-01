@@ -2,14 +2,17 @@
 
 #include <chrono>
 #include <fstream>
+#include <sstream>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
+#include <rapidjson/error/en.h>
 
 #include "file_util.h"
 #include "dirs.h"
+#include "load_config_error.h"
 
 constexpr const char* users_file_path = "/users.pwd";
 constexpr const char* tokens_file_path = "/tokens.pwd";
@@ -137,7 +140,9 @@ void auth_manager::load_users(std::filesystem::path users_file)
     document.ParseStream(isw);
     if(document.HasParseError())
     {
-        throw "Can't load users!"; //TODO
+        std::stringstream ss;
+        ss << "Can't load users db: " << GetParseError_En(document.GetParseError());
+        throw load_config_error(ss.str());
     }
     if(!document.IsObject())
     {
@@ -157,7 +162,9 @@ void auth_manager::load_tokens(std::filesystem::path tokens_file)
     document.ParseStream(isw);
     if(document.HasParseError())
     {
-        throw "Can't load tokens!"; //TODO
+        std::stringstream ss;
+        ss << "Can't load tokens db: " << GetParseError_En(document.GetParseError());
+        throw load_config_error(ss.str());
     }
     if(!document.IsObject())
     {

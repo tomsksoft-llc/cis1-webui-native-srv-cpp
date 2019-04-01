@@ -1,6 +1,7 @@
 #include "web_app.h"
 
 #include "net/listener.h"
+#include "generic_error.h"
 
 web_app::web_app(boost::asio::io_context& ioc)
     : ioc_(ioc)
@@ -41,7 +42,7 @@ void web_app::listen(const tcp::endpoint& endpoint)
     l->listen(endpoint, ec);
     if(ec)
     {
-        throw "failure"; //TODO
+        throw generic_error(ec.message());
     }
     l->run();
 }

@@ -30,7 +30,10 @@ set(${PROJECT_NAME}_SRC
     http_handlers.cpp
     websocket_event_dispatcher.cpp
     websocket_event_handlers.cpp
-    base_websocket_event_handler.cpp)
+    base_websocket_event_handler.cpp
+    base_cis_srv_exception.cpp
+    generic_error.cpp
+    load_config_error.cpp)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
