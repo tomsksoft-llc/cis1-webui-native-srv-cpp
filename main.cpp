@@ -70,6 +70,8 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_token, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::logout,
             std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::change_pass,
+            std::bind(&ws_handle_change_pass, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_projects,
             std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_jobs,

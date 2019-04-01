@@ -49,6 +49,25 @@ std::string auth_manager::authenticate(const std::string& token)
     return "";
 }
 
+bool auth_manager::change_pass(
+        const std::string& user,
+        const std::string& old_pass,
+        const std::string& new_pass)
+{
+    if(new_pass.empty())
+    {
+        return false;
+    }
+    if(auto it = users_.find(user);
+            it != users_.cend() && it->second == old_pass)
+    {
+        it->second = new_pass;
+        save_on_disk();
+        return true;
+    }
+    return false;
+}
+
 void auth_manager::delete_token(const std::string& token)
 {
     tokens_.erase(token);

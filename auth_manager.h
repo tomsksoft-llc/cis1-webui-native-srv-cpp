@@ -17,6 +17,10 @@ public:
     auth_manager();
     std::string authenticate(const std::string& user, const std::string& pass);
     std::string authenticate(const std::string& token);
+    bool change_pass(
+            const std::string& user,
+            const std::string& old_pass,
+            const std::string& new_pass);
     void delete_token(const std::string& token);
     std::optional<std::string> add_user(std::string user, std::string pass);
     void save_on_disk();

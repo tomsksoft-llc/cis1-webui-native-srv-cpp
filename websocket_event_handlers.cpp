@@ -281,3 +281,27 @@ std::optional<std::string> ws_handle_run_job(
         return "Project doesn't exists.";
     }
 }
+
+std::optional<std::string> ws_handle_change_pass(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto old_pass = get_string(request_data, "oldPass");
+    auto new_pass = get_string(request_data, "newPass");
+    if(!old_pass || !new_pass)
+    {
+        return "Invalid JSON.";
+    }
+    bool ok = authentication_handler->change_pass(
+            ctx.username,
+            old_pass.value(),
+            new_pass.value());
+    if(!ok)
+    {
+        return "Invalid password";
+    }
+    return std::nullopt;
+}

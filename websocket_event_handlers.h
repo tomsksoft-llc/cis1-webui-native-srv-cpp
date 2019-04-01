@@ -11,6 +11,8 @@
 
 #include <rapidjson/document.h>
 
+//users
+
 std::optional<std::string> ws_handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
@@ -31,6 +33,15 @@ std::optional<std::string> ws_handle_logout(
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
+
+std::optional<std::string> ws_handle_change_pass(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
+//cis
 
 std::optional<std::string> ws_handle_list_projects(
         const std::shared_ptr<project_list>& projects,
