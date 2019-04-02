@@ -471,6 +471,66 @@ std::optional<std::string> ws_handle_set_user_permissions(
     return "Action not permitted";
 }
 
+std::optional<std::string> ws_handle_make_admin(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto name = get_string(request_data, "name");
+    auto state = get_bool(request_data, "state");
+    if(!name || !state)
+    {
+        return "Invalid JSON.";
+    }
+
+    if(authentication_handler->has_user(name.value()))
+    {
+        return "Invalid username.";
+    }
+
+    auto perm = rights->check_user_right(ctx.username, "users.make_admin");
+    auto permitted = perm.has_value() ? perm.value() : false;
+    if(permitted)
+    {
+        authentication_handler->make_admin(name.value(), state.value());
+        return std::nullopt;
+    }
+    return "Action not permitted.";
+}
+
+std::optional<std::string> ws_handle_disable_user(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto name = get_string(request_data, "name");
+    auto state = get_bool(request_data, "state");
+    if(!name || !state)
+    {
+        return "Invalid JSON.";
+    }
+    
+    if(authentication_handler->has_user(name.value()))
+    {
+        return "Invalid username.";
+    }
+
+    auto perm = rights->check_user_right(ctx.username, "users.disable");
+    auto permitted = perm.has_value() ? perm.value() : false;
+    if(permitted)
+    {
+        authentication_handler->set_disabled(name.value(), state.value());
+        return std::nullopt;
+    }
+    return "Action not permitted.";
+}
+
 std::optional<std::string> ws_handle_rename_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,

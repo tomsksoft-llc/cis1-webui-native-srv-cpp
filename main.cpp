@@ -78,6 +78,10 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_get_user_permissions, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::set_user_permissions,
             std::bind(&ws_handle_set_user_permissions, authorization_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::make_admin,
+            std::bind(&ws_handle_make_admin, authentication_handler, authorization_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::disable_user,
+            std::bind(&ws_handle_disable_user, authentication_handler, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_projects,
             std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_jobs,

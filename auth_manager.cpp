@@ -89,6 +89,34 @@ std::string auth_manager::authenticate(const std::string& token)
     return "";
 }
 
+bool auth_manager::has_user(const std::string& name)
+{
+    if(auto it = users_.find(name);
+            it != users_.cend())
+    {
+        return true;
+    }
+    return false;
+}
+
+void auth_manager::set_disabled(const std::string& name, bool state)
+{
+    if(auto it = users_.find(name);
+            it != users_.cend())
+    {
+        it->second.admin = state;
+    }
+}
+
+void auth_manager::make_admin(const std::string& name, bool state)
+{
+    if(auto it = users_.find(name);
+            it != users_.cend())
+    {
+        it->second.disabled = state;
+    }
+}
+
 bool auth_manager::change_pass(
         const std::string& user,
         const std::string& old_pass,
