@@ -35,10 +35,12 @@ struct build
     explicit build(
             const std::string& build_name,
             int build_status,
-            const std::string& build_date);
+            const std::string& build_date,
+            std::vector<std::string> build_artifacts);
     std::string name;
     int status;
     std::string date;
+    std::vector<std::string> artifacts;
     using set_t = std::set<build, name_member_comparator<build>>;
 };
 

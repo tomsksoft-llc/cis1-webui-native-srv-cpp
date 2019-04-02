@@ -19,10 +19,12 @@ namespace fs = std::filesystem;
 build::build(
         const std::string& build_name,
         int build_status,
-        const std::string& build_date)
+        const std::string& build_date,
+        std::vector<std::string> build_artifacts)
     : name(build_name)
     , status(build_status)
     , date(build_date)
+    , artifacts(std::move(build_artifacts))
 {}
 param::param(
         const std::string& param_name,
@@ -122,10 +124,19 @@ void project_list::fetch()
                                 std::ifstream output_file(path_cat(build.path().c_str(), "/output.txt"));
                                 std::string date;
                                 output_file >> date;
+                                std::vector<std::string> artifacts;
+                                for(auto& artifact_file: fs::directory_iterator(job_file))
+                                {
+                                    if(artifact_file.is_regular_file())
+                                    {
+                                        artifacts.emplace_back(artifact_file.path().filename().c_str());
+                                    }
+                                }
                                 job_it->second.builds.emplace(
                                         build.path().filename(),
                                         exitcode,
-                                        date.substr(0, 10));
+                                        date.substr(0, 10),
+                                        std::move(artifacts));
                             }
                             else if(job_file.is_regular_file())
                             {

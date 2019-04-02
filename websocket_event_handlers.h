@@ -121,3 +121,11 @@ std::optional<std::string> ws_handle_rename_job(
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
+
+std::optional<std::string> ws_handle_get_build_info(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);

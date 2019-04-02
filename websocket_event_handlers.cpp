@@ -219,7 +219,7 @@ std::optional<std::string> ws_handle_get_job_info(
     {
         auto job_it = project_it->second.find(job_name.value());
         if(job_it != project_it->second.cend())
-{
+        {
             rapidjson::Value array;
             rapidjson::Value array_value;
             array.SetArray();
@@ -611,6 +611,84 @@ std::optional<std::string> ws_handle_rename_job(
             }
             projects->fetch();
             return std::nullopt;
+        }
+        else
+        {
+            return "Job doesn't exists.";
+        }
+    }
+    else if(!permitted)
+    {
+        return "Action not permitted.";
+    }
+    else
+    {
+        return "Project doesn't exists.";
+    }
+}
+
+std::optional<std::string> ws_handle_get_build_info(
+        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto project_name = get_string(request_data, "project");
+    auto job_name = get_string(request_data, "job");
+    auto build_name = get_string(request_data, "build");
+    if(!project_name || !job_name || !build_name)
+    {
+        return "Invalid JSON.";
+    }
+
+    auto project_it = projects->projects.find(project_name.value());
+    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto permitted = perm.has_value() ? perm.value().write : true;
+    if(project_it != projects->projects.cend() && permitted)
+    {   
+        auto job_it = project_it->second.find(job_name.value());
+        if(job_it != project_it->second.cend())
+        {
+            auto build_it = job_it->second.builds.find(build_name.value());
+            if(build_it != job_it->second.builds.cend())
+            {
+                rapidjson::Value value;
+                value.SetInt(build_it->status);
+                response_data.AddMember("status", value, allocator);
+                value.SetString(
+                        build_it->date.c_str(),
+                        build_it->date.length(),
+                        allocator);
+                response_data.AddMember("date", value, allocator);
+                value.SetArray();
+                rapidjson::Value array_value;
+                for(auto& artifact : build_it->artifacts)
+                {
+                    array_value.SetObject();
+                    array_value.AddMember(
+                            "name",
+                            rapidjson::Value().SetString(
+                                artifact.c_str(),
+                                artifact.length(),
+                                allocator),
+                            allocator);
+                    array_value.AddMember(
+                            "link",
+                            rapidjson::Value().SetString(""),
+                            allocator);
+                    value.PushBack(
+                            array_value,
+                            allocator);
+                }
+                response_data.AddMember("artufacts", value, allocator);
+                return std::nullopt;
+            }
+            else
+            {
+                return "Build doesn't exists.";
+            }
         }
         else
         {

@@ -92,6 +92,8 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_run_job, projects, authorization_handler, std::ref(ioc), _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::rename_job,
             std::bind(&ws_handle_rename_job, projects, authorization_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::get_build_info,
+            std::bind(&ws_handle_get_build_info, projects, authorization_handler, _1, _2, _3, _4));
 
     ws_route.append_handler([&ws_dispatcher](
                 http::request<http::string_body>& req,
