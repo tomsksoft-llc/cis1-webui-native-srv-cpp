@@ -24,60 +24,20 @@ build::build(
     , status(build_status)
     , date(build_date)
 {}
-
-bool build::comp::operator()(const build& lhs, const build& rhs) const
-{
-    return lhs.name < rhs.name;
-}
-
-bool build::comp::operator()(const build& lhs, const std::string& rhs) const
-{
-    return lhs.name < rhs;
-}
-
-bool build::comp::operator()(const std::string& lhs, const build& rhs) const
-{
-    return lhs < rhs.name;
-}
-
+param::param(
+        const std::string& param_name,
+        const std::string& param_default_value)
+    : name(param_name)
+    , default_value(param_default_value)
+{}
 job::job(const std::string& job_name)
     : name(job_name)
 {}
-
-bool job::comp::operator()(const job& lhs, const job& rhs) const
-{
-    return lhs.name < rhs.name;
-}
-
-bool job::comp::operator()(const job& lhs, const std::string& rhs) const
-{
-    return lhs.name < rhs;
-}
-
-bool job::comp::operator()(const std::string& lhs, const job& rhs) const
-{
-    return lhs < rhs.name;
-}
 
 
 project::project(const std::string& project_name)
         : name(project_name)
 {}
-
-bool project::comp::operator()(const project& lhs, const project& rhs) const
-{
-    return lhs.name < rhs.name;
-}
-
-bool project::comp::operator()(const project& lhs, const std::string& rhs) const
-{
-    return lhs.name < rhs;
-}
-
-bool project::comp::operator()(const std::string& lhs, const project& rhs) const
-{
-    return lhs < rhs.name;
-}
 
 project_list::project_list(boost::asio::io_context& ioc)
     : cis_projects_path_(path_cat(cis::get_root_dir(), cis::projects))
@@ -151,20 +111,45 @@ void project_list::fetch()
                         {
                             continue; //FIXME
                         }
-                        for(auto& build: fs::directory_iterator(job))
+                        for(auto& job_file: fs::directory_iterator(job))
                         {
-                            if(build.is_directory())
+                            if(job_file.is_directory())
                             {
+                                auto& build = job_file;
                                 std::ifstream exitcode_file(path_cat(build.path().c_str(), "/exitcode.txt"));
                                 int exitcode;
                                 exitcode_file >> exitcode;
                                 std::ifstream output_file(path_cat(build.path().c_str(), "/output.txt"));
                                 std::string date;
                                 output_file >> date;
-                                job_it->second.emplace(
+                                job_it->second.builds.emplace(
                                         build.path().filename(),
                                         exitcode,
                                         date.substr(0, 10));
+                            }
+                            else if(job_file.is_regular_file())
+                            {
+                                if(job_file.path().filename() == "params")
+                                {
+                                    //TODO prevent crash on invalid params file
+                                    auto& job_params = job_it->second.params;
+                                    std::ifstream params_file(job_file.path()); 
+                                    while(params_file.good())
+                                    {
+                                        std::string param;
+                                        std::string default_value;
+                                        std::getline(params_file, param, '=');
+                                        std::getline(params_file, default_value, '\n');
+                                        if(!default_value.empty())
+                                        {
+                                            default_value = default_value.substr(1, default_value.size() - 2);
+                                        }
+                                        job_params.emplace(param, default_value);
+                                    }
+                                    
+                                }
+                                auto& job_files = job_it->second.files;
+                                job_files.emplace_back(job_file.path().filename());
                             }
                         }
                     }

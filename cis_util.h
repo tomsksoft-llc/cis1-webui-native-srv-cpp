@@ -9,6 +9,27 @@
 #include <boost/asio.hpp>
 #include <rapidjson/document.h>
 
+template <class T>
+struct name_member_comparator
+{
+    typedef std::true_type is_transparent;
+
+    bool operator()(const T& lhs, const T& rhs) const
+    {
+        return lhs.name < rhs.name;
+    }
+
+    bool operator()(const T& lhs, const std::string& rhs) const
+    {
+        return lhs.name < rhs;
+    }
+
+    bool operator()(const std::string& lhs, const T& rhs) const
+    {
+        return lhs < rhs.name;
+    }
+};
+
 struct build
 {
     explicit build(
@@ -18,15 +39,24 @@ struct build
     std::string name;
     int status;
     std::string date;
-    struct comp
-    {
-        typedef std::true_type is_transparent;
+    using set_t = std::set<build, name_member_comparator<build>>;
+};
 
-        bool operator()(const build& lhs, const build& rhs) const;
-        bool operator()(const build& lhs, const std::string& rhs) const;
-        bool operator()(const std::string& lhs, const build& rhs) const;
-    };
-    using set_t = std::set<build, comp>;
+struct param
+{
+    explicit param(
+            const std::string& param_name,
+            const std::string& param_default_value);
+    std::string name;
+    std::string default_value;
+    using map_t = std::set<param, name_member_comparator<param>>;
+};
+
+struct job_info
+{
+    build::set_t builds;
+    param::map_t params;
+    std::vector<std::string> files;
 };
 
 struct job 
@@ -35,15 +65,7 @@ struct job
             const std::string& job_name);
 
     std::string name;
-    struct comp
-    {
-        typedef std::true_type is_transparent;
-
-        bool operator()(const job& lhs, const job& rhs) const;
-        bool operator()(const job& lhs, const std::string& rhs) const;
-        bool operator()(const std::string& lhs, const job& rhs) const;
-    };
-    using map_t = std::map<job, build::set_t, comp>;
+    using map_t = std::map<job, job_info, name_member_comparator<job>>;
 };
 
 
@@ -53,15 +75,7 @@ struct project
             const std::string& project_name);
 
     std::string name;
-    struct comp
-    {
-        typedef std::true_type is_transparent;
-
-        bool operator()(const project& lhs, const project& rhs) const;
-        bool operator()(const project& lhs, const std::string& rhs) const;
-        bool operator()(const std::string& lhs, const project& rhs) const;
-    };
-    using map_t = std::map<project, job::map_t, comp>;
+    using map_t = std::map<project, job::map_t, name_member_comparator<project>>;
 };
 
 class project_list

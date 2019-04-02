@@ -196,7 +196,7 @@ std::optional<std::string> ws_handle_list_jobs(
     }
 }
 
-std::optional<std::string> ws_handle_list_builds(
+std::optional<std::string> ws_handle_get_job_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -221,8 +221,44 @@ std::optional<std::string> ws_handle_list_builds(
         if(job_it != project_it->second.cend())
 {
             rapidjson::Value array;
+            rapidjson::Value array_value;
             array.SetArray();
-            for(auto& build : job_it->second)
+            for(auto& file : job_it->second.files)
+            {
+                array_value.SetString(
+                        file.c_str(),
+                        file.length(),
+                        allocator);
+                array.PushBack(
+                        array_value,
+                        allocator);
+            }
+            response_data.AddMember("files", array, allocator);
+            array.SetArray();
+            for(auto& param : job_it->second.params)
+            {
+                array_value.SetObject();
+                array_value.AddMember(
+                        "name",
+                        rapidjson::Value().SetString(
+                            param.name.c_str(),
+                            param.name.length(),
+                            allocator),
+                        allocator);
+                array_value.AddMember(
+                        "default_value",
+                        rapidjson::Value().SetString(
+                            param.default_value.c_str(),
+                            param.default_value.length(),
+                            allocator),
+                        allocator);
+                array.PushBack(
+                        array_value,
+                        allocator);
+            }
+            response_data.AddMember("params", array, allocator);
+            array.SetArray();
+            for(auto& build : job_it->second.builds)
             {
                 array.PushBack(
                         rapidjson::Value().CopyFrom(

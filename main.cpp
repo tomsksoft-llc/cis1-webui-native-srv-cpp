@@ -86,8 +86,8 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_jobs,
             std::bind(&ws_handle_list_jobs, projects, authorization_handler, _1, _2, _3, _4));
-    ws_dispatcher.add_event_handler(ws_request_id::list_builds,
-            std::bind(&ws_handle_list_builds, projects, authorization_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::get_job_info,
+            std::bind(&ws_handle_get_job_info, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::run_job,
             std::bind(&ws_handle_run_job, projects, authorization_handler, std::ref(ioc), _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::rename_job,
