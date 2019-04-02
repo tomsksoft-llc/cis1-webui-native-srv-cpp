@@ -20,6 +20,17 @@ std::optional<std::string> get_string(
     return std::nullopt;
 }
 
+std::optional<bool> get_bool(
+        const rapidjson::Value& value,
+        const char* name)
+{
+    if(value.HasMember(name) && value[name].IsBool())
+    {
+        return value[name].GetBool();
+    }
+    return std::nullopt;
+}
+
 std::optional<std::string> ws_handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
@@ -128,8 +139,8 @@ std::optional<std::string> ws_handle_list_projects(
     array.SetArray();
     for(auto& [project, jobs] : projects->projects)
     {
-        if(auto perm = rights->check_right(ctx.username, "project." + project.name);
-                perm.has_value() && perm.value())
+        if(auto perm = rights->check_project_right(ctx.username, project.name);
+                (perm.has_value() && perm.value().read) || (!perm.has_value() && true))
         {
             array.PushBack(
                     rapidjson::Value().CopyFrom(
@@ -157,8 +168,8 @@ std::optional<std::string> ws_handle_list_jobs(
     }
 
     auto project_it = projects->projects.find(project_name.value());
-    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
-    auto permitted = perm.has_value() ? perm.value() : true;
+    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(project_it != projects->projects.cend() && permitted)
     {
@@ -201,8 +212,8 @@ std::optional<std::string> ws_handle_list_builds(
     }
    
     auto project_it = projects->projects.find(project_name.value());
-    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
-    auto permitted = perm.has_value() ? perm.value() : true;
+    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(project_it != projects->projects.cend() && permitted)
     {
@@ -254,8 +265,8 @@ std::optional<std::string> ws_handle_run_job(
     }
    
     auto project_it = projects->projects.find(project_name.value());
-    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
-    auto permitted = perm.has_value() ? perm.value() : true;
+    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto permitted = perm.has_value() ? perm.value().execute : true;
 
     if(project_it != projects->projects.cend() && permitted)
     {
@@ -314,7 +325,7 @@ std::optional<std::string> ws_handle_list_users(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto perm = rights->check_right(ctx.username, "users.list");
+    auto perm = rights->check_user_right(ctx.username, "users.list");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
@@ -371,6 +382,95 @@ std::optional<std::string> ws_handle_list_users(
     return "Action not permitted";
 }
 
+std::optional<std::string> ws_handle_get_user_permissions(
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto name = get_string(request_data, "name");
+    if(!name)
+    {
+        return "Invalid JSON.";
+    }
+
+    auto perm = rights->check_user_right(ctx.username, "users.permissions");
+    auto permitted = perm.has_value() ? perm.value() : false;
+    
+    if(permitted)
+    {
+        auto& permissions = rights->get_permissions(name.value());
+        rapidjson::Value array;
+        rapidjson::Value key;
+        rapidjson::Value value;
+        array.SetObject();
+        for(auto [project, rights] : permissions)
+        {
+            key.SetString(project.c_str(), project.length(), allocator);
+            value.SetObject();
+            value.AddMember(
+                    "read",
+                    rapidjson::Value().SetBool(rights.read),
+                    allocator);
+            value.AddMember(
+                    "write",
+                    rapidjson::Value().SetBool(rights.write),
+                    allocator);
+            value.AddMember(
+                    "execute",
+                    rapidjson::Value().SetBool(rights.execute),
+                    allocator);
+            array.AddMember(key, value, allocator);
+        }
+        response_data.AddMember("permissions", array, allocator);
+        return std::nullopt;
+    }
+    return "Action not permitted";
+}
+
+std::optional<std::string> ws_handle_set_user_permissions(
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto name = get_string(request_data, "name");
+    if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsArray())
+    {
+        return "Invalid JSON.";
+    }
+
+    auto perm = rights->check_user_right(ctx.username, "users.permissions");
+    auto permitted = perm.has_value() ? perm.value() : false;
+    
+    if(permitted)
+    {
+        for(auto& member : request_data["permissions"].GetObject())
+        {
+            auto project_name = get_string(member.name, "project");
+            if(!member.value.IsObject())
+            {
+                return "Invalid JSON.";
+            }
+            auto read = get_bool(member.value, "read");
+            auto write = get_bool(member.value, "write");
+            auto execute = get_bool(member.value, "execute");
+            if(!project_name || !read || !write || !execute)
+            {
+                return "Invalid JSON.";
+            }
+            rights->set_user_project_permissions(
+                    ctx.username,
+                    project_name.value(),
+                    {read.value(), write.value(), execute.value()});
+        }
+        return std::nullopt;
+    }
+    return "Action not permitted";
+}
+
 std::optional<std::string> ws_handle_rename_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
@@ -393,8 +493,8 @@ std::optional<std::string> ws_handle_rename_job(
     }
    
     auto project_it = projects->projects.find(project_name.value());
-    auto perm = rights->check_right(ctx.username, "project." + project_name.value());
-    auto permitted = perm.has_value() ? perm.value() : true;
+    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto permitted = perm.has_value() ? perm.value().write : true;
 
     if(project_it != projects->projects.cend() && permitted)
     {

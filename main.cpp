@@ -74,6 +74,10 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_change_pass, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_users,
             std::bind(&ws_handle_list_users, authentication_handler, authorization_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::get_user_permissions,
+            std::bind(&ws_handle_get_user_permissions, authorization_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::set_user_permissions,
+            std::bind(&ws_handle_set_user_permissions, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_projects,
             std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_jobs,

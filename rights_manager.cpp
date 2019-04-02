@@ -35,7 +35,7 @@ void rights_manager::set_right(
     save_rights(path_cat(db::get_root_dir(), rights_file_path));
 }
 
-std::optional<bool> rights_manager::check_right(
+std::optional<bool> rights_manager::check_user_right(
         const std::string& username,
         const std::string& resource_name)
 {
@@ -52,6 +52,31 @@ std::optional<bool> rights_manager::check_right(
         return resource->second;
     }
     return std::nullopt;
+}
+
+std::optional<project_rights> rights_manager::check_project_right(
+        const std::string& username,
+        const std::string& project)
+{
+    if(auto user = projects_permissions_.find(username); user != projects_permissions_.end())
+    {
+        if(auto resource = user->second.find(project);
+                resource != user->second.end())
+        {
+            return resource->second;
+        }
+    }
+    return std::nullopt;
+}
+
+const std::map<std::string, project_rights>& rights_manager::get_permissions(const std::string& username) const
+{
+    return projects_permissions_.at(username);
+}
+
+void rights_manager::set_user_project_permissions(const std::string& user, const std::string& project, project_rights rights)
+{
+    projects_permissions_[user][project] = rights;
 }
 
 void rights_manager::save_rights(const std::filesystem::path& file)
@@ -89,6 +114,39 @@ void rights_manager::save_rights(const std::filesystem::path& file)
         document_value.AddMember(key, value, document.GetAllocator());
     }
     document.AddMember("user_rights", document_value, document.GetAllocator());
+
+    document_value.SetObject();
+    for(auto& [user, projects] : projects_permissions_)
+    {
+        key.SetString(user.c_str(), user.length(), document.GetAllocator());
+        value.SetObject();
+        rapidjson::Value second_key;
+        rapidjson::Value second_value;
+        for(auto& [project, rights] : projects)
+        {
+            second_key.SetString(
+                    project.c_str(),
+                    project.length(),
+                    document.GetAllocator());
+            second_value.SetObject();
+            second_value.AddMember(
+                    "read",
+                    rapidjson::Value().SetBool(rights.read),
+                    document.GetAllocator());
+            second_value.AddMember(
+                    "write",
+                    rapidjson::Value().SetBool(rights.write),
+                    document.GetAllocator());
+            second_value.AddMember(
+                    "execute",
+                    rapidjson::Value().SetBool(rights.execute),
+                    document.GetAllocator());
+            value.AddMember(second_key, second_value, document.GetAllocator());
+        }
+        document_value.AddMember(key, value, document.GetAllocator());
+    }
+    document.AddMember("projects_permissions", document_value, document.GetAllocator());
+
     std::ofstream db(file);
     rapidjson::OStreamWrapper osw(db);
     rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
@@ -109,6 +167,7 @@ void rights_manager::load_rights(const std::filesystem::path& file)
     {
         return;
     }
+
     auto resources_obj = document["resources"].GetObject();
     for(auto& member : resources_obj)
     {
@@ -124,6 +183,22 @@ void rights_manager::load_rights(const std::filesystem::path& file)
         {
             user_rights_[user][resource_right.name.GetString()]
                 = resource_right.value.GetBool();
+        }
+    }
+
+    auto projects_permissions_obj = document["projects_permissions"].GetObject();
+    for(auto& member : projects_permissions_obj)
+    {
+        auto user = member.name.GetString();
+        auto rights = member.value.GetObject();
+        for(auto& resource_right : rights)
+        {
+            auto project_rights_obj = resource_right.value.GetObject();
+            project_rights pr{
+                project_rights_obj["read"].GetBool(),
+                project_rights_obj["write"].GetBool(),
+                project_rights_obj["execute"].GetBool()};
+            projects_permissions_[user][resource_right.name.GetString()] = pr;
         }
     }
 }
