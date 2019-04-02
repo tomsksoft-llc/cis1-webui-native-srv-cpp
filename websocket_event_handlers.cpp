@@ -225,9 +225,17 @@ std::optional<std::string> ws_handle_get_job_info(
             array.SetArray();
             for(auto& file : job_it->second.files)
             {
-                array_value.SetString(
-                        file.c_str(),
-                        file.length(),
+                array_value.SetObject();
+                array_value.AddMember(
+                        "name",
+                        rapidjson::Value().SetString(
+                            file.c_str(),
+                            file.length(),
+                            allocator),
+                        allocator);
+                array_value.AddMember(
+                        "link",
+                        rapidjson::Value().SetString(""),
                         allocator);
                 array.PushBack(
                         array_value,
