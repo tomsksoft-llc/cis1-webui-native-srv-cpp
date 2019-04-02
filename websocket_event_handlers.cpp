@@ -437,7 +437,7 @@ std::optional<std::string> ws_handle_set_user_permissions(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto name = get_string(request_data, "name");
-    if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsArray())
+    if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsObject())
     {
         return "Invalid JSON.";
     }
