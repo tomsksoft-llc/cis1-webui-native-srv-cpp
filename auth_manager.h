@@ -29,6 +29,8 @@ public:
     bool has_user(const std::string& name);
     void set_disabled(const std::string& name, bool state);
     void make_admin(const std::string& name, bool state);
+    bool is_admin(const std::string& name);
+    std::optional<std::string> generate_api_key(const std::string& name);
     bool change_pass(
             const std::string& user,
             const std::string& old_pass,

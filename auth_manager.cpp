@@ -117,6 +117,38 @@ void auth_manager::make_admin(const std::string& name, bool state)
     }
 }
 
+bool auth_manager::is_admin(const std::string& name)
+{
+    if(auto it = users_.find(name);
+            it != users_.cend())
+    {
+        return it->second.admin;
+    }
+    return false;
+}
+
+std::optional<std::string> auth_manager::generate_api_key(const std::string& name)
+{
+    if(auto it = users_.find(name);
+            it != users_.cend())
+    {
+        if(!it->second.api_access_key)
+        {
+            auto unix_timestamp = std::chrono::seconds(std::time(NULL));
+            std::ostringstream os;
+            os << unix_timestamp.count();
+            std::string token = name + it->second.pass + os.str() + "SALT";
+            os.clear();
+            static const std::hash<std::string> hash_fn;
+            os << hash_fn(token);
+
+            it->second.api_access_key = os.str();
+        }
+        return it->second.api_access_key;
+    }
+    return std::nullopt;
+}
+
 bool auth_manager::change_pass(
         const std::string& user,
         const std::string& old_pass,

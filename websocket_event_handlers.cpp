@@ -575,6 +575,39 @@ std::optional<std::string> ws_handle_disable_user(
     return "Action not permitted.";
 }
 
+std::optional<std::string> ws_handle_generate_api_key(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto name = get_string(request_data, "name");
+    if(!name)
+    {
+        return "Invalid JSON.";
+    }
+
+    if(ctx.username == name.value() 
+        || authentication_handler->is_admin(ctx.username))
+    {
+        auto api_key = authentication_handler->generate_api_key(name.value());
+        if(!api_key)
+        {
+            return "Can't generate APIAccessSecretKey.";
+        }
+        response_data.AddMember(
+                "APIAccessSecretKey",
+                rapidjson::Value().SetString(
+                    api_key.value().c_str(),
+                    api_key.value().length(),
+                    allocator),
+                allocator);
+        return std::nullopt;
+    }
+    return "Action not permitted.";
+}
+
 std::optional<std::string> ws_handle_rename_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,

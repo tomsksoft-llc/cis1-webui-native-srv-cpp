@@ -79,6 +79,13 @@ std::optional<std::string> ws_handle_disable_user(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
+std::optional<std::string> ws_handle_generate_api_key(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
 //cis
 
 std::optional<std::string> ws_handle_list_projects(
