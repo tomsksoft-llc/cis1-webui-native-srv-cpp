@@ -433,8 +433,12 @@ std::optional<std::string> ws_handle_list_users(
                         allocator),
                     allocator);
             array_value.AddMember(
-                    "admin",
-                    rapidjson::Value().SetBool(user.admin),
+                    "group",
+                    rapidjson::Value().SetString(
+                        user.admin
+                        ? "admin"
+                        : "user",
+                        allocator),
                     allocator);
             array_value.AddMember(
                     "disabled",
