@@ -532,7 +532,7 @@ std::optional<std::string> ws_handle_set_user_permissions(
     return "Action not permitted";
 }
 
-std::optional<std::string> ws_handle_make_admin(
+std::optional<std::string> ws_handle_change_group(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -541,8 +541,8 @@ std::optional<std::string> ws_handle_make_admin(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto name = get_string(request_data, "name");
-    auto state = get_bool(request_data, "state");
-    if(!name || !state)
+    auto group = get_string(request_data, "admin");
+    if(!name || !group)
     {
         return "Invalid JSON.";
     }
@@ -552,11 +552,25 @@ std::optional<std::string> ws_handle_make_admin(
         return "Invalid username.";
     }
 
+    bool state;
+    if(group.value() == "admin")
+    {
+        state = true;
+    }
+    else if(group.value() == "user")
+    {
+        state = false;
+    }
+    else
+    {
+        return "Invalid group name.";
+    }
+
     auto perm = rights->check_user_right(ctx.username, "users.make_admin");
     auto permitted = perm.has_value() ? perm.value() : false;
     if(permitted)
     {
-        authentication_handler->make_admin(name.value(), state.value());
+        authentication_handler->make_admin(name.value(), state);
         return std::nullopt;
     }
     return "Action not permitted.";
