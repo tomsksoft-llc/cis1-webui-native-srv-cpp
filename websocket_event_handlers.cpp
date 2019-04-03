@@ -446,26 +446,30 @@ std::optional<std::string> ws_handle_get_user_permissions(
     {
         auto& permissions = rights->get_permissions(name.value());
         rapidjson::Value array;
-        rapidjson::Value key;
-        rapidjson::Value value;
-        array.SetObject();
+        rapidjson::Value array_value;
+        array.SetArray();
         for(auto [project, rights] : permissions)
         {
-            key.SetString(project.c_str(), project.length(), allocator);
-            value.SetObject();
-            value.AddMember(
+            array_value.SetObject();
+            array_value.AddMember(
+                    "name",
+                    rapidjson::Value().SetString(
+                        project.c_str(),
+                        project.length(),
+                        allocator),
+                    allocator);
+            array_value.AddMember(
                     "read",
                     rapidjson::Value().SetBool(rights.read),
                     allocator);
-            value.AddMember(
+            array_value.AddMember(
                     "write",
                     rapidjson::Value().SetBool(rights.write),
                     allocator);
-            value.AddMember(
+            array_value.AddMember(
                     "execute",
                     rapidjson::Value().SetBool(rights.execute),
                     allocator);
-            array.AddMember(key, value, allocator);
         }
         response_data.AddMember("permissions", array, allocator);
         return std::nullopt;
