@@ -470,6 +470,7 @@ std::optional<std::string> ws_handle_get_user_permissions(
                     "execute",
                     rapidjson::Value().SetBool(rights.execute),
                     allocator);
+            array.PushBack(array_value, allocator);
         }
         response_data.AddMember("permissions", array, allocator);
         return std::nullopt;
@@ -495,16 +496,12 @@ std::optional<std::string> ws_handle_set_user_permissions(
     
     if(permitted)
     {
-        for(auto& member : request_data["permissions"].GetObject())
+        for(auto& array_value : request_data["permissions"].GetArray())
         {
-            auto project_name = get_string(member.name, "project");
-            if(!member.value.IsObject())
-            {
-                return "Invalid JSON.";
-            }
-            auto read = get_bool(member.value, "read");
-            auto write = get_bool(member.value, "write");
-            auto execute = get_bool(member.value, "execute");
+            auto project_name = get_string(array_value, "name");
+            auto read = get_bool(array_value, "read");
+            auto write = get_bool(array_value, "write");
+            auto execute = get_bool(array_value, "execute");
             if(!project_name || !read || !write || !execute)
             {
                 return "Invalid JSON.";
