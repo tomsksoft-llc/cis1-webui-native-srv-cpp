@@ -59,6 +59,14 @@ std::optional<std::string> ws_handle_authenticate(
                     token.length(),
                     allocator),
                 allocator);
+        response_data.AddMember(
+                "group",
+                rapidjson::Value().SetString(
+                    authentication_handler->is_admin(ctx.username)
+                    ? "admin"
+                    : "user",
+                    allocator),
+                allocator);
         return std::nullopt;
     }
     else
@@ -86,6 +94,14 @@ std::optional<std::string> ws_handle_token(
     {
         ctx.username = username;
         ctx.active_token = token.value();
+        response_data.AddMember(
+                "group",
+                rapidjson::Value().SetString(
+                    authentication_handler->is_admin(ctx.username)
+                    ? "admin"
+                    : "user",
+                    allocator),
+                allocator);
         return std::nullopt;
     }
     else
@@ -486,7 +502,7 @@ std::optional<std::string> ws_handle_set_user_permissions(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto name = get_string(request_data, "name");
-    if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsObject())
+    if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsArray())
     {
         return "Invalid JSON.";
     }
@@ -507,7 +523,7 @@ std::optional<std::string> ws_handle_set_user_permissions(
                 return "Invalid JSON.";
             }
             rights->set_user_project_permissions(
-                    ctx.username,
+                    name.value(),
                     project_name.value(),
                     {read.value(), write.value(), execute.value()});
         }
