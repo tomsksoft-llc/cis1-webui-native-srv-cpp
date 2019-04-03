@@ -169,7 +169,7 @@ std::optional<std::string> ws_handle_list_projects(
     return std::nullopt;
 }
 
-std::optional<std::string> ws_handle_list_jobs(
+std::optional<std::string> ws_handle_get_project_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -190,8 +190,29 @@ std::optional<std::string> ws_handle_list_jobs(
     if(project_it != projects->projects.cend() && permitted)
     {
         rapidjson::Value array;
+        rapidjson::Value array_value;
         array.SetArray();
-        for(auto& [job, builds] : project_it->second)
+        for(auto& file : project_it->second.files)
+        {
+            array_value.SetObject();
+            array_value.AddMember(
+                    "name",
+                    rapidjson::Value().SetString(
+                        file.c_str(),
+                        file.length(),
+                        allocator),
+                    allocator);
+            array_value.AddMember(
+                    "link",
+                    rapidjson::Value().SetString(""),
+                    allocator);
+            array.PushBack(
+                    array_value,
+                    allocator);
+        }
+        response_data.AddMember("files", array, allocator);
+        array.SetArray();
+        for(auto& [job, builds] : project_it->second.jobs)
         {
             array.PushBack(
                     rapidjson::Value().CopyFrom(
@@ -233,8 +254,8 @@ std::optional<std::string> ws_handle_get_job_info(
 
     if(project_it != projects->projects.cend() && permitted)
     {
-        auto job_it = project_it->second.find(job_name.value());
-        if(job_it != project_it->second.cend())
+        auto job_it = project_it->second.jobs.find(job_name.value());
+        if(job_it != project_it->second.jobs.cend())
         {
             rapidjson::Value array;
             rapidjson::Value array_value;
@@ -330,8 +351,8 @@ std::optional<std::string> ws_handle_run_job(
 
     if(project_it != projects->projects.cend() && permitted)
     {
-        auto job_it = project_it->second.find(job_name.value());
-        if(job_it != project_it->second.cend())
+        auto job_it = project_it->second.jobs.find(job_name.value());
+        if(job_it != project_it->second.jobs.cend())
         {
             run_job(io_ctx, project_name.value(), job_name.value());
             return std::nullopt;
@@ -666,14 +687,14 @@ std::optional<std::string> ws_handle_rename_job(
 
     if(project_it != projects->projects.cend() && permitted)
     {
-        if(auto it = project_it->second.find(new_job_name.value());
-                it != project_it->second.cend())
+        if(auto it = project_it->second.jobs.find(new_job_name.value());
+                it != project_it->second.jobs.cend())
         {
             return "Project with this name already exists.";
         }
 
-        auto job_it = project_it->second.find(job_name.value());
-        if(job_it != project_it->second.cend())
+        auto job_it = project_it->second.jobs.find(job_name.value());
+        if(job_it != project_it->second.jobs.cend())
         {
             std::error_code ec;
             rename_job(project_name.value(), job_name.value(), new_job_name.value(), ec);
@@ -720,8 +741,8 @@ std::optional<std::string> ws_handle_get_build_info(
     auto permitted = perm.has_value() ? perm.value().write : true;
     if(project_it != projects->projects.cend() && permitted)
     {   
-        auto job_it = project_it->second.find(job_name.value());
-        if(job_it != project_it->second.cend())
+        auto job_it = project_it->second.jobs.find(job_name.value());
+        if(job_it != project_it->second.jobs.cend())
         {
             auto build_it = job_it->second.builds.find(build_name.value());
             if(build_it != job_it->second.builds.cend())

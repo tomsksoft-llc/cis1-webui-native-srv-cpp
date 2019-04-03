@@ -71,13 +71,19 @@ struct job
 };
 
 
+struct project_info
+{
+    job::map_t jobs;
+    std::vector<std::string> files;
+};
+
 struct project
 {
     explicit project(
             const std::string& project_name);
 
     std::string name;
-    using map_t = std::map<project, job::map_t, name_member_comparator<project>>;
+    using map_t = std::map<project, project_info, name_member_comparator<project>>;
 };
 
 class project_list

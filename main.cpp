@@ -86,8 +86,8 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_generate_api_key, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_projects,
             std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3, _4));
-    ws_dispatcher.add_event_handler(ws_request_id::list_jobs,
-            std::bind(&ws_handle_list_jobs, projects, authorization_handler, _1, _2, _3, _4));
+    ws_dispatcher.add_event_handler(ws_request_id::get_project_info,
+            std::bind(&ws_handle_get_project_info, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::get_job_info,
             std::bind(&ws_handle_get_job_info, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::run_job,

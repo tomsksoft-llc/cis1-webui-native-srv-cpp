@@ -105,7 +105,7 @@ void project_list::fetch()
                 {
                     if(job.is_directory())
                     {
-                        auto [job_it, result] = project_it->second.emplace(
+                        auto [job_it, result] = project_it->second.jobs.emplace(
                             std::piecewise_construct,
                             std::make_tuple(job.path().filename()),
                             std::make_tuple());
@@ -163,6 +163,11 @@ void project_list::fetch()
                                 job_files.emplace_back(job_file.path().filename());
                             }
                         }
+                    }
+                    else if(job.is_regular_file())
+                    {
+                        auto& project_files = project_it->second.files;
+                        project_files.emplace_back(job.path().filename());
                     }
                 }
             }
