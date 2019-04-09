@@ -31,7 +31,13 @@ std::optional<bool> get_bool(
     return std::nullopt;
 }
 
-std::optional<std::string> ws_handle_authenticate(
+namespace websocket
+{
+
+namespace handlers
+{
+
+std::optional<std::string> authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -75,7 +81,7 @@ std::optional<std::string> ws_handle_authenticate(
     }
 }
 
-std::optional<std::string> ws_handle_token(
+std::optional<std::string> token(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -110,7 +116,7 @@ std::optional<std::string> ws_handle_token(
     }
 }
 
-std::optional<std::string> ws_handle_logout(
+std::optional<std::string> logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -143,7 +149,7 @@ std::optional<std::string> ws_handle_logout(
     }
 }
 
-std::optional<std::string> ws_handle_list_projects(
+std::optional<std::string> list_projects(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -169,7 +175,7 @@ std::optional<std::string> ws_handle_list_projects(
     return std::nullopt;
 }
 
-std::optional<std::string> ws_handle_get_project_info(
+std::optional<std::string> get_project_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -233,7 +239,7 @@ std::optional<std::string> ws_handle_get_project_info(
     }
 }
 
-std::optional<std::string> ws_handle_get_job_info(
+std::optional<std::string> get_job_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -329,7 +335,7 @@ std::optional<std::string> ws_handle_get_job_info(
     }
 }
 
-std::optional<std::string> ws_handle_run_job(
+std::optional<std::string> run_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
@@ -354,7 +360,7 @@ std::optional<std::string> ws_handle_run_job(
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
         {
-            run_job(io_ctx, project_name.value(), job_name.value());
+            ::run_job(io_ctx, project_name.value(), job_name.value());
             return std::nullopt;
             projects->defer_fetch();
             return std::nullopt;
@@ -374,7 +380,7 @@ std::optional<std::string> ws_handle_run_job(
     }
 }
 
-std::optional<std::string> ws_handle_change_pass(
+std::optional<std::string> change_pass(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -398,7 +404,7 @@ std::optional<std::string> ws_handle_change_pass(
     return std::nullopt;
 }
 
-std::optional<std::string> ws_handle_list_users(
+std::optional<std::string> list_users(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -467,7 +473,7 @@ std::optional<std::string> ws_handle_list_users(
     return "Action not permitted";
 }
 
-std::optional<std::string> ws_handle_get_user_permissions(
+std::optional<std::string> get_user_permissions(
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -519,7 +525,7 @@ std::optional<std::string> ws_handle_get_user_permissions(
     return "Action not permitted";
 }
 
-std::optional<std::string> ws_handle_set_user_permissions(
+std::optional<std::string> set_user_permissions(
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -557,7 +563,7 @@ std::optional<std::string> ws_handle_set_user_permissions(
     return "Action not permitted";
 }
 
-std::optional<std::string> ws_handle_change_group(
+std::optional<std::string> change_group(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -601,7 +607,7 @@ std::optional<std::string> ws_handle_change_group(
     return "Action not permitted.";
 }
 
-std::optional<std::string> ws_handle_disable_user(
+std::optional<std::string> disable_user(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -631,7 +637,7 @@ std::optional<std::string> ws_handle_disable_user(
     return "Action not permitted.";
 }
 
-std::optional<std::string> ws_handle_generate_api_key(
+std::optional<std::string> generate_api_key(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -664,7 +670,7 @@ std::optional<std::string> ws_handle_generate_api_key(
     return "Action not permitted.";
 }
 
-std::optional<std::string> ws_handle_rename_job(
+std::optional<std::string> rename_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -701,7 +707,7 @@ std::optional<std::string> ws_handle_rename_job(
         if(job_it != project_it->second.jobs.cend())
         {
             std::error_code ec;
-            rename_job(project_name.value(), job_name.value(), new_job_name.value(), ec);
+            ::rename_job(project_name.value(), job_name.value(), new_job_name.value(), ec);
             if(ec)
             {
                 return "Error while renaming.";
@@ -724,7 +730,7 @@ std::optional<std::string> ws_handle_rename_job(
     }
 }
 
-std::optional<std::string> ws_handle_get_build_info(
+std::optional<std::string> get_build_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -801,3 +807,7 @@ std::optional<std::string> ws_handle_get_build_info(
         return "Project doesn't exists.";
     }
 }
+
+} // namespace handlers
+
+} // namespace websocket

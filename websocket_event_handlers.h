@@ -11,59 +11,43 @@
 
 #include <rapidjson/document.h>
 
+namespace websocket
+{
+
+namespace handlers
+{
+
 //users
 
-std::optional<std::string> ws_handle_authenticate(
+std::optional<std::string> authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_token(
+std::optional<std::string> token(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_logout(
+std::optional<std::string> logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_change_pass(
+std::optional<std::string> change_pass(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_list_users(
-        const std::shared_ptr<auth_manager>& authentication_handler,
-        const std::shared_ptr<rights_manager>& rights,
-        request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
-
-std::optional<std::string> ws_handle_get_user_permissions(
-        const std::shared_ptr<rights_manager>& rights,
-        request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
-
-std::optional<std::string> ws_handle_set_user_permissions(
-        const std::shared_ptr<rights_manager>& rights,
-        request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
-
-std::optional<std::string> ws_handle_change_group(
+std::optional<std::string> list_users(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -71,7 +55,21 @@ std::optional<std::string> ws_handle_change_group(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_disable_user(
+std::optional<std::string> get_user_permissions(
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
+std::optional<std::string> set_user_permissions(
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
+std::optional<std::string> change_group(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -79,7 +77,15 @@ std::optional<std::string> ws_handle_disable_user(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_generate_api_key(
+std::optional<std::string> disable_user(
+        const std::shared_ptr<auth_manager>& authentication_handler,
+        const std::shared_ptr<rights_manager>& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
+std::optional<std::string> generate_api_key(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -88,7 +94,7 @@ std::optional<std::string> ws_handle_generate_api_key(
 
 //cis
 
-std::optional<std::string> ws_handle_list_projects(
+std::optional<std::string> list_projects(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -96,7 +102,7 @@ std::optional<std::string> ws_handle_list_projects(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_get_project_info(
+std::optional<std::string> get_project_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -104,7 +110,7 @@ std::optional<std::string> ws_handle_get_project_info(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_get_job_info(
+std::optional<std::string> get_job_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -112,7 +118,7 @@ std::optional<std::string> ws_handle_get_job_info(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_run_job(
+std::optional<std::string> run_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
@@ -121,7 +127,7 @@ std::optional<std::string> ws_handle_run_job(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_rename_job(
+std::optional<std::string> rename_job(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
@@ -129,10 +135,14 @@ std::optional<std::string> ws_handle_rename_job(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> ws_handle_get_build_info(
+std::optional<std::string> get_build_info(
         const std::shared_ptr<project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
+
+} // namespace handlers
+
+} // namespace websocket

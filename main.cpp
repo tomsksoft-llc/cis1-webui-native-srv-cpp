@@ -29,6 +29,7 @@ namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace asio = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 using namespace std::placeholders;
+namespace wsh = websocket::handlers;
 
 int main(int argc, char* argv[])
 {
@@ -65,37 +66,37 @@ int main(int argc, char* argv[])
 
     websocket_event_dispatcher ws_dispatcher;
     ws_dispatcher.add_event_handler(ws_request_id::auth_login_pass,
-            std::bind(&ws_handle_authenticate, authentication_handler, _1, _2, _3, _4));
+            std::bind(&wsh::authenticate, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::auth_token,
-            std::bind(&ws_handle_token, authentication_handler, _1, _2, _3, _4));
+            std::bind(&wsh::token, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::logout,
-            std::bind(&ws_handle_logout, authentication_handler, _1, _2, _3, _4));
+            std::bind(&wsh::logout, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::change_pass,
-            std::bind(&ws_handle_change_pass, authentication_handler, _1, _2, _3, _4));
+            std::bind(&wsh::change_pass, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_users,
-            std::bind(&ws_handle_list_users, authentication_handler, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::list_users, authentication_handler, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::get_user_permissions,
-            std::bind(&ws_handle_get_user_permissions, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::get_user_permissions, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::set_user_permissions,
-            std::bind(&ws_handle_set_user_permissions, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::set_user_permissions, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::change_group,
-            std::bind(&ws_handle_change_group, authentication_handler, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::change_group, authentication_handler, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::disable_user,
-            std::bind(&ws_handle_disable_user, authentication_handler, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::disable_user, authentication_handler, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::generate_api_key,
-            std::bind(&ws_handle_generate_api_key, authentication_handler, _1, _2, _3, _4));
+            std::bind(&wsh::generate_api_key, authentication_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::list_projects,
-            std::bind(&ws_handle_list_projects, projects, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::list_projects, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::get_project_info,
-            std::bind(&ws_handle_get_project_info, projects, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::get_project_info, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::get_job_info,
-            std::bind(&ws_handle_get_job_info, projects, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::get_job_info, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::run_job,
-            std::bind(&ws_handle_run_job, projects, authorization_handler, std::ref(ioc), _1, _2, _3, _4));
+            std::bind(&wsh::run_job, projects, authorization_handler, std::ref(ioc), _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::rename_job,
-            std::bind(&ws_handle_rename_job, projects, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::rename_job, projects, authorization_handler, _1, _2, _3, _4));
     ws_dispatcher.add_event_handler(ws_request_id::get_build_info,
-            std::bind(&ws_handle_get_build_info, projects, authorization_handler, _1, _2, _3, _4));
+            std::bind(&wsh::get_build_info, projects, authorization_handler, _1, _2, _3, _4));
 
     ws_route.append_handler([&ws_dispatcher](
                 http::request<http::empty_body>& req,
