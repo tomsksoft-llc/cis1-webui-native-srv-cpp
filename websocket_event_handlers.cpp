@@ -150,7 +150,7 @@ std::optional<std::string> logout(
 }
 
 std::optional<std::string> list_projects(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -176,7 +176,7 @@ std::optional<std::string> list_projects(
 }
 
 std::optional<std::string> get_project_info(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -240,7 +240,7 @@ std::optional<std::string> get_project_info(
 }
 
 std::optional<std::string> get_job_info(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -336,7 +336,7 @@ std::optional<std::string> get_job_info(
 }
 
 std::optional<std::string> run_job(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
         request_context& ctx,
@@ -360,7 +360,7 @@ std::optional<std::string> run_job(
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
         {
-            ::run_job(io_ctx, project_name.value(), job_name.value());
+            cis::run_job(io_ctx, project_name.value(), job_name.value());
             return std::nullopt;
             projects->defer_fetch();
             return std::nullopt;
@@ -671,7 +671,7 @@ std::optional<std::string> generate_api_key(
 }
 
 std::optional<std::string> rename_job(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -707,7 +707,7 @@ std::optional<std::string> rename_job(
         if(job_it != project_it->second.jobs.cend())
         {
             std::error_code ec;
-            ::rename_job(project_name.value(), job_name.value(), new_job_name.value(), ec);
+            cis::rename_job(project_name.value(), job_name.value(), new_job_name.value(), ec);
             if(ec)
             {
                 return "Error while renaming.";
@@ -731,7 +731,7 @@ std::optional<std::string> rename_job(
 }
 
 std::optional<std::string> get_build_info(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,

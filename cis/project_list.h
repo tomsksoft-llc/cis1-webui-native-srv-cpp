@@ -9,6 +9,9 @@
 #include <boost/asio.hpp>
 #include <rapidjson/document.h>
 
+namespace cis
+{
+
 template <class T>
 struct name_member_comparator
 {
@@ -86,6 +89,21 @@ struct project
     using map_t = std::map<project, project_info, name_member_comparator<project>>;
 };
 
+rapidjson::Document to_json(
+        const project& p,
+        rapidjson::Document document = {},
+        rapidjson::Value value = {});
+
+rapidjson::Document to_json(
+        const job& s,
+        rapidjson::Document document = {},
+        rapidjson::Value value = {});
+
+rapidjson::Document to_json(
+        const build& b,
+        rapidjson::Document document = {},
+        rapidjson::Value value = {});
+
 class project_list
     : public std::enable_shared_from_this<project_list>
 {
@@ -111,26 +129,4 @@ public:
     void defer_fetch();
 };
 
-rapidjson::Document to_json(
-        const project& p,
-        rapidjson::Document document = {},
-        rapidjson::Value value = {});
-rapidjson::Document to_json(
-        const job& s,
-        rapidjson::Document document = {},
-        rapidjson::Value value = {});
-rapidjson::Document to_json(
-        const build& b,
-        rapidjson::Document document = {},
-        rapidjson::Value value = {});
-
-void run_job(
-        boost::asio::io_context& ctx,
-        const std::string& project,
-        const std::string& name);
-
-void rename_job(
-        const std::string& project,
-        const std::string& job,
-        const std::string& name,
-        std::error_code& ec);
+} // namespace cis

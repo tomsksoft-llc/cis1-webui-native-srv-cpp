@@ -13,7 +13,7 @@
 // Business logic
 #include "auth_manager.h"
 #include "rights_manager.h"
-#include "cis_util.h"
+#include "cis/project_list.h"
 // Middleware
 #include "router.h"
 #include "cookie_parser.h"
@@ -52,7 +52,7 @@ int main(int argc, char* argv[])
     auto authentication_handler = std::make_shared<auth_manager>();
     auto authorization_handler = std::make_shared<rights_manager>();
     auto files = std::make_shared<file_handler>(doc_root);
-    auto projects = std::make_shared<project_list>(ioc);
+    auto projects = std::make_shared<cis::project_list>(ioc);
     projects->run();
     auto public_router = std::make_shared<http_router>();
     auto& index_route = public_router->add_route("/");

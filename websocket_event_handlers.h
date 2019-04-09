@@ -7,7 +7,8 @@
 #include "net/queued_websocket_session.h"
 #include "auth_manager.h"
 #include "rights_manager.h"
-#include "cis_util.h"
+#include "cis/project_list.h"
+#include "cis/job.h"
 
 #include <rapidjson/document.h>
 
@@ -95,7 +96,7 @@ std::optional<std::string> generate_api_key(
 //cis
 
 std::optional<std::string> list_projects(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -103,7 +104,7 @@ std::optional<std::string> list_projects(
         rapidjson::Document::AllocatorType& allocator);
 
 std::optional<std::string> get_project_info(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -111,7 +112,7 @@ std::optional<std::string> get_project_info(
         rapidjson::Document::AllocatorType& allocator);
 
 std::optional<std::string> get_job_info(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -119,7 +120,7 @@ std::optional<std::string> get_job_info(
         rapidjson::Document::AllocatorType& allocator);
 
 std::optional<std::string> run_job(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         boost::asio::io_context& io_ctx,
         request_context& ctx,
@@ -128,7 +129,7 @@ std::optional<std::string> run_job(
         rapidjson::Document::AllocatorType& allocator);
 
 std::optional<std::string> rename_job(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -136,7 +137,7 @@ std::optional<std::string> rename_job(
         rapidjson::Document::AllocatorType& allocator);
 
 std::optional<std::string> get_build_info(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,

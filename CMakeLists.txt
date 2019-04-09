@@ -14,6 +14,8 @@ set(${PROJECT_NAME}_SRC
     net/basic_websocket_session.cpp
     net/queued_websocket_session.cpp
     net/socket_util.cpp
+    cis/job.cpp
+    cis/project_list.cpp
     http_handlers_chain.cpp
     cookie_parser.cpp
     auth_manager.cpp
@@ -22,7 +24,6 @@ set(${PROJECT_NAME}_SRC
     multipart_form_handler.cpp
     file_util.cpp
     request_util.cpp
-    cis_util.cpp
     child_process.cpp
     dirs.cpp
     init.cpp

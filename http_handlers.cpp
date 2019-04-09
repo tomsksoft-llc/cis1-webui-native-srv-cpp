@@ -21,7 +21,7 @@ handle_result handle_authenticate(
 }
 
 handle_result handle_update_projects(
-        const std::shared_ptr<project_list>& projects,
+        const std::shared_ptr<cis::project_list>& projects,
         http::request<http::empty_body>& req,
         net::http_session::request_reader& reader,
         net::http_session::queue& queue,
