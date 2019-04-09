@@ -14,6 +14,7 @@ set(${PROJECT_NAME}_SRC
     net/basic_websocket_session.cpp
     net/queued_websocket_session.cpp
     net/socket_util.cpp
+    cis/dirs.cpp
     cis/job.cpp
     cis/project_list.cpp
     http_handlers_chain.cpp
@@ -25,7 +26,7 @@ set(${PROJECT_NAME}_SRC
     file_util.cpp
     request_util.cpp
     child_process.cpp
-    dirs.cpp
+    db_dirs.cpp
     init.cpp
     rights_manager.cpp
     http_handlers.cpp

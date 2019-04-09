@@ -8,7 +8,7 @@
 #include <rapidjson/ostreamwrapper.h>
 
 #include "file_util.h"
-#include "dirs.h"
+#include "db_dirs.h"
 #include "load_config_error.h"
 
 constexpr const char* rights_file_path = "/rights.pwd";

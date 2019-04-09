@@ -8,7 +8,8 @@
 #include <boost/beast.hpp>
 
 #include "init.h"
-#include "dirs.h"
+#include "db_dirs.h"
+#include "cis/dirs.h"
 #include "request_context.h"
 // Business logic
 #include "auth_manager.h"
