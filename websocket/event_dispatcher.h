@@ -7,10 +7,13 @@
 
 #include "net/queued_websocket_session.h"
 #include "request_context.h"
-#include "websocket_event_list.h"
-#include "base_websocket_event_handler.h"
+#include "event_list.h"
+#include "base_event_handler.h"
 
-class websocket_event_dispatcher
+namespace websocket
+{
+
+class event_dispatcher
 {
 public:
     using default_event_handler_t = std::optional<std::string>(
@@ -25,8 +28,10 @@ public:
             size_t bytes_transferred,
             std::shared_ptr<net::websocket_queue> queue);
     void add_event_handler(
-            ws_request_id event_id,
+            request_id event_id,
             std::function<default_event_handler_t> cb);
 private:
-    std::map<int, std::shared_ptr<base_websocket_event_handler>> event_handlers_;
+    std::map<int, std::shared_ptr<base_event_handler>> event_handlers_;
 };
+
+} // namespace websocket

@@ -1,11 +1,11 @@
-#include "websocket_event_dispatcher.h"
+#include "event_dispatcher.h"
 
 #include <string>
 
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
-#include "websocket_event_list.h"
+#include "event_list.h"
 
 #ifndef NDEBUG
 #include <iostream>
@@ -13,7 +13,7 @@
 
 void send_error(
         std::shared_ptr<net::websocket_queue>& queue,
-        ws_response_id event_id,
+        websocket::response_id event_id,
         std::string error_string)
 {
     rapidjson::Document document;
@@ -34,7 +34,10 @@ void send_error(
             [buffer](){});
 }
 
-void websocket_event_dispatcher::dispatch(
+namespace websocket
+{
+
+void event_dispatcher::dispatch(
         request_context& ctx,
         bool text,
         boost::beast::flat_buffer& buffer,
@@ -58,7 +61,7 @@ void websocket_event_dispatcher::dispatch(
         
         if(request.HasParseError())
         {
-            send_error(queue, ws_response_id::generic_error, "Invalid JSON.");
+            send_error(queue, response_id::generic_error, "Invalid JSON.");
             return;
         }
 
@@ -75,14 +78,14 @@ void websocket_event_dispatcher::dispatch(
                             queue,
                             ctx,
                             request["data"],
-                            static_cast<ws_request_id>(event_id),
+                            static_cast<request_id>(event_id),
                             request["transanctionId"].GetInt());
                 }
                 else
                 {
                     send_error(
                             queue,
-                            static_cast<ws_response_id>(event_id),
+                            static_cast<response_id>(event_id),
                             "Request doesn't contain 'data' member.");
                     return;
                 }
@@ -92,19 +95,19 @@ void websocket_event_dispatcher::dispatch(
         {
             send_error(
                     queue,
-                    ws_response_id::generic_error,
+                    response_id::generic_error,
                     "Request doesn't contain 'eventId' or 'transanctionId' member.");
             return;
         }
     }
 }
 
-void websocket_event_dispatcher::add_event_handler(
-        ws_request_id event_id,
+void event_dispatcher::add_event_handler(
+        request_id event_id,
         std::function<default_event_handler_t> cb)
 {
     class handler
-        : public base_websocket_event_handler
+        : public base_event_handler
     {
         std::function<default_event_handler_t> process_;
     public:
@@ -122,3 +125,5 @@ void websocket_event_dispatcher::add_event_handler(
     };
     event_handlers_.try_emplace(static_cast<int>(event_id), std::make_shared<handler>(cb));
 }
+
+} // namespace websocket

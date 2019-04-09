@@ -1,19 +1,22 @@
-#include "base_websocket_event_handler.h"
+#include "base_event_handler.h"
 
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
-void base_websocket_event_handler::handle(
+namespace websocket
+{
+
+void base_event_handler::handle(
         std::shared_ptr<net::websocket_queue> queue,
         request_context& ctx,
         const rapidjson::Value& request_data,
-        ws_request_id request_id,
+        request_id req_id,
         uint64_t transanction_id)
 {
     rapidjson::Document response;
     rapidjson::Value value;
     response.SetObject();
-    value.SetInt(static_cast<int>(request_id) + 1);
+    value.SetInt(static_cast<int>(req_id) + 1);
     response.AddMember("eventId", value, response.GetAllocator());
     value.SetInt(transanction_id);
     response.AddMember("transanctionId", value, response.GetAllocator());
@@ -44,4 +47,6 @@ void base_websocket_event_handler::handle(
     queue->send_text(
             boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
             [buffer](){});
+}
+
 }

@@ -1,11 +1,11 @@
-#include "websocket_event_handlers.h"
+#include "event_handlers.h"
 
 #include <chrono>
 
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
-#include "websocket_event_list.h"
+#include "event_list.h"
 
 using namespace std::string_literals;
 

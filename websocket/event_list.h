@@ -1,6 +1,9 @@
 #pragma once
 
-enum class ws_request_id
+namespace websocket
+{
+
+enum class request_id
 {
     auth_login_pass     = 1,
     auth_token          = 3,
@@ -20,7 +23,7 @@ enum class ws_request_id
     get_build_info      = 75,
 };
 
-enum class ws_response_id
+enum class response_id
 {
     generic_error       = -1,
     reserved            = 0,
@@ -41,3 +44,5 @@ enum class ws_response_id
     rename_job          = 74,
     get_build_info      = 76,
 };
+
+} // namespace websocket
