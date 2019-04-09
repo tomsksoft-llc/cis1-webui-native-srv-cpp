@@ -3,6 +3,8 @@
 #include "file_util.h"
 #include "response.h"
 
+namespace beast = boost::beast;
+
 file_handler::file_handler(const std::string& doc_root)
     : doc_root_(doc_root)
 {}

@@ -1,5 +1,7 @@
 #include "file_util.h"
 
+namespace beast = boost::beast;
+
 beast::string_view mime_type(beast::string_view path)
 {
     using beast::iequals;
