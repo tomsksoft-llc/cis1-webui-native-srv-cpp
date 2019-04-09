@@ -37,7 +37,7 @@ void http_handlers_chain::listen(boost::asio::io_context& ioc, const tcp::endpoi
     auto l = std::make_shared<net::listener>(
         ioc,
         accept_handler);
-    beast::error_code ec;
+    boost::beast::error_code ec;
     l->listen(endpoint, ec);
     if(ec)
     {

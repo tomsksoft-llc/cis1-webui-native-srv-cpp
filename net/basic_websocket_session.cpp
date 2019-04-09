@@ -13,7 +13,7 @@ basic_websocket_session::basic_websocket_session(boost::asio::ip::tcp::socket so
 {
 }
 
-void basic_websocket_session::on_accept(beast::error_code ec)
+void basic_websocket_session::on_accept(boost::beast::error_code ec)
 {
     // Happens when the timer closes the socket
     if(ec == boost::asio::error::operation_aborted)
@@ -27,7 +27,7 @@ void basic_websocket_session::on_accept(beast::error_code ec)
     this->on_accept_success();
 }
 
-void basic_websocket_session::on_timer(beast::error_code ec)
+void basic_websocket_session::on_timer(boost::beast::error_code ec)
 {
     if(ec && ec != boost::asio::error::operation_aborted)
     {
@@ -89,7 +89,7 @@ void basic_websocket_session::activity()
     timer_.expires_after(std::chrono::seconds(15));
 }
 
-void basic_websocket_session::on_ping(beast::error_code ec)
+void basic_websocket_session::on_ping(boost::beast::error_code ec)
 {
     // Happens when the timer closes the socket
     if(ec == boost::asio::error::operation_aborted)

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <boost/beast.hpp>
+#include <boost/beast/core/error.hpp>   // for error_code
 
-namespace beast = boost::beast;                 // from <boost/beast.hpp>
-
-void fail(beast::error_code ec, char const* what);
+void fail(boost::beast::error_code ec, char const* what);

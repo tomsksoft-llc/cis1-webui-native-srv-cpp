@@ -27,7 +27,7 @@ handle_result handle_update_projects(
         net::http_session::queue& queue,
         request_context& /*ctx*/)
 {
-    beast::error_code ec;
+    boost::beast::error_code ec;
     // Handle an unknown error
     if(ec)
     {

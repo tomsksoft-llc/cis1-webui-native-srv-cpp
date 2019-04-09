@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-void fail(beast::error_code ec, char const* what)
+void fail(boost::beast::error_code ec, char const* what)
 {
     std::cerr << what << ": " << ec.message() << "\n";
 }

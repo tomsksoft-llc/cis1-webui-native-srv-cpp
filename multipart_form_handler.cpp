@@ -24,7 +24,7 @@ handle_result multipart_form_handler::operator()(
         reader.async_read_body<multipart_form_body>(
                 [&boundary, save_dir](http::request<multipart_form_body>& req)
                 {
-                    beast::error_code ec;
+                    boost::beast::error_code ec;
                     req.body().set_boundary(boundary);
                     req.body().set_dir(save_dir, ec);
                 },
