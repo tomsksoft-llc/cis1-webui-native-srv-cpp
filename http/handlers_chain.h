@@ -11,8 +11,11 @@
 
 using tcp = boost::asio::ip::tcp;
 
-class http_handlers_chain
-    : public std::enable_shared_from_this<http_handlers_chain>
+namespace http
+{
+
+class handlers_chain
+    : public std::enable_shared_from_this<handlers_chain>
     , public net::http_handler_interface
 {
 public:
@@ -40,7 +43,7 @@ private:
     std::vector<ws_handler_t> ws_handlers_;
     error_handler_t error_handler_;
 public:
-    http_handlers_chain();
+    handlers_chain();
     void append_handler(const handler_t& handler);
     void append_ws_handler(const ws_handler_t& handler);
     void set_error_handler(const error_handler_t& handler);
@@ -54,3 +57,5 @@ public:
             request_header_t&& req,
             net::http_session::queue& queue) const;
 };
+
+} // namespace http

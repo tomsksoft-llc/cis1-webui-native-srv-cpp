@@ -1,13 +1,16 @@
-#include "http_error_handler.h"
+#include "error_handler.h"
 
 #include "response.h"
 
-void http_error_handler::operator()(
-        http::request<http::empty_body>& req,
+namespace http
+{
+
+void error_handler::operator()(
+        beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
         net::http_session::queue& queue)
 {
-    using status = boost::beast::http::status;
+    using status = beast::http::status;
 
     switch(ctx.res_status)
     {
@@ -22,3 +25,5 @@ void http_error_handler::operator()(
         }
     }
 }
+
+} // namespace http

@@ -2,6 +2,9 @@
 
 #include <boost/regex.hpp>
 
+namespace http
+{
+
 const boost::regex query_regex("(^|&)([a-zA-Z0-9]+)\\=([a-zA-Z0-9]+)");
 const boost::regex cookies_regex("(.*?)=(.*?)($|;|,(?! ))");
 
@@ -50,3 +53,5 @@ std::map<std::string, std::string> parse_cookies(const std::string& cookies)
     }
     return result;
 }
+
+} // namespace http

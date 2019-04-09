@@ -2,6 +2,11 @@
 
 #include <boost/beast.hpp>
 
+namespace beast = boost::beast;
+
+namespace http
+{
+
 namespace response 
 {
 
@@ -22,4 +27,6 @@ string_response_t server_error(
             string_request_t&& req,
             boost::beast::string_view what);
 
-} //namespace response
+} // namespace response
+
+} // namespace http

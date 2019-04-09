@@ -20,23 +20,23 @@ set(${PROJECT_NAME}_SRC
     exceptions/base_cis_srv_exception.cpp
     exceptions/generic_error.cpp
     exceptions/load_config_error.cpp
-    http_handlers_chain.cpp
-    http_error_handler.cpp
-    cookie_parser.cpp
+    http/handlers_chain.cpp
+    http/error_handler.cpp
+    http/cookie_parser.cpp
+    http/response.cpp
+    http/file_handler.cpp
+    http/multipart_form_handler.cpp
+    http/request_util.cpp
+    http/common_handlers.cpp
+    websocket/event_dispatcher.cpp
+    websocket/event_handlers.cpp
+    websocket/base_event_handler.cpp
     auth_manager.cpp
-    response.cpp
-    file_handler.cpp
-    multipart_form_handler.cpp
     file_util.cpp
-    request_util.cpp
     child_process.cpp
     db_dirs.cpp
     init.cpp
-    rights_manager.cpp
-    http_handlers.cpp
-    websocket/event_dispatcher.cpp
-    websocket/event_handlers.cpp
-    websocket/base_event_handler.cpp)
+    rights_manager.cpp)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})

@@ -16,13 +16,13 @@
 #include "rights_manager.h"
 #include "cis/project_list.h"
 // HTTP Middleware
-#include "http_handlers_chain.h"
-#include "router.h"
-#include "cookie_parser.h"
-#include "file_handler.h"
+#include "http/handlers_chain.h"
+#include "http/router.h"
+#include "http/cookie_parser.h"
+#include "http/file_handler.h"
 // HTTP handlers
-#include "http_error_handler.h"
-#include "http_handlers.h"
+#include "http/error_handler.h"
+#include "http/common_handlers.h"
 // WebSocket handlers
 #include "websocket/event_list.h"
 #include "websocket/event_dispatcher.h"
@@ -32,6 +32,8 @@ namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace asio = boost::asio;                   // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 using namespace std::placeholders;              // from <functional>
+
+using namespace http;
 
 namespace ws = websocket;
 namespace wsh = websocket::handlers;
@@ -52,16 +54,16 @@ int main(int argc, char* argv[])
     asio::io_context ioc{};
    
     // Configure and run public http interface
-    auto app = std::make_shared<http_handlers_chain>();
+    auto app = std::make_shared<http::handlers_chain>();
     app->set_error_handler(
             std::bind(
-                &http_error_handler::operator(),
-                std::make_shared<http_error_handler>(),
+                &http::error_handler::operator(),
+                std::make_shared<http::error_handler>(),
                 _1, _2, _3));
     
     auto authentication_handler = std::make_shared<auth_manager>();
     auto authorization_handler = std::make_shared<rights_manager>();
-    auto files = std::make_shared<file_handler>(doc_root);
+    auto files = std::make_shared<http::file_handler>(doc_root);
     auto projects = std::make_shared<cis::project_list>(ioc);
     projects->run();
     auto public_router = std::make_shared<http_router>();
@@ -109,7 +111,7 @@ int main(int argc, char* argv[])
             std::bind(&wsh::get_build_info, projects, authorization_handler, _1, _2, _3, _4));
 
     ws_route.append_handler([&ws_dispatcher](
-                http::request<http::empty_body>& req,
+                beast::http::request<beast::http::empty_body>& req,
                 request_context& ctx,
                 tcp::socket& socket)
             {
@@ -143,7 +145,7 @@ int main(int argc, char* argv[])
     app->listen(ioc, tcp::endpoint{address, port});
 
     // Configure and run cis http interface
-    auto cis_app = std::make_shared<http_handlers_chain>();
+    auto cis_app = std::make_shared<http::handlers_chain>();
     auto cis_router = std::make_shared<http_router>();
     cis_app->append_handler(
             std::bind(

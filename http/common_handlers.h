@@ -5,18 +5,23 @@
 #include "auth_manager.h"
 #include "cis/project_list.h"
 
-namespace http = boost::beast::http;
+namespace beast = boost::beast;
+
+namespace http
+{
 
 handle_result handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        http::request<http::empty_body>& req,
+        beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
         net::http_session::request_reader& reader,
         net::http_session::queue& queue);
 
 handle_result handle_update_projects(
         const std::shared_ptr<cis::project_list>& projects,
-        http::request<http::empty_body>& req,
+        beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
         net::http_session::request_reader& reader,
         net::http_session::queue& queue);
+
+} // namespace http

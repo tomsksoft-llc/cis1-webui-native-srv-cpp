@@ -2,8 +2,11 @@
 
 #include "request_util.h"
 
+namespace http
+{
+
 handle_result cookie_parser::parse(
-        http::request<http::empty_body>& req,
+        beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
         net::http_session::request_reader& reader,
         net::http_session::queue& /*queue*/)
@@ -16,3 +19,5 @@ handle_result cookie_parser::parse(
     ctx.cookies = parse_cookies(cookies_string);
     return handle_result::next;
 }
+
+} // namespace http
