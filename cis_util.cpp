@@ -84,92 +84,112 @@ void project_list::on_timer(boost::system::error_code ec)
                 std::placeholders::_1)));
 }
 
+void project_list::fetch_build(
+        const std::filesystem::directory_entry& build_dir,
+        job::map_t::iterator it)
+{
+    std::ifstream exitcode_file(build_dir.path() / "exitcode.txt");
+    int exitcode;
+    exitcode_file >> exitcode;
+    std::ifstream output_file(build_dir.path() / "output.txt");
+    std::string date;
+    output_file >> date;
+    std::vector<std::string> artifacts;
+    for(auto& dir_entry: fs::directory_iterator(build_dir))
+    {
+        if(dir_entry.is_regular_file())
+        {
+            artifacts.emplace_back(dir_entry.path().filename().c_str());
+        }
+    }
+    auto& builds = it->second.builds;
+    builds.emplace(
+            build_dir.path().filename(),
+            exitcode,
+            date.substr(0, 10),
+            std::move(artifacts));
+}
+
+void project_list::fetch_job(
+        const std::filesystem::directory_entry& job_dir,
+        project::map_t::iterator it)
+{
+    auto [job_it, result] = it->second.jobs.emplace(
+        std::piecewise_construct,
+        std::make_tuple(job_dir.path().filename()),
+        std::make_tuple());
+    if(result == false)
+    {
+        return;
+    }
+    for(auto& dir_entry: fs::directory_iterator(job_dir))
+    {
+        if(dir_entry.is_directory())
+        {
+            fetch_build(dir_entry, job_it);
+        }
+        else if(dir_entry.is_regular_file())
+        {
+            if(dir_entry.path().filename() == "params")
+            {
+                //TODO prevent crash on invalid params file
+                auto& job_params = job_it->second.params;
+                std::ifstream params_file(dir_entry.path()); 
+                while(params_file.good())
+                {
+                    std::string param;
+                    std::string default_value;
+                    std::getline(params_file, param, '=');
+                    std::getline(params_file, default_value, '\n');
+                    if(!default_value.empty())
+                    {
+                        default_value = default_value.substr(1, default_value.size() - 2);
+                    }
+                    job_params.emplace(param, default_value);
+                }
+                
+            }
+            auto& job_files = job_it->second.files;
+            job_files.emplace_back(dir_entry.path().filename());
+        }
+    }
+}
+
+void project_list::fetch_project(
+        const std::filesystem::directory_entry& project_dir)
+{
+    auto [it, result] = projects.emplace(
+            std::piecewise_construct,
+            std::make_tuple(project_dir.path().filename()),
+            std::make_tuple());
+    if(result == false)
+    {
+        return;
+    }
+    for(auto& dir_entry: fs::directory_iterator(project_dir))
+    {
+        if(dir_entry.is_directory())
+        {
+            fetch_job(dir_entry, it);
+        }
+        else if(dir_entry.is_regular_file())
+        {
+            auto& project_files = it->second.files;
+            project_files.emplace_back(dir_entry.path().filename());
+        }
+    }
+}
+
 void project_list::fetch()
 {
     projects.clear();
     try
     {
-        for(auto& project: fs::directory_iterator(cis_projects_path_))
+        for(auto& dir_entry: fs::directory_iterator(cis_projects_path_))
         {
-            if(project.is_directory())
+            if(dir_entry.is_directory())
             {
-                auto [project_it, result] = projects.emplace(
-                        std::piecewise_construct,
-                        std::make_tuple(project.path().filename()),
-                        std::make_tuple());
-                if(result == false)
-                {
-                    continue; //FIXME
-                }
-                for(auto& job: fs::directory_iterator(project))
-                {
-                    if(job.is_directory())
-                    {
-                        auto [job_it, result] = project_it->second.jobs.emplace(
-                            std::piecewise_construct,
-                            std::make_tuple(job.path().filename()),
-                            std::make_tuple());
-                        if(result == false)
-                        {
-                            continue; //FIXME
-                        }
-                        for(auto& job_file: fs::directory_iterator(job))
-                        {
-                            if(job_file.is_directory())
-                            {
-                                auto& build = job_file;
-                                std::ifstream exitcode_file(path_cat(build.path().c_str(), "/exitcode.txt"));
-                                int exitcode;
-                                exitcode_file >> exitcode;
-                                std::ifstream output_file(path_cat(build.path().c_str(), "/output.txt"));
-                                std::string date;
-                                output_file >> date;
-                                std::vector<std::string> artifacts;
-                                for(auto& artifact_file: fs::directory_iterator(job_file))
-                                {
-                                    if(artifact_file.is_regular_file())
-                                    {
-                                        artifacts.emplace_back(artifact_file.path().filename().c_str());
-                                    }
-                                }
-                                job_it->second.builds.emplace(
-                                        build.path().filename(),
-                                        exitcode,
-                                        date.substr(0, 10),
-                                        std::move(artifacts));
-                            }
-                            else if(job_file.is_regular_file())
-                            {
-                                if(job_file.path().filename() == "params")
-                                {
-                                    //TODO prevent crash on invalid params file
-                                    auto& job_params = job_it->second.params;
-                                    std::ifstream params_file(job_file.path()); 
-                                    while(params_file.good())
-                                    {
-                                        std::string param;
-                                        std::string default_value;
-                                        std::getline(params_file, param, '=');
-                                        std::getline(params_file, default_value, '\n');
-                                        if(!default_value.empty())
-                                        {
-                                            default_value = default_value.substr(1, default_value.size() - 2);
-                                        }
-                                        job_params.emplace(param, default_value);
-                                    }
-                                    
-                                }
-                                auto& job_files = job_it->second.files;
-                                job_files.emplace_back(job_file.path().filename());
-                            }
-                        }
-                    }
-                    else if(job.is_regular_file())
-                    {
-                        auto& project_files = project_it->second.files;
-                        project_files.emplace_back(job.path().filename());
-                    }
-                }
+                fetch_project(dir_entry);
             }
         }
     }

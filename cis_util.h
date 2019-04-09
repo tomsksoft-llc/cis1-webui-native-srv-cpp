@@ -95,6 +95,14 @@ class project_list
     boost::asio::steady_timer timer_;
 
     void on_timer(boost::system::error_code ec);
+    void fetch_build(
+            const std::filesystem::directory_entry& build_dir,
+            job::map_t::iterator it);
+    void fetch_job(
+            const std::filesystem::directory_entry& job_dir,
+            project::map_t::iterator it);
+    void fetch_project(
+            const std::filesystem::directory_entry& project_dir);
 public:
     project_list(boost::asio::io_context& ioc);
     void run();
