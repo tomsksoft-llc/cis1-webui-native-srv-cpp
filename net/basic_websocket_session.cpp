@@ -2,7 +2,10 @@
 
 #include "fail.h"
 
-basic_websocket_session::basic_websocket_session(tcp::socket socket)
+namespace net
+{
+
+basic_websocket_session::basic_websocket_session(boost::asio::ip::tcp::socket socket)
     : ws_(std::move(socket))
     , strand_(ws_.get_executor())
     , timer_(ws_.get_executor().context(),
@@ -13,7 +16,7 @@ basic_websocket_session::basic_websocket_session(tcp::socket socket)
 void basic_websocket_session::on_accept(beast::error_code ec)
 {
     // Happens when the timer closes the socket
-    if(ec == net::error::operation_aborted)
+    if(ec == boost::asio::error::operation_aborted)
     {
         return;
     }
@@ -26,7 +29,7 @@ void basic_websocket_session::on_accept(beast::error_code ec)
 
 void basic_websocket_session::on_timer(beast::error_code ec)
 {
-    if(ec && ec != net::error::operation_aborted)
+    if(ec && ec != boost::asio::error::operation_aborted)
     {
         return fail(ec, "timer");
     }
@@ -46,7 +49,7 @@ void basic_websocket_session::on_timer(beast::error_code ec)
 
             // Now send the ping
             ws_.async_ping({},
-                net::bind_executor(
+                boost::asio::bind_executor(
                     strand_,
                     std::bind(
                         &basic_websocket_session::on_ping,
@@ -61,7 +64,7 @@ void basic_websocket_session::on_timer(beast::error_code ec)
 
             // Closing the socket cancels all outstanding operations. They
             // will complete with net::error::operation_aborted
-            ws_.next_layer().shutdown(tcp::socket::shutdown_both, ec);
+            ws_.next_layer().shutdown(boost::asio::ip::tcp::socket::shutdown_both, ec);
             ws_.next_layer().close(ec);
             return;
         }
@@ -69,7 +72,7 @@ void basic_websocket_session::on_timer(beast::error_code ec)
 
     // Wait on the timer
     timer_.async_wait(
-        net::bind_executor(
+        boost::asio::bind_executor(
             strand_,
             std::bind(
                 &basic_websocket_session::on_timer,
@@ -89,7 +92,7 @@ void basic_websocket_session::activity()
 void basic_websocket_session::on_ping(beast::error_code ec)
 {
     // Happens when the timer closes the socket
-    if(ec == net::error::operation_aborted)
+    if(ec == boost::asio::error::operation_aborted)
     {
         return;
     }
@@ -112,11 +115,13 @@ void basic_websocket_session::on_ping(beast::error_code ec)
 }
 
 void basic_websocket_session::on_control_callback(
-    websocket::frame_type kind,
-    beast::string_view payload)
+    boost::beast::websocket::frame_type kind,
+    boost::beast::string_view payload)
 {
     boost::ignore_unused(kind, payload);
 
     // Note that there is activity
     activity();
 }
+
+} // namespace net

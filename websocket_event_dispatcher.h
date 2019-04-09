@@ -21,9 +21,9 @@ public:
     void dispatch(
             request_context& ctx,
             bool text,
-            beast::flat_buffer& buffer,
+            boost::beast::flat_buffer& buffer,
             size_t bytes_transferred,
-            std::shared_ptr<websocket_queue> queue);
+            std::shared_ptr<net::websocket_queue> queue);
     void add_event_handler(
             ws_request_id event_id,
             std::function<default_event_handler_t> cb);

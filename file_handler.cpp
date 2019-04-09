@@ -8,16 +8,18 @@ file_handler::file_handler(const std::string& doc_root)
 {}
 
 handle_result file_handler::operator()(
-        http::request<http::string_body>& req,
-        http_session::queue& queue,
+        http::request<http::empty_body>& req,
+        net::http_session::request_reader& reader,
+        net::http_session::queue& queue,
         request_context& ctx)
 {
-    return single_file(req, queue, ctx, req.target());
+    return single_file(req, reader, queue, ctx, req.target());
 }
 
 handle_result file_handler::single_file(
-        http::request<http::string_body>& req,
-        http_session::queue& queue,
+        http::request<http::empty_body>& req,
+        net::http_session::request_reader& reader,
+        net::http_session::queue& queue,
         request_context& /*ctx*/,
         std::string_view path)
 {

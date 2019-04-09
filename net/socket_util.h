@@ -2,6 +2,9 @@
 
 #include <boost/system/error_code.hpp>
 
+namespace net
+{
+
 namespace detail
 {
     void set_cloexec_impl(int fd, boost::system::error_code& ec);
@@ -15,3 +18,5 @@ void set_cloexec(T& handle, boost::system::error_code& ec)
     detail::set_cloexec_impl(native_handle, ec);
 #endif
 }
+
+} // namespace net

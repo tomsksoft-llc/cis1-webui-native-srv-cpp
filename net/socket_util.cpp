@@ -4,6 +4,9 @@
 #include <fcntl.h>
 #endif
 
+namespace net
+{
+
 namespace detail
 {
 #ifdef __linux__
@@ -24,3 +27,5 @@ void set_cloexec_impl(int fd, boost::system::error_code& ec)
 }
 #endif
 } // namespace detail
+
+} // namespace net

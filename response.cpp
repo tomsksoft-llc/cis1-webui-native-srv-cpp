@@ -4,7 +4,7 @@ namespace beast = boost::beast;
 namespace http = beast::http;
 
 http::response<http::string_body> response::accepted(
-        http::request<http::string_body>&& req)
+        http::request<http::empty_body>&& req)
 {
     http::response<http::string_body> res{http::status::accepted, req.version()};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
@@ -16,7 +16,7 @@ http::response<http::string_body> response::accepted(
 }
 
 http::response<http::string_body> response::not_found(
-        http::request<http::string_body>&& req)
+        http::request<http::empty_body>&& req)
 {
     http::response<http::string_body> res{http::status::not_found, req.version()};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
@@ -28,7 +28,7 @@ http::response<http::string_body> response::not_found(
 }
 
 http::response<http::string_body> response::bad_request(
-        http::request<http::string_body>&& req, beast::string_view why)
+        http::request<http::empty_body>&& req, beast::string_view why)
 {
     http::response<http::string_body> res{http::status::bad_request, req.version()};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);
@@ -40,7 +40,7 @@ http::response<http::string_body> response::bad_request(
 }
 
 http::response<http::string_body> response::server_error(
-        http::request<http::string_body>&& req, beast::string_view what)
+        http::request<http::empty_body>&& req, beast::string_view what)
 {
     http::response<http::string_body> res{http::status::internal_server_error, req.version()};
     res.set(http::field::server, BOOST_BEAST_VERSION_STRING);

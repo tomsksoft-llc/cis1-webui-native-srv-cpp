@@ -14,7 +14,7 @@ class base_websocket_event_handler
 {
 public:
     virtual void handle(
-            std::shared_ptr<websocket_queue> queue,
+            std::shared_ptr<net::websocket_queue> queue,
             request_context& ctx,
             const rapidjson::Value& request_data,
             ws_request_id request_id,

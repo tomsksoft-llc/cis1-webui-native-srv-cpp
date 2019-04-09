@@ -6,6 +6,9 @@
 #include <iostream>
 #endif
 
+namespace net
+{
+
 websocket_queue::websocket_queue(queued_websocket_session& self)
     : self_(self)
 {
@@ -17,7 +20,7 @@ void websocket_queue::send()
         self_.ws_.text(messages_.front().text);
         self_.ws_.async_write(
                 messages_.front().buffer,
-                net::bind_executor(
+                boost::asio::bind_executor(
                     self_.strand_,
                     std::bind(
                         &queued_websocket_session::on_write,
@@ -54,8 +57,8 @@ bool websocket_queue::on_write()
 }
 
 void queued_websocket_session::accept_handler(
-            tcp::socket&& socket,
-            http::request<http::string_body>&& req,
+            boost::asio::ip::tcp::socket&& socket,
+            boost::beast::http::request<boost::beast::http::empty_body>&& req,
             request_handler_t handler)
 {
     std::make_shared<queued_websocket_session>(
@@ -65,7 +68,7 @@ void queued_websocket_session::accept_handler(
 #endif
 }
 
-queued_websocket_session::queued_websocket_session(tcp::socket socket, request_handler_t handler)
+queued_websocket_session::queued_websocket_session(boost::asio::ip::tcp::socket socket, request_handler_t handler)
     : basic_websocket_session(std::move(socket))
     , handler_(std::move(handler))
     , queue_(*this)
@@ -94,7 +97,7 @@ void queued_websocket_session::do_read()
     // TODO probably better is readsome because we can reach resource exhaustation
     ws_.async_read(
         in_buffer_,
-        net::bind_executor(
+        boost::asio::bind_executor(
             strand_,
             std::bind(
                 &queued_websocket_session::on_read,
@@ -104,16 +107,16 @@ void queued_websocket_session::do_read()
 }
 
 void queued_websocket_session::on_read(
-    beast::error_code ec,
+    boost::beast::error_code ec,
     std::size_t bytes_transferred)
 {
     // Happens when the timer closes the socket
-    if(ec == net::error::operation_aborted)
+    if(ec == boost::asio::error::operation_aborted)
     {
         return;
     }
     // This indicates that the websocket_session was closed
-    if(ec == websocket::error::closed)
+    if(ec == boost::beast::websocket::error::closed)
     {
 #ifndef NDEBUG
         std::cout << "websocket::error::closed" << std::endl;
@@ -139,13 +142,13 @@ void queued_websocket_session::on_read(
 }
 
 void queued_websocket_session::on_write(
-    beast::error_code ec,
+    boost::beast::error_code ec,
     std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
 
     // Happens when the timer closes the socket
-    if(ec == net::error::operation_aborted)
+    if(ec == boost::asio::error::operation_aborted)
     {
         return;
     }
@@ -164,3 +167,5 @@ std::shared_ptr<websocket_queue> queued_websocket_session::get_queue()
 {
     return std::shared_ptr<websocket_queue>(shared_from_this(), &queue_);
 }
+
+} // namespace net

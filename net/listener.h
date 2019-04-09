@@ -5,27 +5,30 @@
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
 
-namespace beast = boost::beast;                 // from <boost/beast.hpp>
-namespace net = boost::asio;                    // from <boost/asio.hpp>
-using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-
-class listener : public std::enable_shared_from_this<listener>
+namespace net
 {
-    tcp::acceptor acceptor_;
-    tcp::socket socket_;
-    std::function<void(tcp::socket&&)> accept_socket_;
+
+class listener
+    : public std::enable_shared_from_this<listener>
+{
+    boost::asio::ip::tcp::acceptor acceptor_;
+    boost::asio::ip::tcp::socket socket_;
+    std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket_;
 public:
     listener(
-        net::io_context& ioc,
-        std::function<void(tcp::socket&&)> accept_socket);
+        boost::asio::io_context& ioc,
+        std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket);
 
-    void listen(const tcp::endpoint& endpoint, beast::error_code& ec);
+    void listen(
+            const boost::asio::ip::tcp::endpoint& endpoint,
+            boost::beast::error_code& ec);
 
     // Start accepting incoming connections
     void run();
 
     void do_accept();
 
-    void on_accept(beast::error_code ec);
+    void on_accept(boost::beast::error_code ec);
 };
 
+} // namespace net

@@ -12,7 +12,7 @@
 #endif
 
 void send_error(
-        std::shared_ptr<websocket_queue>& queue,
+        std::shared_ptr<net::websocket_queue>& queue,
         ws_response_id event_id,
         std::string error_string)
 {
@@ -37,9 +37,9 @@ void send_error(
 void websocket_event_dispatcher::dispatch(
         request_context& ctx,
         bool text,
-        beast::flat_buffer& buffer,
+        boost::beast::flat_buffer& buffer,
         size_t bytes_transferred,
-        std::shared_ptr<websocket_queue> queue)
+        std::shared_ptr<net::websocket_queue> queue)
 {
     if(text)
     {     

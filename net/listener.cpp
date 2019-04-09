@@ -5,15 +5,20 @@
 #include "fail.h"
 #include "socket_util.h"
 
+namespace net
+{
+
 listener::listener(
-    net::io_context& ioc,
-    std::function<void(tcp::socket&&)> accept_socket)
+    boost::asio::io_context& ioc,
+    std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket)
     : acceptor_(ioc)
     , socket_(ioc)
     , accept_socket_(std::move(accept_socket))
 {}
 
-void listener::listen(const tcp::endpoint& endpoint, beast::error_code& ec)
+void listener::listen(
+        const boost::asio::ip::tcp::endpoint& endpoint,
+        boost::beast::error_code& ec)
 {
 
     // Open the acceptor
@@ -33,7 +38,7 @@ void listener::listen(const tcp::endpoint& endpoint, beast::error_code& ec)
     }
 
     // Allow address reuse
-    acceptor_.set_option(net::socket_base::reuse_address(true), ec);
+    acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
     if(ec)
     {
         fail(ec, "set_option");
@@ -50,7 +55,7 @@ void listener::listen(const tcp::endpoint& endpoint, beast::error_code& ec)
 
     // Start listening for connections
     acceptor_.listen(
-        net::socket_base::max_listen_connections, ec);
+        boost::asio::socket_base::max_listen_connections, ec);
     if(ec)
     {
         fail(ec, "listen");
@@ -77,7 +82,7 @@ void listener::do_accept()
             std::placeholders::_1));
 }
 
-void listener::on_accept(beast::error_code ec)
+void listener::on_accept(boost::beast::error_code ec)
 {
     if(ec)
     {
@@ -100,3 +105,4 @@ void listener::on_accept(beast::error_code ec)
     do_accept();
 }
 
+} // namespace net

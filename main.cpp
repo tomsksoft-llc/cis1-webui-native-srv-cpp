@@ -10,7 +10,6 @@
 #include "init.h"
 #include "dirs.h"
 #include "request_context.h"
-#include "web_app.h"
 // Business logic
 #include "auth_manager.h"
 #include "rights_manager.h"
@@ -20,13 +19,14 @@
 #include "cookie_parser.h"
 #include "file_handler.h"
 // HTTP handlers
+#include "http_handlers_chain.h"
 #include "http_handlers.h"
 // WebSocket handlers
 #include "websocket_event_dispatcher.h"
 #include "websocket_event_handlers.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
-namespace net = boost::asio;                    // from <boost/asio.hpp>
+namespace asio = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 using namespace std::placeholders;
 
@@ -43,10 +43,10 @@ int main(int argc, char* argv[])
     cis::set_root_dir(cis_root.c_str());
     db::set_root_dir(db_path.c_str());
     // The io_context is required for all I/O
-    net::io_context ioc{};
+    asio::io_context ioc{};
    
     // Configure and run public http interface
-    auto app = std::make_shared<web_app>(ioc);
+    auto app = std::make_shared<http_handlers_chain>();
     
     auto authentication_handler = std::make_shared<auth_manager>();
     auto authorization_handler = std::make_shared<rights_manager>();
@@ -56,10 +56,10 @@ int main(int argc, char* argv[])
     auto public_router = std::make_shared<http_router>();
     auto& index_route = public_router->add_route("/");
     index_route.append_handler(
-            std::bind(&file_handler::single_file, files, _1, _2, _3, "/index.html"));
+            std::bind(&file_handler::single_file, files, _1, _2, _3, _4, "/index.html"));
     public_router->add_catch_route()
         .append_handler(
-                std::bind(&file_handler::operator(), files, _1, _2, _3));
+                std::bind(&file_handler::operator(), files, _1, _2, _3, _4));
     auto ws_router = std::make_shared<websocket_router>();
     auto& ws_route = ws_router->add_route("/ws(\\?.+)*");
 
@@ -98,14 +98,18 @@ int main(int argc, char* argv[])
             std::bind(&ws_handle_get_build_info, projects, authorization_handler, _1, _2, _3, _4));
 
     ws_route.append_handler([&ws_dispatcher](
-                http::request<http::string_body>& req,
+                http::request<http::empty_body>& req,
                 tcp::socket& socket,
                 request_context& ctx)
             {
-                queued_websocket_session::accept_handler(
+            net::queued_websocket_session::accept_handler(
                         std::move(socket),
                         std::move(req),
-                        std::bind(&websocket_event_dispatcher::dispatch, ws_dispatcher, ctx, _1, _2, _3, _4));
+                        std::bind(
+                            &websocket_event_dispatcher::dispatch,
+                            ws_dispatcher,
+                            ctx,
+                            _1, _2, _3, _4));
                 return handle_result::done;
             });
 
@@ -114,37 +118,37 @@ int main(int argc, char* argv[])
             std::bind(
                 &handle_authenticate,
                 authentication_handler,
-                _1, _2, _3));
+                _1, _2, _3, _4));
     app->append_handler(
             std::bind(
                 &http_router::operator(),
                 public_router,
-                _1, _2, _3));
+                _1, _2, _3, _4));
     app->append_ws_handler(
             std::bind(
                 &websocket_router::operator(),
                 ws_router,
                 _1, _2, _3));
-    app->listen(tcp::endpoint{address, port});
+    app->listen(ioc, tcp::endpoint{address, port});
 
     // Configure and run cis http interface
-    auto cis_app = std::make_shared<web_app>(ioc);
+    auto cis_app = std::make_shared<http_handlers_chain>();
     auto cis_router = std::make_shared<http_router>();
     cis_app->append_handler(
             std::bind(
                 &http_router::operator(),
                 cis_router,
-                _1, _2,_3));
+                _1, _2,_3, _4));
     auto& projects_route = cis_router->add_route("/projects");
     projects_route.append_handler(
             std::bind(
                 &handle_update_projects,
                 projects,
-                _1, _2, _3));
-    cis_app->listen(tcp::endpoint{cis_address, cis_port});
+                _1, _2, _3, _4));
+    cis_app->listen(ioc, tcp::endpoint{cis_address, cis_port});
 
     // Capture SIGINT and SIGTERM to perform a clean shutdown
-    net::signal_set signals(ioc, SIGINT, SIGTERM);
+    asio::signal_set signals(ioc, SIGINT, SIGTERM);
     signals.async_wait(
         [&](beast::error_code const&, int)
         {

@@ -4,8 +4,9 @@
 
 handle_result handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
-        http::request<http::string_body>& /*req*/,
-        http_session::queue& /*queue*/,
+        http::request<http::empty_body>& /*req*/,
+        net::http_session::request_reader& reader,
+        net::http_session::queue& /*queue*/,
         request_context& ctx)
 {
     if(const auto& cookies = ctx.cookies; cookies.count("token"))
@@ -21,8 +22,9 @@ handle_result handle_authenticate(
 
 handle_result handle_update_projects(
         const std::shared_ptr<project_list>& projects,
-        http::request<http::string_body>& req,
-        http_session::queue& queue,
+        http::request<http::empty_body>& req,
+        net::http_session::request_reader& reader,
+        net::http_session::queue& queue,
         request_context& /*ctx*/)
 {
     beast::error_code ec;
