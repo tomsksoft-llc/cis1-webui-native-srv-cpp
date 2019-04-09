@@ -16,14 +16,9 @@ void http_handlers_chain::append_ws_handler(const ws_handler_t& handler)
     ws_handlers_.push_back(handler);
 }
 
-void http_handlers_chain::set_error_handler(const handler_t& handler)
+void http_handlers_chain::set_error_handler(const error_handler_t& handler)
 {
     error_handler_ = handler;
-}
-
-void http_handlers_chain::set_ws_error_handler(const ws_handler_t& handler)
-{
-    ws_error_handler_ = handler;
 }
 
 void http_handlers_chain::listen(boost::asio::io_context& ioc, const tcp::endpoint& endpoint)
@@ -54,7 +49,7 @@ void http_handlers_chain::handle_header(
     context_t ctx{};
     for(auto& handler : handlers_)
     {
-        auto result = handler(req, reader, queue, ctx);
+        auto result = handler(req, ctx, reader, queue);
         switch(result)
         {
             case handle_result::next:
@@ -62,7 +57,10 @@ void http_handlers_chain::handle_header(
             case handle_result::done:
                 return;
             case handle_result::error:
-                error_handler_(req, reader, queue, ctx);
+                if(error_handler_)
+                {
+                    error_handler_(req, ctx, queue);
+                }
                 return;
         };
     }
@@ -70,12 +68,13 @@ void http_handlers_chain::handle_header(
 
 void http_handlers_chain::handle_upgrade(
         tcp::socket&& socket,
-        request_header_t&& req) const
+        request_header_t&& req,
+        net::http_session::queue& queue) const
 {
     context_t ctx{};
     for(auto& handler : ws_handlers_)
     {
-        auto result = handler(req, socket, ctx);
+        auto result = handler(req, ctx, socket);
         switch(result)
         {
             case handle_result::next:
@@ -83,7 +82,10 @@ void http_handlers_chain::handle_upgrade(
             case handle_result::done:
                 return;
             case handle_result::error:
-                ws_error_handler_(req, socket, ctx);
+                if(error_handler_)
+                {
+                    error_handler_(req, ctx, queue);
+                }
                 return;
         };
     }

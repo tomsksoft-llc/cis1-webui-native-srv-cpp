@@ -11,18 +11,18 @@ file_handler::file_handler(const std::string& doc_root)
 
 handle_result file_handler::operator()(
         http::request<http::empty_body>& req,
+        request_context& ctx,
         net::http_session::request_reader& reader,
-        net::http_session::queue& queue,
-        request_context& ctx)
+        net::http_session::queue& queue)
 {
-    return single_file(req, reader, queue, ctx, req.target());
+    return single_file(req, ctx, reader, queue, req.target());
 }
 
 handle_result file_handler::single_file(
         http::request<http::empty_body>& req,
+        request_context& ctx,
         net::http_session::request_reader& reader,
         net::http_session::queue& queue,
-        request_context& /*ctx*/,
         std::string_view path)
 {
         std::string full_path = path_cat(doc_root_, path);
@@ -33,15 +33,16 @@ handle_result file_handler::single_file(
         body.open(full_path.c_str(), beast::file_mode::scan, ec);
         if(ec == beast::errc::no_such_file_or_directory)
         {
-            queue.send(response::not_found(std::move(req)));
-            return handle_result::done;
+            ctx.res_status = http::status::not_found;
+            return handle_result::error;
         }
 
         // Handle an unknown error
         if(ec)
         {
-            queue.send(response::server_error(std::move(req), ec.message()));
-            return handle_result::done;
+            ctx.res_status = http::status::internal_server_error;
+            ctx.error = ec.message();
+            return handle_result::error;
         }
 
         // Cache the size since we need it after the move

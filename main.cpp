@@ -15,12 +15,13 @@
 #include "auth_manager.h"
 #include "rights_manager.h"
 #include "cis/project_list.h"
-// Middleware
+// HTTP Middleware
+#include "http_handlers_chain.h"
 #include "router.h"
 #include "cookie_parser.h"
 #include "file_handler.h"
 // HTTP handlers
-#include "http_handlers_chain.h"
+#include "http_error_handler.h"
 #include "http_handlers.h"
 // WebSocket handlers
 #include "websocket/event_list.h"
@@ -28,9 +29,9 @@
 #include "websocket/event_handlers.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
-namespace asio = boost::asio;                    // from <boost/asio.hpp>
+namespace asio = boost::asio;                   // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
-using namespace std::placeholders;
+using namespace std::placeholders;              // from <functional>
 
 namespace ws = websocket;
 namespace wsh = websocket::handlers;
@@ -52,6 +53,11 @@ int main(int argc, char* argv[])
    
     // Configure and run public http interface
     auto app = std::make_shared<http_handlers_chain>();
+    app->set_error_handler(
+            std::bind(
+                &http_error_handler::operator(),
+                std::make_shared<http_error_handler>(),
+                _1, _2, _3));
     
     auto authentication_handler = std::make_shared<auth_manager>();
     auto authorization_handler = std::make_shared<rights_manager>();
@@ -104,8 +110,8 @@ int main(int argc, char* argv[])
 
     ws_route.append_handler([&ws_dispatcher](
                 http::request<http::empty_body>& req,
-                tcp::socket& socket,
-                request_context& ctx)
+                request_context& ctx,
+                tcp::socket& socket)
             {
             net::queued_websocket_session::accept_handler(
                         std::move(socket),

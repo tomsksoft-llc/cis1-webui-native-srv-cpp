@@ -5,9 +5,9 @@
 handle_result handle_authenticate(
         const std::shared_ptr<auth_manager>& authentication_handler,
         http::request<http::empty_body>& /*req*/,
+        request_context& ctx,
         net::http_session::request_reader& reader,
-        net::http_session::queue& /*queue*/,
-        request_context& ctx)
+        net::http_session::queue& /*queue*/)
 {
     if(const auto& cookies = ctx.cookies; cookies.count("token"))
     {
@@ -23,18 +23,10 @@ handle_result handle_authenticate(
 handle_result handle_update_projects(
         const std::shared_ptr<cis::project_list>& projects,
         http::request<http::empty_body>& req,
+        request_context& ctx,
         net::http_session::request_reader& reader,
-        net::http_session::queue& queue,
-        request_context& /*ctx*/)
+        net::http_session::queue& queue)
 {
-    boost::beast::error_code ec;
-    // Handle an unknown error
-    if(ec)
-    {
-        queue.send(response::server_error(std::move(req), ec.message()));
-        return handle_result::done;
-    }
-
     projects->fetch();
 
     http::response<http::empty_body> res{

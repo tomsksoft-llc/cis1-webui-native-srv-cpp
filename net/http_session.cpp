@@ -123,7 +123,8 @@ void http_session::on_read_header(boost::beast::error_code ec)
         // Create a WebSocket websocket_session by transferring the socket
         app_->handle_upgrade(
                 std::move(socket_),
-                std::move(request_reader_.get_header_parser().release()));
+                std::move(request_reader_.get_header_parser().release()),
+                queue_);
         return;
     }
     

@@ -40,11 +40,9 @@ handle_result multipart_form_handler::operator()(
                         res.keep_alive(req.keep_alive());
                     queue.send(std::move(res));
                 });
+        return handle_result::done;
     }
-    else
-    {
-        queue.send(response::not_found(std::move(req)));
-        reader.done();
-    }
-    return handle_result::done;
+    ctx.res_status = http::status::not_found;
+    return handle_result::error;
+    reader.done();
 }

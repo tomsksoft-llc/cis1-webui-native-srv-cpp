@@ -19,21 +19,22 @@ namespace http = beast::http;                   // from <boost/beast/http.hpp>
 namespace asio = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 
-template <class BodyType, typename... Args>
+template <typename... Args>
 class router
 {
 public:
-    using request_t = http::request<BodyType>;
-    using handler_t = std::function<handle_result(request_t& req, Args...)>;
+    using request_t = http::request<http::empty_body>;
+    using context_t = request_context;
+    using handler_t = std::function<handle_result(request_t&, context_t&, Args...)>;
     class handlers_chain
     {
         std::vector<handler_t> handlers_;
     public:
-        handle_result handle(request_t& req, Args... args)
+        handle_result handle(request_t& req, context_t& ctx, Args... args)
         {
             for(auto& handler : handlers_)
             {
-                auto result = handler(req, std::forward<decltype(args)>(args)...);
+                auto result = handler(req, ctx, std::forward<decltype(args)>(args)...);
                 switch(result)
                 {
                     case handle_result::next:
@@ -44,14 +45,15 @@ public:
                         return handle_result::error;
                 };
             }
-            return handle_result::next;
+            //
+            return handle_result::error;
         }
         void append_handler(const handler_t& handler)
         {
             handlers_.push_back(handler);
         }
     };
-    handle_result operator()(request_t& req, Args... args)
+    handle_result operator()(request_t& req, context_t& ctx, Args... args)
     {
         std::string target{req.target()}; //TODO: use string_view somehow
         for(auto&& [regexp, chain] : routes_)
@@ -59,12 +61,11 @@ public:
             boost::smatch what;
             if(boost::regex_match(target, what, regexp))
             {
-                chain->handle(req, std::forward<decltype(args)>(args)...);
-                return handle_result::done;
+                return chain->handle(req, ctx, std::forward<decltype(args)>(args)...);
             }
         }
-        //queue.send(response::not_found(std::move(req)));
-        return handle_result::done;
+        //
+        return handle_result::error;
     };
     handlers_chain& add_route(const std::string& route)
     {
@@ -86,8 +87,6 @@ private:
 };
 
 using http_router = router<
-    http::empty_body,
     net::http_session::request_reader&,
-    net::http_session::queue&,
-    request_context&>;
-using websocket_router = router<http::empty_body, tcp::socket&, request_context&>;
+    net::http_session::queue&>;
+using websocket_router = router<tcp::socket&>;

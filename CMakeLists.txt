@@ -21,6 +21,7 @@ set(${PROJECT_NAME}_SRC
     exceptions/generic_error.cpp
     exceptions/load_config_error.cpp
     http_handlers_chain.cpp
+    http_error_handler.cpp
     cookie_parser.cpp
     auth_manager.cpp
     response.cpp
