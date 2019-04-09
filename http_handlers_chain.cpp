@@ -1,7 +1,7 @@
 #include "http_handlers_chain.h"
 
 #include "net/listener.h"
-#include "generic_error.h"
+#include "exceptions/generic_error.h"
 
 http_handlers_chain::http_handlers_chain()
 {}

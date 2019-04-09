@@ -12,7 +12,7 @@
 
 #include "file_util.h"
 #include "db_dirs.h"
-#include "load_config_error.h"
+#include "exceptions/load_config_error.h"
 
 constexpr const char* users_file_path = "/users.pwd";
 constexpr const char* tokens_file_path = "/tokens.pwd";

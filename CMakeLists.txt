@@ -17,6 +17,9 @@ set(${PROJECT_NAME}_SRC
     cis/dirs.cpp
     cis/job.cpp
     cis/project_list.cpp
+    exceptions/base_cis_srv_exception.cpp
+    exceptions/generic_error.cpp
+    exceptions/load_config_error.cpp
     http_handlers_chain.cpp
     cookie_parser.cpp
     auth_manager.cpp
@@ -32,10 +35,7 @@ set(${PROJECT_NAME}_SRC
     http_handlers.cpp
     websocket_event_dispatcher.cpp
     websocket_event_handlers.cpp
-    base_websocket_event_handler.cpp
-    base_cis_srv_exception.cpp
-    generic_error.cpp
-    load_config_error.cpp)
+    base_websocket_event_handler.cpp)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
