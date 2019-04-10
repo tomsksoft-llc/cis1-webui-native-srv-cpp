@@ -36,7 +36,8 @@ set(${PROJECT_NAME}_SRC
     child_process.cpp
     db_dirs.cpp
     init.cpp
-    rights_manager.cpp)
+    rights_manager.cpp
+    application.cpp)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})

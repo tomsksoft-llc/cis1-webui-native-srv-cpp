@@ -67,6 +67,10 @@ void handlers_chain::handle_header(
                 return;
         };
     }
+    if(error_handler_)
+    {
+        error_handler_(req, ctx, queue);
+    }
 }
 
 void handlers_chain::handle_upgrade(
@@ -91,6 +95,10 @@ void handlers_chain::handle_upgrade(
                 }
                 return;
         };
+    }
+    if(error_handler_)
+    {
+        error_handler_(req, ctx, queue);
     }
 };
 

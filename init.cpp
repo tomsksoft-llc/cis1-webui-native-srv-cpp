@@ -4,6 +4,9 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
+#include "cis/dirs.h"
+#include "db_dirs.h"
+
 namespace net = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace pt = boost::property_tree;
@@ -49,5 +52,7 @@ init_params parse_args(int argc, char* argv[])
         }
         result.db_root = ".";
     }
+    cis::set_root_dir(result.cis_root.c_str());
+    db::set_root_dir(result.db_root.c_str());
     return result;
 }
