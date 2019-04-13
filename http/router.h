@@ -13,6 +13,8 @@
 #include "handle_result.h"
 #include "request_context.h"
 #include "response.h"
+#include "url.h"
+#include "meta.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace asio = boost::asio;                    // from <boost/asio.hpp>
@@ -28,64 +30,77 @@ public:
     using request_t = beast::http::request<beast::http::empty_body>;
     using context_t = request_context;
     using handler_t = std::function<handle_result(request_t&, context_t&, Args...)>;
-    class handlers_chain
+    struct handler_interface
     {
-        std::vector<handler_t> handlers_;
-    public:
-        handle_result handle(request_t& req, context_t& ctx, Args... args)
-        {
-            for(auto& handler : handlers_)
-            {
-                auto result = handler(req, ctx, std::forward<decltype(args)>(args)...);
-                switch(result)
-                {
-                    case handle_result::next:
-                        break;
-                    case handle_result::done:
-                        return handle_result::done;
-                    case handle_result::error:
-                        return handle_result::error;
-                };
-            }
-            //
-            return handle_result::error;
-        }
-        void append_handler(const handler_t& handler)
-        {
-            handlers_.push_back(handler);
-        }
+        virtual ~handler_interface() = default;
+        virtual handle_result handle(
+                request_t&,
+                context_t&,
+                Args...,
+                const boost::smatch&) const = 0;
     };
     handle_result operator()(request_t& req, context_t& ctx, Args... args)
     {
         std::string target{req.target()}; //TODO: use string_view somehow
-        for(auto&& [regexp, chain] : routes_)
+        for(auto&& [regexp, handler] : routes_)
         {
             boost::smatch what;
             if(boost::regex_match(target, what, regexp))
             {
-                return chain->handle(req, ctx, std::forward<decltype(args)>(args)...);
+                return handler->handle(req, ctx, std::forward<decltype(args)>(args)..., what);
             }
         }
         //
         return handle_result::error;
-    };
-    handlers_chain& add_route(const std::string& route)
+    }
+    template <class ParseString, class... RouteArgs>
+    void add_route(
+            url::url_chain<ParseString, RouteArgs...> url,
+            std::function<handle_result(request_t&, context_t&, Args..., RouteArgs...)> cb)
     {
         using namespace std::string_literals;
+        ParseString s;
+        class handler_impl
+            : public handler_interface
+        {
+            std::function<handle_result(
+                        request_t&,
+                        context_t&,
+                        Args...,
+                        RouteArgs...)> fn;
+        public:
+            handler_impl(
+                    std::function<handle_result(
+                        request_t&,
+                        context_t&,
+                        Args...,
+                        RouteArgs...)> fn_arg)
+                : fn(fn_arg)
+            {}
+
+
+            handle_result handle(
+                    request_t& req,
+                    context_t& ctx,
+                    Args... args,
+                    const boost::smatch& what) const
+            {
+                auto parsed_args = meta::maybe_tuple<RouteArgs...>(what, 1); 
+                if(parsed_args)
+                {
+                    auto fn_args = std::tuple_cat(std::forward_as_tuple(req, ctx, args...), parsed_args.value());
+                    return std::apply(fn, fn_args);
+                }
+                return handle_result::error;
+            }
+        };
+        
         auto&& inserted = routes_.emplace_back(
-                "^"s + route + "$"s,
-                std::make_unique<handlers_chain>());
-        return *(inserted.second);
-    }
-    handlers_chain& add_catch_route()
-    {
-        auto&& inserted = routes_.emplace_back(
-                "^/.+$",
-                std::make_unique<handlers_chain>());
-        return *(inserted.second);
+                "^"s + s.value + "$"s,
+                std::make_unique<handler_impl>(cb));
     }
 private:
-    std::vector<std::pair<boost::regex, std::unique_ptr<handlers_chain>>> routes_;
+    std::vector<std::pair<boost::regex, std::unique_ptr<handler_interface>>> routes_;
 };
 
 } // namespace http

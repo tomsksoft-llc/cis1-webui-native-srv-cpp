@@ -5,10 +5,12 @@
 #include "http/error_handler.h"
 #include "http/cookie_parser.h"
 #include "http/common_handlers.h"
+#include "http/url.h"
 #include "websocket/event_dispatcher.h"
 #include "websocket/event_handlers.h"
 
 using namespace std::placeholders;              // from <functional>
+using url::operator""_url;
 
 application::application(const init_params& params)
     : params_(params)
@@ -74,19 +76,24 @@ void application::init_cis_app()
 std::shared_ptr<http_router> application::make_public_http_router()
 {
     auto router = std::make_shared<http_router>();
-    auto& index_route = router->add_route("/");
-    index_route.append_handler(
-            std::bind(
+
+    std::function <http::handle_result(
+        beast::http::request<beast::http::empty_body>& req,
+        request_context& ctx,
+        net::http_session::request_reader&,
+        net::http_session::queue&)> cb = std::bind(
                 &http::file_handler::single_file,
                 files_,
                 _1, _2, _3, _4,
-                "/index.html"));
-    router->add_catch_route()
-        .append_handler(
-                std::bind(
+                "/index.html");
+    router->add_route(url::root(), cb);
+    
+    cb = std::bind(
                     &http::file_handler::operator(),
                     files_,
-                    _1, _2, _3, _4));
+                    _1, _2, _3, _4);
+    router->add_route(url::make() / url::ignore(), cb);
+
     return router;
 }
 
@@ -95,7 +102,6 @@ std::shared_ptr<websocket_router> application::make_ws_router()
     namespace ws = websocket;
     namespace wsh = ws::handlers;
     auto router = std::make_shared<websocket_router>();
-    auto& ws_route = router->add_route("/ws(\\?.+)*");
 
     ws::event_dispatcher dispatcher;
     dispatcher.add_event_handler(ws::request_id::auth_login_pass,
@@ -131,7 +137,10 @@ std::shared_ptr<websocket_router> application::make_ws_router()
     dispatcher.add_event_handler(ws::request_id::get_build_info,
             std::bind(&wsh::get_build_info, projects_, rights_manager_, _1, _2, _3, _4));
 
-    ws_route.append_handler([dispatcher](
+    std::function <http::handle_result(
+        beast::http::request<beast::http::empty_body>& req,
+        request_context& ctx,
+        tcp::socket& socket)> cb = [dispatcher](
                 beast::http::request<beast::http::empty_body>& req,
                 request_context& ctx,
                 tcp::socket& socket)
@@ -145,8 +154,9 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                             ctx,
                             _1, _2, _3, _4));
                 return http::handle_result::done;
-            });
-
+            };
+    router->add_route(url::make() / "ws"_url, cb);
+    
     return router;
 }
 
