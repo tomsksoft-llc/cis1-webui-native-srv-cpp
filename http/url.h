@@ -18,11 +18,30 @@ struct str
 template<char ... Chars>
 constexpr const char str<Chars...>::value[sizeof...(Chars)+1];
 
+/* literal string operator template is GNU extension, will be in C++20
 template<typename CharT, CharT ...String>
 constexpr str<String...> operator"" _url()
 {
     return str<String...>();
 }
+*/
+
+template<typename  LambdaStrType>
+struct string_builder
+{
+    template<unsigned... Indices>
+    struct produce
+    {
+        typedef  str<LambdaStrType{}.chars[Indices]...>  result;
+    };
+};
+
+#define URL_STR(VAR)\
+    []() -> decltype(auto) {\
+        struct  constexpr_string_type { const char * chars = VAR; };\
+        return  ::meta::apply_range<sizeof(VAR)-1,\
+            ::url::string_builder<constexpr_string_type>::produce>::result{};\
+    }()
 
 template <class ...>
 struct concat_impl {};
@@ -62,19 +81,19 @@ template <>
 struct token<std::string>
 {
     using value_type = std::string;
-    using regex = decltype("(.+)"_url);
+    using regex = str<'(', '.', '+', ')'>;
 };
 
 template <>
 struct token<int>
 {
     using value_type = int;
-    using regex = decltype("(\\d+)"_url);
+    using regex = str<'(','\\','d','+',')'>;
 };
 
 struct ignore
 {
-    using regex = decltype(".+"_url);
+    using regex = str<'.','+'>;
 };
 
 using string = token<std::string>;

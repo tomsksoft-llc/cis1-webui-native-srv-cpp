@@ -10,7 +10,6 @@
 #include "websocket/event_handlers.h"
 
 using namespace std::placeholders;              // from <functional>
-using url::operator""_url;
 
 application::application(const init_params& params)
     : params_(params)
@@ -155,7 +154,7 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                             _1, _2, _3, _4));
                 return http::handle_result::done;
             };
-    router->add_route(url::make() / "ws"_url, cb);
+    router->add_route(url::make() / URL_STR("ws"), cb);
     
     return router;
 }
