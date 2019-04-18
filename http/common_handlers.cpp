@@ -14,10 +14,10 @@ handle_result handle_authenticate(
 {
     if(const auto& cookies = ctx.cookies; cookies.count("token"))
     {
-        auto user = authentication_handler->authenticate(cookies.at("token"));
-        if(!user.empty())
+        auto username = authentication_handler->authenticate(cookies.at("token"));
+        if(username)
         {
-            ctx.username = user;
+            ctx.username = username.value();
         }
     }
     return handle_result::next;

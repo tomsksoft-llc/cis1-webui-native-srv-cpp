@@ -11,146 +11,140 @@
 #include <rapidjson/error/en.h>
 
 #include "file_util.h"
-#include "db_dirs.h"
 #include "exceptions/load_config_error.h"
 
-constexpr const char* users_file_path = "/users.pwd";
-constexpr const char* tokens_file_path = "/tokens.pwd";
+using namespace sqlite_orm;
+using namespace database;
 
-void save_user(
-        const user& user,
-        rapidjson::Value& user_value,
-        rapidjson::Document::AllocatorType& allocator)
-{
-    user_value.SetObject();
-    rapidjson::Value value;
-    value.SetString(user.pass.c_str(), user.pass.length(), allocator);
-    user_value.AddMember("pass", value, allocator);
-    value.SetString(user.email.c_str(), user.email.length(), allocator);
-    user_value.AddMember("email", value, allocator);
-    value.SetBool(user.admin);
-    user_value.AddMember("admin", value, allocator);
-    value.SetBool(user.disabled);
-    user_value.AddMember("disabled", value, allocator);
-    if(user.api_access_key)
-    {
-        auto& key = user.api_access_key.value();
-        value.SetString(key.c_str(), key.length(), allocator);
-        user_value.AddMember("api_access_key", value, allocator);
-    }
-}
+auth_manager::auth_manager(database::database& db)
+    : db_(db)
+{}
 
-user load_user(const rapidjson::Value& value)
+std::optional<std::string> auth_manager::authenticate(
+        const std::string& username,
+        const std::string& pass)
 {
-    user result;
-    result.pass = value["pass"].GetString();
-    result.email = value["email"].GetString();
-    result.admin = value["admin"].GetBool();
-    result.disabled = value["disabled"].GetBool();
-    if(value.HasMember("api_access_key"))
-    {
-        result.api_access_key = value["api_access_key"].GetString();
-    }
-    return result;
-}
-
-auth_manager::auth_manager()
-{
-    std::string db_path = db::get_root_dir();
-    load_users(path_cat(db_path, users_file_path));
-    load_tokens(path_cat(db_path, tokens_file_path));
-}
-
-std::string auth_manager::authenticate(const std::string& user, const std::string& pass)
-{
-    if(auto it = users_.find(user);
-            it != users_.cend() && it->second.pass == pass)
+    auto db = db_.make_transaction();
+    auto ids = db->select(
+            &user::id,
+            where(c(&user::name) == username
+                  && c(&user::pass) == pass));
+    if(ids.size() == 1)
     {
         auto unix_timestamp = std::chrono::seconds(std::time(NULL));
         std::ostringstream os;
         os << unix_timestamp.count();
-        std::string token = user + os.str();
+        std::string token_str = username + os.str();
         os.clear();
         static const std::hash<std::string> hash_fn;
-        os << hash_fn(token);
-        tokens_[os.str()] = user;
-        save_on_disk();
+        os << hash_fn(token_str);
+        uint64_t expiration_time = (unix_timestamp + std::chrono::hours(24*7)).count();
+        db->insert(token{-1, ids[0], os.str(), expiration_time});
+        db.commit();
         return os.str();
     }
-    return "";
+    return std::nullopt;
 }
 
-std::string auth_manager::authenticate(const std::string& token)
+std::optional<std::string> auth_manager::authenticate(const std::string& token_value)
 {
-    if(auto it = tokens_.find(token); it != tokens_.cend())
+    auto db = db_.make_transaction();
+    auto ids = db->select(
+            columns(&token::user_id, &token::expiration_time),
+            where(c(&token::value) == token_value));
+
+    if(ids.size() == 1)
     {
-        return it->second;
+        if(std::get<1>(ids[0]) < std::chrono::seconds(std::time(NULL)).count())
+        {
+            db->remove_all<token>(where(c(&token::value) == token_value));
+            db.commit();
+            return std::nullopt;
+        }
+        auto users = db->select(
+                &user::name,
+                where(c(&user::id) == std::get<0>(ids[0])));
+        db.commit();
+        return users[0];
     }
-    return "";
+    return std::nullopt;
 }
 
-bool auth_manager::has_user(const std::string& name)
+bool auth_manager::has_user(const std::string& username) const
 {
-    if(auto it = users_.find(name);
-            it != users_.cend())
+    auto db = db_.make_transaction();
+    auto users_count = db->count<user>(where(c(&user::name) == username));
+    if(users_count)
     {
+        db.commit();
         return true;
     }
     return false;
 }
 
-void auth_manager::set_disabled(const std::string& name, bool state)
+bool auth_manager::change_group(
+        const std::string& username,
+        const std::string& groupname)
 {
-    if(auto it = users_.find(name);
-            it != users_.cend())
-    {
-        it->second.admin = state;
-    }
-}
+    auto db = db_.make_transaction();
+    auto users = db->select(
+            &user::id,
+            where(c(&user::name) == username));
+    auto groups = db->select(
+            &group::id,
+            where(c(&group::name) == groupname));
 
-void auth_manager::make_admin(const std::string& name, bool state)
-{
-    if(auto it = users_.find(name);
-            it != users_.cend())
+    if(users.size() == 1 && groups.size() == 1)
     {
-        it->second.disabled = state;
-    }
-}
-
-bool auth_manager::is_admin(const std::string& name)
-{
-    if(auto it = users_.find(name);
-            it != users_.cend())
-    {
-        return it->second.admin;
+        db->update_all(
+                set(assign(&user::group_id, groups[0])),
+                where(c(&user::id) == users[0]));
+        db.commit();
+        return true;
     }
     return false;
 }
 
-std::optional<std::string> auth_manager::generate_api_key(const std::string& name)
+std::optional<std::string> auth_manager::get_group(
+        const std::string& username) const
 {
-    if(auto it = users_.find(name);
-            it != users_.cend())
+    auto db = db_.make_transaction();
+    auto groups = db->select(
+            &group::name,
+            inner_join<user>(on(c(&user::group_id) == &group::id)),
+            where(c(&user::name) == username));
+    if(groups.size() == 1)
     {
-        if(!it->second.api_access_key)
-        {
-            auto unix_timestamp = std::chrono::seconds(std::time(NULL));
-            std::ostringstream os;
-            os << unix_timestamp.count();
-            std::string token = name + it->second.pass + os.str() + "SALT";
-            os.clear();
-            static const std::hash<std::string> hash_fn;
-            os << hash_fn(token);
+        db.commit();
+        return groups[0];
+    }
+    return std::nullopt;
+}
 
-            it->second.api_access_key = os.str();
-        }
-        return it->second.api_access_key;
+std::optional<std::string> auth_manager::generate_api_key(const std::string& username)
+{
+    auto db = db_.make_transaction();
+    auto ids = db->select(
+            &user::id,
+            where(c(&user::name) == username));
+    if(ids.size() == 1)
+    {
+        auto unix_timestamp = std::chrono::seconds(std::time(NULL));
+        std::ostringstream os;
+        os << unix_timestamp.count();
+        std::string key_str = username + os.str() + "SALT";
+        os.clear();
+        static const std::hash<std::string> hash_fn;
+        os << hash_fn(key_str);
+        db->insert(api_access_key{-1, ids[0], os.str()});
+        db.commit();
+        return os.str();
     }
     return std::nullopt;
 }
 
 bool auth_manager::change_pass(
-        const std::string& user,
+        const std::string& username,
         const std::string& old_pass,
         const std::string& new_pass)
 {
@@ -158,116 +152,53 @@ bool auth_manager::change_pass(
     {
         return false;
     }
-    if(auto it = users_.find(user);
-            it != users_.cend() && it->second.pass == old_pass)
+    auto db = db_.make_transaction();
+    auto users = db->select(
+            &user::id,
+            where(c(&user::name) == username
+                  && c(&user::pass) == old_pass));
+    if(users.size() == 1)
     {
-        it->second.pass = new_pass;
-        save_on_disk();
+        db->update_all(
+                set(assign(&user::pass, new_pass)),
+                where(c(&user::id) == users[0]));
+        db.commit();
         return true;
     }
     return false;
 }
 
-const std::map<std::string, user>& auth_manager::get_users()
+std::vector<user> auth_manager::get_users() const
 {
-    return users_;
+    return db_.get().get_all<user>();
 }
 
-void auth_manager::delete_token(const std::string& token)
+bool auth_manager::delete_token(const std::string& token_value)
 {
-    tokens_.erase(token);
+    auto db = db_.make_transaction();
+    db->remove_all<token>(
+            where(c(&token::value) == token_value));
+    db.commit();
+    return true;
 }
 
-std::optional<std::string> auth_manager::add_user(
-        std::string user,
-        std::string pass)
+bool auth_manager::add_user(
+        std::string username,
+        std::string pass,
+        std::string email)
 {
-    return std::nullopt;
-}
-
-void auth_manager::save_on_disk()
-{
-    std::string db_path = db::get_root_dir();
-    save_users(path_cat(db_path, users_file_path));
-    save_tokens(path_cat(db_path, tokens_file_path));
-}
-
-void auth_manager::load_users(std::filesystem::path users_file)
-{
-    std::ifstream users_db(users_file);
-    rapidjson::IStreamWrapper isw(users_db);
-    rapidjson::Document document;
-    document.ParseStream(isw);
-    if(document.HasParseError())
+    auto db = db_.make_transaction();
+    auto users_count = db->count<user>(
+            where(c(&user::name) == username
+                || c(&user::email) == email));
+    if(users_count == 0)
     {
-        std::stringstream ss;
-        ss << "Can't load users db: " << GetParseError_En(document.GetParseError());
-        throw load_config_error(ss.str());
+        auto group_ids = db->select(
+                &group::id,
+                where(c(&group::name) == "user"));
+        db->insert(user{-1, group_ids[0], username, pass, email});
+        db.commit();
+        return true;
     }
-    if(!document.IsObject())
-    {
-        return;
-    }
-    for(auto& member : document.GetObject())
-    {
-        users_[member.name.GetString()] = load_user(member.value);
-    }
-}
-
-void auth_manager::load_tokens(std::filesystem::path tokens_file)
-{
-    std::ifstream tokens_db(tokens_file);
-    rapidjson::IStreamWrapper isw(tokens_db);
-    rapidjson::Document document;
-    document.ParseStream(isw);
-    if(document.HasParseError())
-    {
-        std::stringstream ss;
-        ss << "Can't load tokens db: " << GetParseError_En(document.GetParseError());
-        throw load_config_error(ss.str());
-    }
-    if(!document.IsObject())
-    {
-        return;
-    }
-    for(auto& member : document.GetObject())
-    {
-        tokens_[member.name.GetString()] = member.value.GetString();
-    }
-}
-
-void auth_manager::save_users(std::filesystem::path users_file)
-{
-    rapidjson::Document document;
-    document.SetObject();
-    rapidjson::Value key;
-    rapidjson::Value value;
-    for(auto& [username, user] : users_)
-    {
-        key.SetString(username.c_str(), username.length(), document.GetAllocator());
-        save_user(user, value, document.GetAllocator());
-        document.AddMember(key, value, document.GetAllocator());
-    }
-    std::ofstream users_db(users_file);
-    rapidjson::OStreamWrapper osw(users_db);
-    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
-    document.Accept(writer);
-}
-
-void auth_manager::save_tokens(std::filesystem::path tokens_file)
-{
-    rapidjson::Document document;
-    document.SetObject();
-    rapidjson::Value key;
-    rapidjson::Value value;
-    for(auto& [token, user] : tokens_)
-    {
-        key.SetString(token.c_str(), token.length(), document.GetAllocator());
-        value.SetString(user.c_str(), user.length(), document.GetAllocator());
-        document.AddMember(key, value, document.GetAllocator());
-    }
-    std::ofstream tokens_db(tokens_file);
-    rapidjson::OStreamWrapper osw(tokens_db);
-    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
-    document.Accept(writer);
+    return false;
 }

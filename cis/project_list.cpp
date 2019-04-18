@@ -35,11 +35,12 @@ project::project(const std::string& project_name)
         : name(project_name)
 {}
 
-project_list::project_list(boost::asio::io_context& ioc)
+project_list::project_list(boost::asio::io_context& ioc, database::database& db)
     : cis_projects_path_(path_cat(cis::get_root_dir(), cis::projects))
     , strand_(ioc.get_executor())
     , timer_(ioc,
             (std::chrono::steady_clock::time_point::max)())
+    , db_(db)
 {
     fetch();
 }
@@ -177,6 +178,7 @@ void project_list::fetch_project(
 
 void project_list::fetch()
 {
+    using namespace sqlite_orm;
     projects.clear();
     try
     {
@@ -185,6 +187,23 @@ void project_list::fetch()
             if(dir_entry.is_directory())
             {
                 fetch_project(dir_entry);
+                auto db = db_.make_transaction();
+                auto project_ids = db->select(&database::project::id,
+                        where(c(&database::project::name)
+                            == dir_entry.path().filename().c_str()));
+                if(project_ids.size() == 1)
+                {
+                    db->update_all(set(assign(&database::project::deleted, false)),
+                            where(c(&database::project::id) == project_ids[0]));
+                }
+                else
+                {
+                    db->insert(database::project{
+                            -1,
+                            dir_entry.path().filename().c_str(),
+                            false});
+                }
+                db.commit();
             }
         }
     }

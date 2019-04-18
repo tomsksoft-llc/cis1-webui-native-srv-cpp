@@ -2,46 +2,42 @@
 
 #include <filesystem>
 #include <string>
-#include <map>
+#include <vector>
 #include <optional>
 
 #include "net/http_session.h"
 #include "http/handle_result.h"
 #include "request_context.h"
-
-struct user
-{
-    std::string pass;
-    std::string email;
-    bool admin;
-    bool disabled;
-    std::optional<std::string> api_access_key;
-};
+#include "database.h"
 
 class auth_manager
 {
-    std::map<std::string, user> users_;
-    std::map<std::string, std::string> tokens_;
+    database::database& db_;
 public:
-    auth_manager();
-    std::string authenticate(const std::string& user, const std::string& pass);
-    std::string authenticate(const std::string& token);
-    bool has_user(const std::string& name);
-    void set_disabled(const std::string& name, bool state);
-    void make_admin(const std::string& name, bool state);
-    bool is_admin(const std::string& name);
-    std::optional<std::string> generate_api_key(const std::string& name);
+    auth_manager(database::database& db);
+    std::optional<std::string> authenticate(
+            const std::string& username,
+            const std::string& pass);
+    std::optional<std::string> authenticate(
+            const std::string& token);
+    bool has_user(
+            const std::string& username) const;
+    bool change_group(
+            const std::string& username,
+            const std::string& groupname);
+    std::optional<std::string> get_group(
+            const std::string& username) const;
+    std::optional<std::string> generate_api_key(
+            const std::string& name);
     bool change_pass(
             const std::string& user,
             const std::string& old_pass,
             const std::string& new_pass);
-    const std::map<std::string, user>& get_users();
-    void delete_token(const std::string& token);
-    std::optional<std::string> add_user(std::string user, std::string pass);
-    void save_on_disk();
-private:
-    void load_users(std::filesystem::path users_file);
-    void load_tokens(std::filesystem::path tokens_file);
-    void save_users(std::filesystem::path users_file);
-    void save_tokens(std::filesystem::path tokens_file);
+    std::vector<database::user> get_users() const;
+    bool delete_token(
+            const std::string& token);
+    bool add_user(
+            std::string username,
+            std::string pass,
+            std::string email);
 };
