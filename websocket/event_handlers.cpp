@@ -52,25 +52,27 @@ std::optional<std::string> authenticate(
         return "Invalid JSON.";
     }
 
-    std::string token = authentication_handler->authenticate(login.value(), pass.value());
+    auto token = authentication_handler->authenticate(
+            login.value(),
+            pass.value());
     
-    if(!token.empty())
+    if(token)
     {
         ctx.username = login.value();
-        ctx.active_token = token;
+        auto group = authentication_handler->get_group(ctx.username).value();
+        ctx.active_token = token.value();
         response_data.AddMember(
                 "token",
                 rapidjson::Value().SetString(
-                    token.c_str(),
-                    token.length(),
+                    token.value().c_str(),
+                    token.value().length(),
                     allocator),
                 allocator);
         response_data.AddMember(
                 "group",
                 rapidjson::Value().SetString(
-                    authentication_handler->is_admin(ctx.username)
-                    ? "admin"
-                    : "user",
+                    group.c_str(),
+                    group.length(),
                     allocator),
                 allocator);
         return std::nullopt;
@@ -94,18 +96,18 @@ std::optional<std::string> token(
         return "Invalid JSON.";
     }
 
-    std::string username = authentication_handler->authenticate(token.value());
+    auto username = authentication_handler->authenticate(token.value());
     
-    if(!username.empty())
+    if(username)
     {
-        ctx.username = username;
+        ctx.username = username.value();
         ctx.active_token = token.value();
+        auto group = authentication_handler->get_group(ctx.username).value();
         response_data.AddMember(
                 "group",
                 rapidjson::Value().SetString(
-                    authentication_handler->is_admin(ctx.username)
-                    ? "admin"
-                    : "user",
+                    group.c_str(),
+                    group.length(),
                     allocator),
                 allocator);
         return std::nullopt;
@@ -129,10 +131,9 @@ std::optional<std::string> logout(
         return "Invalid JSON.";
     }
 
-    std::string token_username = authentication_handler->authenticate(token.value());
-    const std::string& connection_username = ctx.username;
+    auto username = authentication_handler->authenticate(token.value());
 
-    if(token_username == connection_username)
+    if(username && username.value() == ctx.username)
     {
         if(token == ctx.active_token)
         {
@@ -412,23 +413,23 @@ std::optional<std::string> list_users(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto perm = rights->check_user_right(ctx.username, "users.list");
+    auto perm = rights->check_user_permission(ctx.username, "users.list");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        auto& users = authentication_handler->get_users();
+        const auto users = authentication_handler->get_users();
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
-        for(auto& [username, user] : users)
+        for(auto& user : users)
         {
             array_value.SetObject();
             array_value.AddMember(
                     "name",
                     rapidjson::Value().SetString(
-                        username.c_str(),
-                        username.length(),
+                        user.name.c_str(),
+                        user.name.length(),
                         allocator),
                     allocator);
             array_value.AddMember(
@@ -441,17 +442,18 @@ std::optional<std::string> list_users(
             array_value.AddMember(
                     "group",
                     rapidjson::Value().SetString(
-                        user.admin
+                        user.group_id == 2 //FIXME
                         ? "admin"
                         : "user",
                         allocator),
                     allocator);
             array_value.AddMember(
                     "disabled",
-                    rapidjson::Value().SetBool(user.disabled),
+                    rapidjson::Value().SetBool(false/*user.disabled*/),
                     allocator);
-            if(user.api_access_key)
+            if(false)//user.api_access_key)
             {
+                /*
                 auto& key = user.api_access_key.value();
                 array_value.AddMember(
                         "APIAccessSecretKey",
@@ -459,7 +461,7 @@ std::optional<std::string> list_users(
                             key.c_str(),
                             key.length(),
                             allocator),
-                        allocator);
+                        allocator);*/
             }
             else
             {
@@ -486,36 +488,36 @@ std::optional<std::string> get_user_permissions(
         return "Invalid JSON.";
     }
 
-    auto perm = rights->check_user_right(ctx.username, "users.permissions");
+    auto perm = rights->check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
     
     if(permitted)
     {
-        auto& permissions = rights->get_permissions(name.value());
+        const auto permissions = rights->get_permissions(name.value());
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
-        for(auto [project, rights] : permissions)
+        for(auto [project_name, project_rights] : permissions)
         {
             array_value.SetObject();
             array_value.AddMember(
                     "name",
                     rapidjson::Value().SetString(
-                        project.c_str(),
-                        project.length(),
+                        project_name.c_str(),
+                        project_name.length(),
                         allocator),
                     allocator);
             array_value.AddMember(
                     "read",
-                    rapidjson::Value().SetBool(rights.read),
+                    rapidjson::Value().SetBool(project_rights.read),
                     allocator);
             array_value.AddMember(
                     "write",
-                    rapidjson::Value().SetBool(rights.write),
+                    rapidjson::Value().SetBool(project_rights.write),
                     allocator);
             array_value.AddMember(
                     "execute",
-                    rapidjson::Value().SetBool(rights.execute),
+                    rapidjson::Value().SetBool(project_rights.execute),
                     allocator);
             array.PushBack(array_value, allocator);
         }
@@ -538,7 +540,7 @@ std::optional<std::string> set_user_permissions(
         return "Invalid JSON.";
     }
 
-    auto perm = rights->check_user_right(ctx.username, "users.permissions");
+    auto perm = rights->check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
     
     if(permitted)
@@ -556,7 +558,7 @@ std::optional<std::string> set_user_permissions(
             rights->set_user_project_permissions(
                     name.value(),
                     project_name.value(),
-                    {read.value(), write.value(), execute.value()});
+                    {-1, -1, -1, read.value(), write.value(), execute.value()});
         }
         return std::nullopt;
     }
@@ -572,7 +574,7 @@ std::optional<std::string> change_group(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto name = get_string(request_data, "name");
-    auto group = get_string(request_data, "admin");
+    auto group = get_string(request_data, "group");
     if(!name || !group)
     {
         return "Invalid JSON.";
@@ -583,25 +585,11 @@ std::optional<std::string> change_group(
         return "Invalid username.";
     }
 
-    bool state;
-    if(group.value() == "admin")
-    {
-        state = true;
-    }
-    else if(group.value() == "user")
-    {
-        state = false;
-    }
-    else
-    {
-        return "Invalid group name.";
-    }
-
-    auto perm = rights->check_user_right(ctx.username, "users.make_admin");
+    auto perm = rights->check_user_permission(ctx.username, "users.change_group");
     auto permitted = perm.has_value() ? perm.value() : false;
     if(permitted)
     {
-        authentication_handler->make_admin(name.value(), state);
+        authentication_handler->change_group(name.value(), group.value());
         return std::nullopt;
     }
     return "Action not permitted.";
@@ -627,11 +615,13 @@ std::optional<std::string> disable_user(
         return "Invalid username.";
     }
 
-    auto perm = rights->check_user_right(ctx.username, "users.disable");
+    auto perm = rights->check_user_permission(ctx.username, "users.change_group");
     auto permitted = perm.has_value() ? perm.value() : false;
     if(permitted)
     {
-        authentication_handler->set_disabled(name.value(), state.value());
+        authentication_handler->change_group(
+                name.value(),
+                state.value() ? "disabled" : "user");
         return std::nullopt;
     }
     return "Action not permitted.";
@@ -651,7 +641,7 @@ std::optional<std::string> generate_api_key(
     }
 
     if(ctx.username == name.value() 
-        || authentication_handler->is_admin(ctx.username))
+        || authentication_handler->get_group(ctx.username).value() == "admin")
     {
         auto api_key = authentication_handler->generate_api_key(name.value());
         if(!api_key)

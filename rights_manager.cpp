@@ -8,197 +8,132 @@
 #include <rapidjson/ostreamwrapper.h>
 
 #include "file_util.h"
-#include "db_dirs.h"
 #include "exceptions/load_config_error.h"
 
-constexpr const char* rights_file_path = "/rights.pwd";
+using namespace database;
+using namespace sqlite_orm;
 
-rights_manager::rights_manager()
+rights_manager::rights_manager(database::database& db)
+    : db_(db)
 {
-    load_rights(path_cat(db::get_root_dir(), rights_file_path));
 }
 
-void rights_manager::add_resource(
-        const std::string& resource_name,
-        bool default_value)
-{
-    resources_.try_emplace(resource_name, default_value);
-    save_rights(path_cat(db::get_root_dir(), rights_file_path));
-}
-
-void rights_manager::set_right(
+std::optional<bool> rights_manager::check_user_permission(
         const std::string& username,
-        const std::string& resource_name,
-        bool value)
+        const std::string& permission_name) const
 {
-    user_rights_[username][resource_name] = value;
-    save_rights(path_cat(db::get_root_dir(), rights_file_path));
-}
-
-std::optional<bool> rights_manager::check_user_right(
-        const std::string& username,
-        const std::string& resource_name)
-{
-    if(auto user = user_rights_.find(username); user != user_rights_.end())
+    auto db = db_.make_transaction();
+    auto groups = db->select(
+            &user::group_id,
+            where(c(&user::name) == username));
+    auto permissions = db->select(
+            &permission::id,
+            where(c(&permission::name) == permission_name));
+    if(groups.size() == 1 && permissions.size() == 1)
     {
-        if(auto resource = user->second.find(resource_name);
-                resource != user->second.end())
+        auto group_permission_count = db->count<group_permission>(
+                where(c(&group_permission::group_id) == groups[0]
+                    && c(&group_permission::permission_id) == permissions[0]));
+        db.commit();
+        if(group_permission_count == 1)
         {
-            return resource->second;
+            return true;
         }
     }
-    if(auto resource = resources_.find(resource_name); resource != resources_.end())
+    return false;
+}
+
+std::optional<project_user_right> rights_manager::check_project_right(
+        const std::string& username,
+        const std::string& projectname) const
+{
+    auto db = db_.make_transaction();
+    auto users = db->select(
+            &user::id,
+            where(c(&user::name) == username));
+    auto projects = db->select(
+            &project::id,
+            where(c(&project::name) == projectname));
+    if(users.size() == 1 && projects.size() == 1)
     {
-        return resource->second;
+        auto rights = db->get_all<project_user_right>(
+                where(c(&project_user_right::user_id) == users[0]
+                    && c(&project_user_right::project_id) == projects[0]));
+        if(rights.size() == 1)
+        {
+            db.commit();
+            return rights[0];
+        }
     }
     return std::nullopt;
 }
 
-std::optional<project_rights> rights_manager::check_project_right(
+std::map<std::string, project_rights> rights_manager::get_permissions(
+        const std::string& username) const
+{
+    std::map<std::string, project_rights> result;
+    auto db = db_.make_transaction();
+    auto users = db->select(
+            &user::id,
+            where(c(&user::name) == username));
+    if(users.size() == 1)
+    {
+        auto projects = db->select(&project::name);
+        for(auto& project_name : projects)
+        {
+            result.insert({project_name, project_rights{true, true, true}});
+        }
+        auto projects_rights = db->select(
+                columns(
+                    &project::name,
+                    &project_user_right::read,
+                    &project_user_right::write,
+                    &project_user_right::execute),
+                inner_join<project>(on(c(&project::id) == &project_user_right::project_id)),
+                where(c(&project_user_right::user_id) == users[0]));
+
+        for(auto& [project_name, read, write, execute] : projects_rights)
+        {
+            result[project_name].read = read;
+            result[project_name].write = write;
+            result[project_name].execute = execute;
+        }
+    }
+    db.commit();
+    return result;
+}
+
+bool rights_manager::set_user_project_permissions(
         const std::string& username,
-        const std::string& project)
+        const std::string& projectname,
+        project_user_right rights)
 {
-    if(auto user = projects_permissions_.find(username); user != projects_permissions_.end())
+    auto db = db_.make_transaction();
+    auto users = db->select(
+            &user::id,
+            where(c(&user::name) == username));
+    auto projects = db->select(
+            &project::id,
+            where(c(&project::name) == projectname));
+    if(users.size() == 1 && projects.size() == 1)
     {
-        if(auto resource = user->second.find(project);
-                resource != user->second.end())
+        rights.user_id = users[0];
+        rights.project_id = projects[0];
+        auto ids = db->select(&project_user_right::id,
+                where(c(&project_user_right::user_id) == users[0]
+                    && c(&project_user_right::project_id) == projects[0]));
+        if(ids.size() == 1)
         {
-            return resource->second;
+            rights.id = ids[0];
+            db->replace(rights);
         }
-    }
-    return std::nullopt;
-}
-
-const std::map<std::string, project_rights>& rights_manager::get_permissions(const std::string& username) const
-{
-    return projects_permissions_.at(username);
-}
-
-void rights_manager::set_user_project_permissions(const std::string& user, const std::string& project, project_rights rights)
-{
-    projects_permissions_[user][project] = rights;
-}
-
-void rights_manager::save_rights(const std::filesystem::path& file)
-{
-    rapidjson::Document document;
-    rapidjson::Value document_value;
-    document.SetObject();
-    document_value.SetObject();
-    rapidjson::Value key;
-    rapidjson::Value value;
-    for(auto& [resource, right] : resources_)
-    {
-        key.SetString(resource.c_str(), resource.length(), document.GetAllocator());
-        value.SetBool(right);
-        document_value.AddMember(key, value, document.GetAllocator());
-    }
-    document.AddMember("resources", document_value, document.GetAllocator());
-    
-    document_value.SetObject();
-    for(auto& [user, rights] : user_rights_)
-    {
-        key.SetString(user.c_str(), user.length(), document.GetAllocator());
-        value.SetObject();
-        rapidjson::Value second_key;
-        rapidjson::Value second_value;
-        for(auto& [resource, right] : rights)
+        else
         {
-            second_key.SetString(
-                    resource.c_str(),
-                    resource.length(),
-                    document.GetAllocator());
-            second_value.SetBool(right);
-            value.AddMember(second_key, second_value, document.GetAllocator());
+            rights.id = -1;
+            db->insert(rights);
         }
-        document_value.AddMember(key, value, document.GetAllocator());
+        db.commit();
+        return true;
     }
-    document.AddMember("user_rights", document_value, document.GetAllocator());
-
-    document_value.SetObject();
-    for(auto& [user, projects] : projects_permissions_)
-    {
-        key.SetString(user.c_str(), user.length(), document.GetAllocator());
-        value.SetObject();
-        rapidjson::Value second_key;
-        rapidjson::Value second_value;
-        for(auto& [project, rights] : projects)
-        {
-            second_key.SetString(
-                    project.c_str(),
-                    project.length(),
-                    document.GetAllocator());
-            second_value.SetObject();
-            second_value.AddMember(
-                    "read",
-                    rapidjson::Value().SetBool(rights.read),
-                    document.GetAllocator());
-            second_value.AddMember(
-                    "write",
-                    rapidjson::Value().SetBool(rights.write),
-                    document.GetAllocator());
-            second_value.AddMember(
-                    "execute",
-                    rapidjson::Value().SetBool(rights.execute),
-                    document.GetAllocator());
-            value.AddMember(second_key, second_value, document.GetAllocator());
-        }
-        document_value.AddMember(key, value, document.GetAllocator());
-    }
-    document.AddMember("projects_permissions", document_value, document.GetAllocator());
-
-    std::ofstream db(file);
-    rapidjson::OStreamWrapper osw(db);
-    rapidjson::PrettyWriter<rapidjson::OStreamWrapper> writer(osw);
-    document.Accept(writer);
-}
-
-void rights_manager::load_rights(const std::filesystem::path& file)
-{
-    std::ifstream db(file);
-    rapidjson::IStreamWrapper isw(db);
-    rapidjson::Document document;
-    document.ParseStream(isw);
-    if(document.HasParseError())
-    {
-        throw load_config_error("Can't load user rights");
-    }
-    if(!document.IsObject())
-    {
-        return;
-    }
-
-    auto resources_obj = document["resources"].GetObject();
-    for(auto& member : resources_obj)
-    {
-        resources_[member.name.GetString()] = member.value.GetBool();
-    }
-
-    auto user_rights_obj = document["user_rights"].GetObject();
-    for(auto& member : user_rights_obj)
-    {
-        auto user = member.name.GetString();
-        auto rights = member.value.GetObject();
-        for(auto& resource_right : rights)
-        {
-            user_rights_[user][resource_right.name.GetString()]
-                = resource_right.value.GetBool();
-        }
-    }
-
-    auto projects_permissions_obj = document["projects_permissions"].GetObject();
-    for(auto& member : projects_permissions_obj)
-    {
-        auto user = member.name.GetString();
-        auto rights = member.value.GetObject();
-        for(auto& resource_right : rights)
-        {
-            auto project_rights_obj = resource_right.value.GetObject();
-            project_rights pr{
-                project_rights_obj["read"].GetBool(),
-                project_rights_obj["write"].GetBool(),
-                project_rights_obj["execute"].GetBool()};
-            projects_permissions_[user][resource_right.name.GetString()] = pr;
-        }
-    }
+    return false;
 }

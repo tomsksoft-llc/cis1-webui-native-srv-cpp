@@ -6,6 +6,7 @@ find_package(Threads REQUIRED)
 set(Boost_USE_STATIC_LIBS ON)
 find_package(Boost COMPONENTS regex filesystem REQUIRED)
 find_package(RapidJSON REQUIRED)
+find_package(SQLite3 REQUIRED)
 
 set(${PROJECT_NAME}_SRC
     net/fail.cpp
@@ -34,15 +35,16 @@ set(${PROJECT_NAME}_SRC
     auth_manager.cpp
     file_util.cpp
     child_process.cpp
-    db_dirs.cpp
     init.cpp
     rights_manager.cpp
-    application.cpp)
+    application.cpp
+    database.cpp)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
 target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party/sqlite_orm/include>)
 #set_property(TARGET ${PROJECT_NAME}
 #             PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} stdc++fs Boost::regex Boost::filesystem)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} stdc++fs Boost::regex Boost::filesystem sqlite3)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)

@@ -1,11 +1,13 @@
 #include "init.h"
 
+#include <iostream>
+#include <filesystem>
+
 #include <boost/asio.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
 #include "cis/dirs.h"
-#include "db_dirs.h"
 
 namespace net = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
@@ -53,6 +55,15 @@ init_params parse_args(int argc, char* argv[])
         result.db_root = ".";
     }
     cis::set_root_dir(result.cis_root.c_str());
-    db::set_root_dir(result.db_root.c_str());
+    if(!std::filesystem::exists({result.db_root + "/db.sqlite"}))
+    {
+        result.admin = admin_user{};
+        std::cout << "Enter admin username: ";
+        std::cin >> result.admin.value().name;
+        std::cout << "Enter admin email: ";
+        std::cin >> result.admin.value().email;
+        std::cout << "Enter admin password: ";
+        std::cin >> result.admin.value().pass;
+    }
     return result;
 }

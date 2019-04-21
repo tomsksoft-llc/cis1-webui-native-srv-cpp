@@ -13,14 +13,15 @@ using namespace std::placeholders;              // from <functional>
 
 application::application(const init_params& params)
     : params_(params)
+    , db_(params.db_root + "/db.sqlite", params.admin)
     , ioc_{}
     , signals_(ioc_, SIGINT, SIGTERM)
     , app_(std::make_shared<http::handlers_chain>())
     , cis_app_(std::make_shared<http::handlers_chain>())
     , files_(std::make_shared<http::file_handler>(params.doc_root))
-    , projects_(std::make_shared<cis::project_list>(ioc_))
-    , auth_manager_(std::make_shared<auth_manager>())
-    , rights_manager_(std::make_shared<rights_manager>())
+    , projects_(std::make_shared<cis::project_list>(ioc_, db_))
+    , auth_manager_(std::make_shared<auth_manager>(db_))
+    , rights_manager_(std::make_shared<rights_manager>(db_))
 {
     signals_.async_wait(
         [&](beast::error_code const&, int)

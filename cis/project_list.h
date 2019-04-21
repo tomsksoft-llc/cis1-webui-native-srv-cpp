@@ -9,6 +9,8 @@
 #include <boost/asio.hpp>
 #include <rapidjson/document.h>
 
+#include "database.h"
+
 namespace cis
 {
 
@@ -111,6 +113,7 @@ class project_list
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
     boost::asio::steady_timer timer_;
+    database::database& db_;
 
     void on_timer(boost::system::error_code ec);
     void fetch_build(
@@ -122,7 +125,7 @@ class project_list
     void fetch_project(
             const std::filesystem::directory_entry& project_dir);
 public:
-    project_list(boost::asio::io_context& ioc);
+    project_list(boost::asio::io_context& ioc, database::database& db);
     void run();
     project::map_t projects;
     void fetch();

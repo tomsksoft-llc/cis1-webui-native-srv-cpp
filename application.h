@@ -3,6 +3,7 @@
 #include "init.h"
 #include "auth_manager.h"
 #include "rights_manager.h"
+#include "database.h"
 #include "http/handlers_chain.h"
 #include "http/router.h"
 #include "http/file_handler.h"
@@ -14,6 +15,7 @@ namespace asio = boost::asio;                   // from <boost/asio.hpp>
 class application
 {
     init_params params_;
+    database::database db_;
     asio::io_context ioc_;
     asio::signal_set signals_;
     std::shared_ptr<http::handlers_chain> app_;
