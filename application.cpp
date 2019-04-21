@@ -155,7 +155,7 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                             _1, _2, _3, _4));
                 return http::handle_result::done;
             };
-    router->add_route(url::make() / URL_STR("ws"), cb);
+    router->add_route(url::make() / CT_STRING("ws"), cb);
     
     return router;
 }
