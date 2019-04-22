@@ -160,7 +160,7 @@ std::optional<std::string> list_projects(
 {
     rapidjson::Value array;
     array.SetArray();
-    for(auto& [project, jobs] : projects->projects)
+    for(auto& [project, jobs] : projects->get())
     {
         if(auto perm = rights->check_project_right(ctx.username, project.name);
                 (perm.has_value() && perm.value().read) || (!perm.has_value() && true))
@@ -190,11 +190,11 @@ std::optional<std::string> get_project_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects->projects.find(project_name.value());
+    auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().read : true;
 
-    if(project_it != projects->projects.cend() && permitted)
+    if(project_it != projects->get().cend() && permitted)
     {
         rapidjson::Value array;
         rapidjson::Value array_value;
@@ -255,11 +255,11 @@ std::optional<std::string> get_job_info(
         return "Invalid JSON.";
     }
    
-    auto project_it = projects->projects.find(project_name.value());
+    auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().read : true;
 
-    if(project_it != projects->projects.cend() && permitted)
+    if(project_it != projects->get().cend() && permitted)
     {
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
@@ -352,11 +352,11 @@ std::optional<std::string> run_job(
         return "Invalid JSON.";
     }
    
-    auto project_it = projects->projects.find(project_name.value());
+    auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().execute : true;
 
-    if(project_it != projects->projects.cend() && permitted)
+    if(project_it != projects->get().cend() && permitted)
     {
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
@@ -681,11 +681,11 @@ std::optional<std::string> rename_job(
         return "Empty name field.";
     }
    
-    auto project_it = projects->projects.find(project_name.value());
+    auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
 
-    if(project_it != projects->projects.cend() && permitted)
+    if(project_it != projects->get().cend() && permitted)
     {
         if(auto it = project_it->second.jobs.find(new_job_name.value());
                 it != project_it->second.jobs.cend())
@@ -736,10 +736,10 @@ std::optional<std::string> get_build_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects->projects.find(project_name.value());
+    auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
-    if(project_it != projects->projects.cend() && permitted)
+    if(project_it != projects->get().cend() && permitted)
     {   
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())

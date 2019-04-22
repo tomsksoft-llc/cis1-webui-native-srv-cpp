@@ -124,10 +124,11 @@ class project_list
             project::map_t::iterator it);
     void fetch_project(
             const std::filesystem::directory_entry& project_dir);
+    project::map_t projects_;
 public:
+    const project::map_t& get() const;
     project_list(boost::asio::io_context& ioc, database::database& db);
     void run();
-    project::map_t projects;
     void fetch();
     void defer_fetch();
 };
