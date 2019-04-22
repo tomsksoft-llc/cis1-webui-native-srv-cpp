@@ -66,7 +66,7 @@ void event_dispatcher::dispatch(
         }
 
         if(   request.HasMember("eventId") && request["eventId"].IsInt()
-           && request.HasMember("transanctionId") && request["transanctionId"].IsInt())
+           && request.HasMember("transactionId") && request["transactionId"].IsInt())
         {
             auto event_id = request["eventId"].GetInt();
             if(auto it = event_handlers_.find(request["eventId"].GetInt());
@@ -79,7 +79,7 @@ void event_dispatcher::dispatch(
                             ctx,
                             request["data"],
                             static_cast<request_id>(event_id),
-                            request["transanctionId"].GetInt());
+                            request["transactionId"].GetInt());
                 }
                 else
                 {
@@ -96,7 +96,7 @@ void event_dispatcher::dispatch(
             send_error(
                     queue,
                     response_id::generic_error,
-                    "Request doesn't contain 'eventId' or 'transanctionId' member.");
+                    "Request doesn't contain 'eventId' or 'transactionId' member.");
             return;
         }
     }

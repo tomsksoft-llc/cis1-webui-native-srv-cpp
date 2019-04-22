@@ -44,7 +44,7 @@ std::optional<std::string> authenticate(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto login = get_string(request_data, "login");
+    auto login = get_string(request_data, "username");
     auto pass = get_string(request_data, "pass");
     
     if(!login || !pass)
@@ -388,8 +388,8 @@ std::optional<std::string> change_pass(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto old_pass = get_string(request_data, "oldPass");
-    auto new_pass = get_string(request_data, "newPass");
+    auto old_pass = get_string(request_data, "oldPassword");
+    auto new_pass = get_string(request_data, "newPassword");
     if(!old_pass || !new_pass)
     {
         return "Invalid JSON.";
@@ -426,7 +426,7 @@ std::optional<std::string> list_users(
         {
             array_value.SetObject();
             array_value.AddMember(
-                    "name",
+                    "username",
                     rapidjson::Value().SetString(
                         user.name.c_str(),
                         user.name.length(),
@@ -501,7 +501,7 @@ std::optional<std::string> get_user_permissions(
         {
             array_value.SetObject();
             array_value.AddMember(
-                    "name",
+                    "username",
                     rapidjson::Value().SetString(
                         project_name.c_str(),
                         project_name.length(),
@@ -534,7 +534,7 @@ std::optional<std::string> set_user_permissions(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto name = get_string(request_data, "name");
+    auto name = get_string(request_data, "username");
     if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsArray())
     {
         return "Invalid JSON.";
@@ -547,7 +547,7 @@ std::optional<std::string> set_user_permissions(
     {
         for(auto& array_value : request_data["permissions"].GetArray())
         {
-            auto project_name = get_string(array_value, "name");
+            auto project_name = get_string(array_value, "project");
             auto read = get_bool(array_value, "read");
             auto write = get_bool(array_value, "write");
             auto execute = get_bool(array_value, "execute");
@@ -573,7 +573,7 @@ std::optional<std::string> change_group(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto name = get_string(request_data, "name");
+    auto name = get_string(request_data, "username");
     auto group = get_string(request_data, "group");
     if(!name || !group)
     {
@@ -603,7 +603,7 @@ std::optional<std::string> disable_user(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto name = get_string(request_data, "name");
+    auto name = get_string(request_data, "username");
     auto state = get_bool(request_data, "state");
     if(!name || !state)
     {
@@ -634,7 +634,7 @@ std::optional<std::string> generate_api_key(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto name = get_string(request_data, "name");
+    auto name = get_string(request_data, "username");
     if(!name)
     {
         return "Invalid JSON.";
@@ -669,8 +669,8 @@ std::optional<std::string> rename_job(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto project_name = get_string(request_data, "project");
-    auto job_name = get_string(request_data, "job");
-    auto new_job_name = get_string(request_data, "name");
+    auto job_name = get_string(request_data, "oldName");
+    auto new_job_name = get_string(request_data, "newName");
     if(!project_name || !job_name || !new_job_name)
     {
         return "Invalid JSON.";
