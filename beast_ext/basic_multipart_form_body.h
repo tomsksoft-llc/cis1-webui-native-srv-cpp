@@ -42,7 +42,6 @@ class basic_multipart_form_body<File>::value_type
     friend class writer;
     friend struct basic_multipart_form_body;
 
-    std::string boundary_;
     std::filesystem::path dir_;
     // This represents the open file
     File file_;
@@ -80,8 +79,6 @@ public:
     /// Move assignment
     value_type& operator=(value_type&& other) = default;
 
-    void set_boundary(const std::string& boundary);
-
     void set_dir(const std::string& dir_path, boost::beast::error_code& ec);
     
     const std::multimap<std::string, value_t>& get_values() const
@@ -94,13 +91,6 @@ public:
         return files_;
     }
 };
-
-template<class File>
-void basic_multipart_form_body<File>::value_type::set_boundary(
-        const std::string& boundary)
-{
-    boundary_ = boundary;
-}
 
 template<class File>
 void basic_multipart_form_body<File>::value_type::set_dir(
@@ -125,6 +115,7 @@ template<class File>
 class basic_multipart_form_body<File>::reader
 {
     value_type& body_;  // The body we are writing to
+    std::string boundary_;
     bool cr_ = false;
     bool if_file_ = false;
     bool content_disposition_parsed_ = false;
@@ -166,7 +157,14 @@ basic_multipart_form_body<File>::reader::reader(
         value_type& body)
     : body_(body)
 {
-    boost::ignore_unused(h);
+    std::string boundary;
+    auto boundary_begin = h[boost::beast::http::field::content_type].find("=");
+    if(boundary_begin != h[boost::beast::http::field::content_type].npos)
+    {
+        boundary_ = h[boost::beast::http::field::content_type].substr(
+                boundary_begin + 1,
+                h[boost::beast::http::field::content_type].size());
+    }
 }
 
 template<class File>
@@ -296,10 +294,10 @@ void basic_multipart_form_body<File>::reader::handle_data(
         case state::next_block:
         {
             next_block_buffer_.append(data, size);
-            if(next_block_buffer_.size() >= body_.boundary_.size() + 2)
+            if(next_block_buffer_.size() >= boundary_.size() + 2)
             {
-                if(next_block_buffer_.substr(0, 2 + body_.boundary_.size())
-                        == "--" + body_.boundary_)
+                if(next_block_buffer_.substr(0, 2 + boundary_.size())
+                        == "--" + boundary_)
                 {
                     parser_state_ = state::init;
                 }
@@ -327,12 +325,12 @@ void basic_multipart_form_body<File>::reader::handle_crlf(
     {
         case state::init:
         {
-            if(block_buffer_ == "--" + body_.boundary_)
+            if(block_buffer_ == "--" + boundary_)
             {
                 block_buffer_.clear();
                 parser_state_ = state::headers;
             }
-            else if(block_buffer_ != "--" + body_.boundary_ + "--")
+            else if(block_buffer_ != "--" + boundary_ + "--")
             {
                 ec.assign(74, ec.category()); //EBADMSG
                 return;

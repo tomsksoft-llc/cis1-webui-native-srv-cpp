@@ -67,26 +67,28 @@ struct detail
 template <class T>
 class database_transanction_guard
 {
-    bool rollback_ = true;
-    T& db_;
 public:
     database_transanction_guard(T& db)
         : db_(db)
     {
         db_.begin_transaction();
     }
+
     ~database_transanction_guard()
     {
         rollback();
     }
+
     T* operator->()
     {
         return &db_;
     }
+
     T& operator*()
     {
         return db_;
     }
+
     void commit()
     {
         if(rollback_)
@@ -95,6 +97,7 @@ public:
             rollback_ = false;
         }
     }
+
     void rollback()
     {
         if(rollback_)
@@ -103,20 +106,25 @@ public:
             rollback_ = false;
         }
     }
+private:
+    bool rollback_ = true;
+    T& db_;
 };
 
 class database
 {
-    decltype(detail::make_database("")) db_;
 public:
     database(const std::string& path, std::optional<admin_user> admin);
-    decltype(detail::make_database(""))& get();
-    database_transanction_guard<decltype(detail::make_database(""))> make_transaction();
-    void sync();
+
     void init(
             const std::string& username,
             const std::string& email,
             const std::string& password);
+    decltype(detail::make_database(""))& get();
+    database_transanction_guard<decltype(detail::make_database(""))> make_transaction();
+    void sync();
+private:
+    decltype(detail::make_database("")) db_;
 };
 
 } // namespace database

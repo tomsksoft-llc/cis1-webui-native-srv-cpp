@@ -39,6 +39,7 @@ handle_result handle_update_projects(
     res.set(beast::http::field::content_type, "application/json");
     res.prepare_payload();
     res.keep_alive(req.keep_alive());
+
     queue.send(std::move(res));
     return handle_result::done;
 }

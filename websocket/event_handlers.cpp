@@ -17,6 +17,7 @@ std::optional<std::string> get_string(
     {
         return value[name].GetString();
     }
+
     return std::nullopt;
 }
 
@@ -28,6 +29,7 @@ std::optional<bool> get_bool(
     {
         return value[name].GetBool();
     }
+
     return std::nullopt;
 }
 
@@ -173,6 +175,7 @@ std::optional<std::string> list_projects(
         }
     }
     response_data.AddMember("projects", array, allocator);
+
     return std::nullopt;
 }
 
@@ -228,6 +231,7 @@ std::optional<std::string> get_project_info(
                     allocator);
         }
         response_data.AddMember("jobs", array, allocator);
+
         return std::nullopt;
     }
     else if(!permitted)
@@ -319,6 +323,7 @@ std::optional<std::string> get_job_info(
                         allocator);
             }
             response_data.AddMember("builds", array, allocator);
+
             return std::nullopt;
         }
         else
@@ -402,6 +407,7 @@ std::optional<std::string> change_pass(
     {
         return "Invalid password";
     }
+
     return std::nullopt;
 }
 
@@ -470,8 +476,10 @@ std::optional<std::string> list_users(
             array.PushBack(array_value, allocator);
         }
         response_data.AddMember("users", array, allocator);
+
         return std::nullopt;
     }
+
     return "Action not permitted";
 }
 
@@ -483,6 +491,7 @@ std::optional<std::string> get_user_permissions(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto name = get_string(request_data, "name");
+
     if(!name)
     {
         return "Invalid JSON.";
@@ -522,8 +531,10 @@ std::optional<std::string> get_user_permissions(
             array.PushBack(array_value, allocator);
         }
         response_data.AddMember("permissions", array, allocator);
+
         return std::nullopt;
     }
+
     return "Action not permitted";
 }
 
@@ -535,6 +546,7 @@ std::optional<std::string> set_user_permissions(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto name = get_string(request_data, "username");
+
     if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsArray())
     {
         return "Invalid JSON.";
@@ -560,8 +572,10 @@ std::optional<std::string> set_user_permissions(
                     project_name.value(),
                     {-1, -1, -1, read.value(), write.value(), execute.value()});
         }
+
         return std::nullopt;
     }
+
     return "Action not permitted";
 }
 
@@ -575,6 +589,7 @@ std::optional<std::string> change_group(
 {
     auto name = get_string(request_data, "username");
     auto group = get_string(request_data, "group");
+
     if(!name || !group)
     {
         return "Invalid JSON.";
@@ -587,11 +602,14 @@ std::optional<std::string> change_group(
 
     auto perm = rights->check_user_permission(ctx.username, "users.change_group");
     auto permitted = perm.has_value() ? perm.value() : false;
+
     if(permitted)
     {
         authentication_handler->change_group(name.value(), group.value());
+
         return std::nullopt;
     }
+
     return "Action not permitted.";
 }
 
@@ -605,6 +623,7 @@ std::optional<std::string> disable_user(
 {
     auto name = get_string(request_data, "username");
     auto state = get_bool(request_data, "state");
+
     if(!name || !state)
     {
         return "Invalid JSON.";
@@ -617,6 +636,7 @@ std::optional<std::string> disable_user(
 
     auto perm = rights->check_user_permission(ctx.username, "users.change_group");
     auto permitted = perm.has_value() ? perm.value() : false;
+
     if(permitted)
     {
         authentication_handler->change_group(
@@ -624,6 +644,7 @@ std::optional<std::string> disable_user(
                 state.value() ? "disabled" : "user");
         return std::nullopt;
     }
+
     return "Action not permitted.";
 }
 
@@ -635,6 +656,7 @@ std::optional<std::string> generate_api_key(
         rapidjson::Document::AllocatorType& allocator)
 {
     auto name = get_string(request_data, "username");
+
     if(!name)
     {
         return "Invalid JSON.";
@@ -655,8 +677,10 @@ std::optional<std::string> generate_api_key(
                     api_key.value().length(),
                     allocator),
                 allocator);
+
         return std::nullopt;
     }
+
     return "Action not permitted.";
 }
 
@@ -671,6 +695,7 @@ std::optional<std::string> rename_job(
     auto project_name = get_string(request_data, "project");
     auto job_name = get_string(request_data, "oldName");
     auto new_job_name = get_string(request_data, "newName");
+
     if(!project_name || !job_name || !new_job_name)
     {
         return "Invalid JSON.";
@@ -703,6 +728,7 @@ std::optional<std::string> rename_job(
                 return "Error while renaming.";
             }
             projects->fetch();
+
             return std::nullopt;
         }
         else
@@ -731,6 +757,7 @@ std::optional<std::string> get_build_info(
     auto project_name = get_string(request_data, "project");
     auto job_name = get_string(request_data, "job");
     auto build_name = get_string(request_data, "build");
+
     if(!project_name || !job_name || !build_name)
     {
         return "Invalid JSON.";
@@ -776,6 +803,7 @@ std::optional<std::string> get_build_info(
                             allocator);
                 }
                 response_data.AddMember("artufacts", value, allocator);
+
                 return std::nullopt;
             }
             else

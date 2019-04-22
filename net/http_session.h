@@ -8,6 +8,7 @@
 #include <boost/asio.hpp>
 
 #include "fail.h"
+#include "beast_ext/sink_body.h"
 
 namespace net
 {
@@ -127,6 +128,7 @@ class http_session
         };
         http_session& self_;
         std::unique_ptr<parser_wrapper> parser_;
+        bool done_ = false;
         template<class Body>
         boost::beast::http::request_parser<Body>& get_parser()
         {
@@ -142,6 +144,7 @@ class http_session
         }
         void prepare()
         {
+            done_ = false;
             parser_ = std::make_unique<parser_wrapper_impl<boost::beast::http::empty_body>>();
         }
         template<class Body>
@@ -157,14 +160,14 @@ class http_session
         {}
         template<class Body>
         void async_read_body(
-                std::function<void(boost::beast::http::request<Body>&)> prepare,    
+                std::function<void(boost::beast::http::request<Body>&)> pre,    
                 std::function<void(
                     boost::beast::http::request<Body>&&,
                     http_session_queue&)> cb)
         {
             upgrade_parser<Body>();
 
-            prepare(get_parser<Body>().get());
+            pre(get_parser<Body>().get());
 
             boost::beast::http::async_read(self_.socket_, self_.buffer_, get_parser<Body>(),
                     boost::asio::bind_executor(
@@ -175,18 +178,29 @@ class http_session
                     cb,
                     std::placeholders::_1,
                     std::placeholders::_2)));
+            done_ = true;
         }
         void done()
         {
-            boost::beast::http::async_read(self_.socket_, self_.buffer_, get_header_parser(),
+            if(done_)
+            {
+                return;
+            }
+
+            upgrade_parser<beast_ext::sink_body>();
+            boost::beast::http::async_read(
+                    self_.socket_,
+                    self_.buffer_,
+                    get_parser<beast_ext::sink_body>(),
                     boost::asio::bind_executor(
                 self_.strand_,
                 std::bind(
-                    &http_session::on_read_body<boost::beast::http::empty_body>,
+                    &http_session::on_read_body<beast_ext::sink_body>,
                     self_.shared_from_this(),
                     nullptr,
                     std::placeholders::_1,
                     std::placeholders::_2)));
+            done_ = true;
         }
     };
     boost::asio::ip::tcp::socket socket_;
@@ -254,7 +268,7 @@ public:
             do_read_header();
         }
     }
-    
+
     void on_write(boost::beast::error_code ec, bool close);
 
     void do_close();

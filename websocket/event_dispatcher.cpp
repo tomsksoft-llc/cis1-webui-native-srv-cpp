@@ -19,16 +19,20 @@ void send_error(
     rapidjson::Document document;
     rapidjson::Value value;
     document.SetObject();
+
     value.SetInt(static_cast<int>(event_id));
     document.AddMember("eventId", value, document.GetAllocator());
+
     rapidjson::Value data_value;
     data_value.SetObject();
     value.SetString(error_string.c_str(), error_string.length(), document.GetAllocator());
     data_value.AddMember("errorMessage", value, document.GetAllocator());
     document.AddMember("data", data_value, document.GetAllocator());
+
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
     rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
     document.Accept(writer);
+
     queue->send_text(
             boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
             [buffer](){});
@@ -123,6 +127,7 @@ void event_dispatcher::add_event_handler(
             return process_(ctx, request_data, response_data, allocator);
         }
     };
+
     event_handlers_.try_emplace(static_cast<int>(event_id), std::make_shared<handler>(cb));
 }
 

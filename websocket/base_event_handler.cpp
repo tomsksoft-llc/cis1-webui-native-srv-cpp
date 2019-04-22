@@ -44,6 +44,7 @@ void base_event_handler::handle(
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
     rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
     response.Accept(writer);
+
     queue->send_text(
             boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
             [buffer](){});

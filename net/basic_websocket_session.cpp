@@ -20,10 +20,12 @@ void basic_websocket_session::on_accept(boost::beast::error_code ec)
     {
         return;
     }
+
     if(ec)
     {
         return fail(ec, "accept");
     }
+
     this->on_accept_success();
 }
 

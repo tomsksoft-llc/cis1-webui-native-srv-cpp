@@ -20,12 +20,14 @@ build::build(
     , date(build_date)
     , artifacts(std::move(build_artifacts))
 {}
+
 param::param(
         const std::string& param_name,
         const std::string& param_default_value)
     : name(param_name)
     , default_value(param_default_value)
 {}
+
 job::job(const std::string& job_name)
     : name(job_name)
 {}
@@ -71,6 +73,7 @@ void project_list::on_timer(boost::system::error_code ec)
         fetch();
         timer_.expires_after(std::chrono::seconds(15));
     }
+
     timer_.async_wait(
         boost::asio::bind_executor(
             strand_,
@@ -87,10 +90,13 @@ void project_list::fetch_build(
     std::ifstream exitcode_file(build_dir.path() / "exitcode.txt");
     int exitcode;
     exitcode_file >> exitcode;
+
     std::ifstream output_file(build_dir.path() / "output.txt");
     std::string date;
     output_file >> date;
+
     std::vector<std::string> artifacts;
+
     for(auto& dir_entry: fs::directory_iterator(build_dir))
     {
         if(dir_entry.is_regular_file())
@@ -98,6 +104,7 @@ void project_list::fetch_build(
             artifacts.emplace_back(dir_entry.path().filename().c_str());
         }
     }
+
     auto& builds = it->second.builds;
     builds.emplace(
             build_dir.path().filename(),
@@ -114,10 +121,12 @@ void project_list::fetch_job(
         std::piecewise_construct,
         std::make_tuple(job_dir.path().filename()),
         std::make_tuple());
+
     if(result == false)
     {
         return;
     }
+
     for(auto& dir_entry: fs::directory_iterator(job_dir))
     {
         if(dir_entry.is_directory())
@@ -158,10 +167,12 @@ void project_list::fetch_project(
             std::piecewise_construct,
             std::make_tuple(project_dir.path().filename()),
             std::make_tuple());
+
     if(result == false)
     {
         return;
     }
+
     for(auto& dir_entry: fs::directory_iterator(project_dir))
     {
         if(dir_entry.is_directory())

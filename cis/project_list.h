@@ -109,6 +109,13 @@ rapidjson::Document to_json(
 class project_list
     : public std::enable_shared_from_this<project_list>
 {
+public:
+    project_list(boost::asio::io_context& ioc, database::database& db);
+    void run();
+    project::map_t projects;
+    void fetch();
+    void defer_fetch();
+private:
     std::filesystem::path cis_projects_path_;
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;
@@ -124,12 +131,6 @@ class project_list
             project::map_t::iterator it);
     void fetch_project(
             const std::filesystem::directory_entry& project_dir);
-public:
-    project_list(boost::asio::io_context& ioc, database::database& db);
-    void run();
-    project::map_t projects;
-    void fetch();
-    void defer_fetch();
 };
 
 } // namespace cis

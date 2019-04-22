@@ -16,9 +16,9 @@ struct project_rights
 
 class rights_manager
 {
-    database::database& db_;
 public:
     rights_manager(database::database& db);
+
     std::optional<bool> check_user_permission(
             const std::string& username,
             const std::string& permission_name) const;
@@ -31,4 +31,6 @@ public:
             const std::string& user,
             const std::string& project,
             database::project_user_right rights);
+private:
+    database::database& db_;
 };

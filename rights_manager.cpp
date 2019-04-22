@@ -23,23 +23,27 @@ std::optional<bool> rights_manager::check_user_permission(
         const std::string& permission_name) const
 {
     auto db = db_.make_transaction();
+
     auto groups = db->select(
             &user::group_id,
             where(c(&user::name) == username));
     auto permissions = db->select(
             &permission::id,
             where(c(&permission::name) == permission_name));
+
     if(groups.size() == 1 && permissions.size() == 1)
     {
         auto group_permission_count = db->count<group_permission>(
                 where(c(&group_permission::group_id) == groups[0]
                     && c(&group_permission::permission_id) == permissions[0]));
-        db.commit();
+
         if(group_permission_count == 1)
         {
+            db.commit();
             return true;
         }
     }
+
     return false;
 }
 
@@ -48,23 +52,27 @@ std::optional<project_user_right> rights_manager::check_project_right(
         const std::string& projectname) const
 {
     auto db = db_.make_transaction();
+
     auto users = db->select(
             &user::id,
             where(c(&user::name) == username));
     auto projects = db->select(
             &project::id,
             where(c(&project::name) == projectname));
+
     if(users.size() == 1 && projects.size() == 1)
     {
         auto rights = db->get_all<project_user_right>(
                 where(c(&project_user_right::user_id) == users[0]
                     && c(&project_user_right::project_id) == projects[0]));
+
         if(rights.size() == 1)
         {
             db.commit();
             return rights[0];
         }
     }
+
     return std::nullopt;
 }
 
@@ -72,17 +80,22 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
         const std::string& username) const
 {
     std::map<std::string, project_rights> result;
+
     auto db = db_.make_transaction();
+
     auto users = db->select(
             &user::id,
             where(c(&user::name) == username));
+
     if(users.size() == 1)
     {
         auto projects = db->select(&project::name);
+
         for(auto& project_name : projects)
         {
             result.insert({project_name, project_rights{true, true, true}});
         }
+
         auto projects_rights = db->select(
                 columns(
                     &project::name,
@@ -99,6 +112,7 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
             result[project_name].execute = execute;
         }
     }
+
     db.commit();
     return result;
 }
@@ -109,12 +123,14 @@ bool rights_manager::set_user_project_permissions(
         project_user_right rights)
 {
     auto db = db_.make_transaction();
+
     auto users = db->select(
             &user::id,
             where(c(&user::name) == username));
     auto projects = db->select(
             &project::id,
             where(c(&project::name) == projectname));
+
     if(users.size() == 1 && projects.size() == 1)
     {
         rights.user_id = users[0];
@@ -122,6 +138,7 @@ bool rights_manager::set_user_project_permissions(
         auto ids = db->select(&project_user_right::id,
                 where(c(&project_user_right::user_id) == users[0]
                     && c(&project_user_right::project_id) == projects[0]));
+
         if(ids.size() == 1)
         {
             rights.id = ids[0];
@@ -132,8 +149,10 @@ bool rights_manager::set_user_project_permissions(
             rights.id = -1;
             db->insert(rights);
         }
+
         db.commit();
         return true;
     }
+
     return false;
 }

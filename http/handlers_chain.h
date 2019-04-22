@@ -38,12 +38,9 @@ public:
             request_header_t&,
             context_t&,
             queue_t&)>;
-private:
-    std::vector<handler_t> handlers_;
-    std::vector<ws_handler_t> ws_handlers_;
-    error_handler_t error_handler_;
-public:
+
     handlers_chain();
+
     void append_handler(const handler_t& handler);
     void append_ws_handler(const ws_handler_t& handler);
     void set_error_handler(const error_handler_t& handler);
@@ -56,6 +53,10 @@ public:
             tcp::socket&& socket,
             request_header_t&& req,
             net::http_session::queue& queue) const;
+private:
+    std::vector<handler_t> handlers_;
+    std::vector<ws_handler_t> ws_handlers_;
+    error_handler_t error_handler_;
 };
 
 } // namespace http

@@ -13,12 +13,6 @@ namespace net
 class basic_websocket_session
     : public std::enable_shared_from_this<basic_websocket_session>
 {
-protected:
-    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> ws_;
-    boost::asio::strand<
-        boost::asio::io_context::executor_type> strand_;
-    boost::asio::steady_timer timer_;
-    char ping_state_ = 0;
 public:
     // Take ownership of the socket
     explicit basic_websocket_session(boost::asio::ip::tcp::socket socket);
@@ -45,6 +39,12 @@ public:
 
     virtual void on_accept_success() = 0;
 protected:
+    boost::beast::websocket::stream<boost::asio::ip::tcp::socket> ws_;
+    boost::asio::strand<
+        boost::asio::io_context::executor_type> strand_;
+    boost::asio::steady_timer timer_;
+    char ping_state_ = 0;
+
     template <typename Derived>
     std::shared_ptr<Derived> shared_from_base()
     {

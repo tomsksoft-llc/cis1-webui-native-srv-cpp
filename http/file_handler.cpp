@@ -28,10 +28,10 @@ handle_result file_handler::single_file(
 {
         std::string full_path = path_cat(doc_root_, path);
 
-        
         beast::error_code ec;
         beast::http::file_body::value_type body;
         body.open(full_path.c_str(), beast::file_mode::scan, ec);
+
         if(ec == beast::errc::no_such_file_or_directory)
         {
             ctx.res_status = beast::http::status::not_found;
@@ -57,7 +57,9 @@ handle_result file_handler::single_file(
         res.set(beast::http::field::content_type, mime_type(full_path));
         res.content_length(size);
         res.keep_alive(req.keep_alive());
+
         queue.send(std::move(res));
+
         return handle_result::done;
 }
 

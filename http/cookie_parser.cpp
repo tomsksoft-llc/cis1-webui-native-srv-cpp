@@ -12,11 +12,14 @@ handle_result cookie_parser::parse(
         net::http_session::queue& /*queue*/)
 {
     std::string cookies_string{};
+
     if(auto it = req.find("Cookie"); it != req.cend())
     {
         cookies_string = it->value();
     }
+
     ctx.cookies = parse_cookies(cookies_string);
+
     return handle_result::next;
 }
 

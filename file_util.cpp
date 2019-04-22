@@ -43,22 +43,34 @@ std::string path_cat(
     beast::string_view path)
 {
     if(base.empty())
+    {
         return std::string(path);
+    }
     std::string result(base);
+
 #if BOOST_MSVC
     constexpr char path_separator = '\\';
     if(result.back() == path_separator)
+    {
         result.resize(result.size() - 1);
+    }
     result.append(path.data(), path.size());
     for(auto& c : result)
+    {
         if(c == '/')
+        {
             c = path_separator;
+        }
+    }
 #else
     constexpr char path_separator = '/';
     if(result.back() == path_separator)
+    {
         result.resize(result.size() - 1);
+    }
     result.append(path.data(), path.size());
 #endif
+
     return result;
 }
 

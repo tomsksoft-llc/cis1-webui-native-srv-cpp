@@ -32,6 +32,7 @@ void websocket_queue::send()
 void websocket_queue::send_text(boost::asio::const_buffer buffer, std::function<void()> on_write)
 {
     messages_.push_back({true, buffer, std::move(on_write)});
+
     if(messages_.size() == 1)
     {
         send();
@@ -49,10 +50,12 @@ bool websocket_queue::on_write()
     auto const was_full = is_full();
     messages_.front().on_write();
     messages_.erase(messages_.begin());
+
     if(!messages_.empty())
     {
         send();
     }
+
     return was_full;
 }
 
@@ -152,6 +155,7 @@ void queued_websocket_session::on_write(
     {
         return;
     }
+
     if(ec)
     {
         return fail(ec, "write");

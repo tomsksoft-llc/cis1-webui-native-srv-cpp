@@ -11,6 +11,13 @@ class queued_websocket_session;
 
 class websocket_queue
 {
+public:
+    websocket_queue(queued_websocket_session& self);
+    void send_binary(boost::asio::const_buffer buffer, std::function<void()> on_write);
+    void send_text(boost::asio::const_buffer buffer, std::function<void()> on_write);
+    bool is_full();
+    bool on_write();
+private:
     enum
     {
         limit = 64
@@ -24,12 +31,6 @@ class websocket_queue
     queued_websocket_session& self_;
     std::deque<message> messages_;
     void send();
-public:
-    websocket_queue(queued_websocket_session& self);
-    void send_binary(boost::asio::const_buffer buffer, std::function<void()> on_write);
-    void send_text(boost::asio::const_buffer buffer, std::function<void()> on_write);
-    bool is_full();
-    bool on_write();
 };
 
 class queued_websocket_session
@@ -38,12 +39,6 @@ class queued_websocket_session
 public:
     using request_handler_t = std::function<void(
             bool, boost::beast::flat_buffer&, size_t, std::shared_ptr<websocket_queue>)>;
-private:
-    request_handler_t handler_;
-    websocket_queue queue_;
-    boost::beast::flat_buffer in_buffer_;
-    friend class websocket_queue;
-public:
     static void accept_handler(
             boost::asio::ip::tcp::socket&& socket,
             boost::beast::http::request<boost::beast::http::empty_body>&& req,
@@ -66,6 +61,11 @@ public:
         std::size_t bytes_transferred);
 
     std::shared_ptr<websocket_queue> get_queue();
+private:
+    request_handler_t handler_;
+    websocket_queue queue_;
+    boost::beast::flat_buffer in_buffer_;
+    friend class websocket_queue;
 };
 
 } // namespace net

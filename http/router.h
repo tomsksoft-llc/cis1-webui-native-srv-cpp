@@ -53,31 +53,24 @@ public:
         //
         return handle_result::error;
     }
-    template <class ParseString, class... RouteArgs>
+    template <
+        class ParseString,
+        class... RouteArgs,
+        class Fn>
     void add_route(
             url::url_chain<ParseString, RouteArgs...> url,
-            std::function<handle_result(request_t&, context_t&, Args..., RouteArgs...)> cb)
+            Fn cb)
     {
         using namespace std::string_literals;
-        ParseString s;
         class handler_impl
             : public handler_interface
         {
-            std::function<handle_result(
-                        request_t&,
-                        context_t&,
-                        Args...,
-                        RouteArgs...)> fn;
+            Fn fn;
         public:
             handler_impl(
-                    std::function<handle_result(
-                        request_t&,
-                        context_t&,
-                        Args...,
-                        RouteArgs...)> fn_arg)
+                    Fn fn_arg)
                 : fn(fn_arg)
             {}
-
 
             handle_result handle(
                     request_t& req,
@@ -88,7 +81,9 @@ public:
                 auto parsed_args = meta::maybe_tuple<RouteArgs...>(what, 1); 
                 if(parsed_args)
                 {
-                    auto fn_args = std::tuple_cat(std::forward_as_tuple(req, ctx, args...), parsed_args.value());
+                    auto fn_args = std::tuple_cat(
+                            std::forward_as_tuple(req, ctx, args...),
+                            parsed_args.value());
                     return std::apply(fn, fn_args);
                 }
                 return handle_result::error;
@@ -96,7 +91,7 @@ public:
         };
         
         auto&& inserted = routes_.emplace_back(
-                "^"s + s.value + "$"s,
+                "^"s + ParseString::value + "$"s,
                 std::make_unique<handler_impl>(cb));
     }
 private:

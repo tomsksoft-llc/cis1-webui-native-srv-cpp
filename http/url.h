@@ -20,6 +20,15 @@ struct token<std::string>
     using regex = meta::ct_string<'(', '.', '+', ')'>;
 };
 
+struct bound_string_tag;
+
+template <>
+struct token<bound_string_tag>
+{
+    using value_type = std::string;
+    using regex = meta::ct_string<'(', '[','^','?','/',']', '+', ')'>;
+};
+
 template <>
 struct token<int>
 {
@@ -33,6 +42,8 @@ struct ignore
 };
 
 using string = token<std::string>;
+
+using bound_string = token<bound_string_tag>;
 
 using integer = token<int>;
 

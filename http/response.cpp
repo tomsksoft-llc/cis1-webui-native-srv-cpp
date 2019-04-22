@@ -15,6 +15,7 @@ beast::http::response<beast::http::string_body> accepted(
     res.keep_alive(req.keep_alive());
     res.body() = "Request accepted.";
     res.prepare_payload();
+
     return res;
 }
 
@@ -27,6 +28,7 @@ beast::http::response<beast::http::string_body> not_found(
     res.keep_alive(req.keep_alive());
     res.body() = "The resource '" + std::string(req.target()) + "' was not found.";
     res.prepare_payload();
+
     return res;
 }
 
@@ -39,6 +41,7 @@ beast::http::response<beast::http::string_body> bad_request(
     res.keep_alive(req.keep_alive());
     res.body() = std::string(why);
     res.prepare_payload();
+
     return res;
 }
 
@@ -51,6 +54,7 @@ beast::http::response<beast::http::string_body> server_error(
     res.keep_alive(req.keep_alive());
     res.body() = "An error occurred: '" + std::string(what) + "'";
     res.prepare_payload();
+
     return res;
 }
 

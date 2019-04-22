@@ -8,7 +8,8 @@ namespace net
 class http_handler_interface
 {
 public:
-    ~http_handler_interface() = default;
+    virtual ~http_handler_interface() = default;
+
     virtual void handle_upgrade(
             boost::asio::ip::tcp::socket&& socket,
             boost::beast::http::request<boost::beast::http::empty_body>&& req,

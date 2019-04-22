@@ -11,10 +11,12 @@ const boost::regex cookies_regex("(.*?)=(.*?)($|;|,(?! ))");
 std::map<std::string, std::string> parse_request_query(const std::string& body)
 {
     std::map<std::string, std::string> result;
+
     auto start = body.cbegin();
     auto end = body.cend();
     boost::match_results<std::string::const_iterator> what;
     boost::match_flag_type flags = boost::match_default;
+
     while(regex_search(start, end, what, query_regex, flags))
     {
         if(what.size() < 4)
@@ -28,16 +30,19 @@ std::map<std::string, std::string> parse_request_query(const std::string& body)
         flags |= boost::match_prev_avail;
         flags |= boost::match_not_bob;
     }
+
     return result;
 }
 
 std::map<std::string, std::string> parse_cookies(const std::string& cookies)
 {
     std::map<std::string, std::string> result;
+
     auto start = cookies.cbegin();
     auto end = cookies.cend();
     boost::match_results<std::string::const_iterator> what;
     boost::match_flag_type flags = boost::match_default;
+
     while(regex_search(start, end, what, cookies_regex, flags))
     {
         if(what.size() < 3)
@@ -51,6 +56,7 @@ std::map<std::string, std::string> parse_cookies(const std::string& cookies)
         flags |= boost::match_prev_avail;
         flags |= boost::match_not_bob;
     }
+
     return result;
 }
 

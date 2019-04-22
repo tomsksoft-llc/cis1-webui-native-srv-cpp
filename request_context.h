@@ -6,9 +6,8 @@
 
 #include <boost/beast/http/status.hpp>
 
-class request_context
+struct request_context
 {
-public:
     std::string username;
     std::map<std::string, std::string> cookies;
     std::string active_token;

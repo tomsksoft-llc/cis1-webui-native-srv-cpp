@@ -11,9 +11,9 @@ namespace http
 
 class file_handler
 {
-    const std::string doc_root_;
 public:
     file_handler(const std::string& doc_root);
+
     handle_result operator()(
             beast::http::request<beast::http::empty_body>& req,
             request_context& ctx,
@@ -26,6 +26,8 @@ public:
             net::http_session::request_reader& reader,
             net::http_session::queue& queue,
             std::string_view path);
+private:
+    const std::string doc_root_;
 };
 
 } // namespace http

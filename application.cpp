@@ -8,6 +8,7 @@
 #include "http/url.h"
 #include "websocket/event_dispatcher.h"
 #include "websocket/event_handlers.h"
+#include "cis/dirs.h"
 
 using namespace std::placeholders;              // from <functional>
 
@@ -18,10 +19,13 @@ application::application(const init_params& params)
     , signals_(ioc_, SIGINT, SIGTERM)
     , app_(std::make_shared<http::handlers_chain>())
     , cis_app_(std::make_shared<http::handlers_chain>())
-    , files_(std::make_shared<http::file_handler>(params.doc_root))
     , projects_(std::make_shared<cis::project_list>(ioc_, db_))
     , auth_manager_(std::make_shared<auth_manager>(db_))
     , rights_manager_(std::make_shared<rights_manager>(db_))
+    , files_(std::make_shared<http::file_handler>(params.doc_root))
+    , upload_handler_(std::make_shared<http::multipart_form_handler>(
+        std::filesystem::path{params.cis_root + cis::projects},
+        rights_manager_))
 {
     signals_.async_wait(
         [&](beast::error_code const&, int)
@@ -55,6 +59,7 @@ void application::init_app()
                 &websocket_router::operator(),
                 make_ws_router(),
                 _1, _2, _3));
+
     app_->listen(ioc_, tcp::endpoint{params_.public_address, params_.public_port});
 }
 
@@ -70,6 +75,7 @@ void application::init_cis_app()
                 &http_router::operator(),
                 make_cis_http_router(),
                 _1, _2,_3, _4));
+
     cis_app_->listen(ioc_, tcp::endpoint{params_.cis_address, params_.cis_port});
 }
 
@@ -78,8 +84,8 @@ std::shared_ptr<http_router> application::make_public_http_router()
     auto router = std::make_shared<http_router>();
 
     std::function <http::handle_result(
-        beast::http::request<beast::http::empty_body>& req,
-        request_context& ctx,
+        beast::http::request<beast::http::empty_body>&,
+        request_context&,
         net::http_session::request_reader&,
         net::http_session::queue&)> cb = std::bind(
                 &http::file_handler::single_file,
@@ -87,6 +93,13 @@ std::shared_ptr<http_router> application::make_public_http_router()
                 _1, _2, _3, _4,
                 "/index.html");
     router->add_route(url::root(), cb);
+    
+    router->add_route(
+            url::make() / CT_STRING("upload") / url::bound_string() / url::string(), 
+                [upload_handler = upload_handler_](auto&& ...args)
+                {
+                    return (*upload_handler)(std::forward<decltype(args)>(args)...);
+                });
     
     cb = std::bind(
                     &http::file_handler::operator(),

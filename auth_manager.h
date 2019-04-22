@@ -12,9 +12,9 @@
 
 class auth_manager
 {
-    database::database& db_;
 public:
     auth_manager(database::database& db);
+
     std::optional<std::string> authenticate(
             const std::string& username,
             const std::string& pass);
@@ -40,4 +40,6 @@ public:
             std::string username,
             std::string pass,
             std::string email);
+private:
+    database::database& db_;
 };
