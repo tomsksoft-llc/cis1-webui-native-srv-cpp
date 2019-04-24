@@ -1,7 +1,5 @@
 #include "common_handlers.h"
 
-#include "response.h"
-
 namespace http
 {
 

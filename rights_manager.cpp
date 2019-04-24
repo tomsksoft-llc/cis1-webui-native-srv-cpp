@@ -7,7 +7,6 @@
 #include <rapidjson/istreamwrapper.h>
 #include <rapidjson/ostreamwrapper.h>
 
-#include "file_util.h"
 #include "exceptions/load_config_error.h"
 
 using namespace database;

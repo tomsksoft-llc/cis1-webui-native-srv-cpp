@@ -1,7 +1,6 @@
 #include "file_handler.h"
 
 #include "file_util.h"
-#include "response.h"
 
 namespace http
 {

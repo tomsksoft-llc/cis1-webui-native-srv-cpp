@@ -1,9 +1,5 @@
 #include "database.h"
 
-#include <chrono>
-#include <fstream>
-#include <sstream>
-
 using namespace sqlite_orm;
 
 namespace database
