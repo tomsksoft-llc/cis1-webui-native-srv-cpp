@@ -97,7 +97,6 @@ std::shared_ptr<queued_websocket_session> queued_websocket_session::shared_from_
 void queued_websocket_session::do_read()
 {
     // Read a message into our buffer
-    // TODO probably better is readsome because we can reach resource exhaustation
     ws_.async_read(
         in_buffer_,
         boost::asio::bind_executor(
