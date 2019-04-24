@@ -72,31 +72,31 @@ class http_session
                 boost::beast::http::message<isRequest, Body, Fields> msg_;
 
                 work_impl(
-                    http_session& self,
-                    boost::beast::http::message<isRequest, Body, Fields>&& msg)
-                    : self_(self)
-                    , msg_(std::move(msg))
+                        http_session& self,
+                        boost::beast::http::message<isRequest, Body, Fields>&& msg)
+                        : self_(self)
+                        , msg_(std::move(msg))
                 {
                 }
 
                 void operator()()
                 {
                     boost::beast::http::async_write(
-                        self_.socket_,
-                        msg_,
-                        boost::asio::bind_executor(
-                            self_.strand_,
-                            std::bind(
-                                &http_session::on_write,
-                                self_.shared_from_this(),
-                                std::placeholders::_1,
-                                msg_.need_eof())));
+                            self_.socket_,
+                            msg_,
+                            boost::asio::bind_executor(
+                                    self_.strand_,
+                                    std::bind(
+                                            &http_session::on_write,
+                                            self_.shared_from_this(),
+                                            std::placeholders::_1,
+                                            msg_.need_eof())));
                 }
             };
 
             // Allocate and store the work
             items_.push_back(
-                boost::make_unique<work_impl>(self_, std::move(msg)));
+                    boost::make_unique<work_impl>(self_, std::move(msg)));
 
             // If there was no previous work, start this one
             if(items_.size() == 1)
@@ -160,24 +160,27 @@ class http_session
         {}
         template<class Body>
         void async_read_body(
-                std::function<void(boost::beast::http::request<Body>&)> pre,    
+                std::function<void(boost::beast::http::request<Body>&)> pre,
                 std::function<void(
-                    boost::beast::http::request<Body>&&,
-                    http_session_queue&)> cb)
+                        boost::beast::http::request<Body>&&,
+                        http_session_queue&)> cb)
         {
             upgrade_parser<Body>();
 
             pre(get_parser<Body>().get());
 
-            boost::beast::http::async_read(self_.socket_, self_.buffer_, get_parser<Body>(),
+            boost::beast::http::async_read(
+                    self_.socket_,
+                    self_.buffer_,
+                    get_parser<Body>(),
                     boost::asio::bind_executor(
-                self_.strand_,
-                std::bind(
-                    &http_session::on_read_body<Body>,
-                    self_.shared_from_this(),
-                    cb,
-                    std::placeholders::_1,
-                    std::placeholders::_2)));
+                            self_.strand_,
+                            std::bind(
+                                    &http_session::on_read_body<Body>,
+                                    self_.shared_from_this(),
+                                    cb,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2)));
             done_ = true;
         }
         void done()
@@ -193,13 +196,13 @@ class http_session
                     self_.buffer_,
                     get_parser<beast_ext::sink_body>(),
                     boost::asio::bind_executor(
-                self_.strand_,
-                std::bind(
-                    &http_session::on_read_body<beast_ext::sink_body>,
-                    self_.shared_from_this(),
-                    nullptr,
-                    std::placeholders::_1,
-                    std::placeholders::_2)));
+                            self_.strand_,
+                            std::bind(
+                                    &http_session::on_read_body<beast_ext::sink_body>,
+                                    self_.shared_from_this(),
+                                    nullptr,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2)));
             done_ = true;
         }
     };
@@ -230,8 +233,7 @@ public:
     void on_timer(boost::beast::error_code ec);
 
     void on_read_header(boost::beast::error_code ec);
-    
-    
+
     template <class Body>
     void on_read_body(
             std::function<void(
@@ -256,7 +258,7 @@ public:
         {
             return fail(ec, "read");
         }
-        
+
         if(cb)
         {
             cb(request_reader_.get_parser<Body>().release(), queue_);

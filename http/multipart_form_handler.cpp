@@ -24,9 +24,9 @@ handle_result multipart_form_handler::operator()(
     if(req.method() == beast::http::verb::post
             && req[beast::http::field::content_type].find("multipart/form-data") == 0)
     {
-        if(auto project_rights 
+        if(auto project_rights
                 = rights_->check_project_right(ctx.username, project);
-                !((!project_rights) 
+                !((!project_rights)
                 || (project_rights && project_rights.value().write)))
         {
             ctx.res_status = beast::http::status::forbidden;
@@ -55,7 +55,7 @@ handle_result multipart_form_handler::operator()(
 
 void multipart_form_handler::handle_body(
         beast::http::request<multipart_form_body>&& req,
-        request_context& ctx, 
+        request_context& ctx,
         net::http_session::queue& queue)
 {
     beast::http::response<beast::http::empty_body> res{

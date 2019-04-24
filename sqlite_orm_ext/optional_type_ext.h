@@ -66,7 +66,7 @@ namespace sqlite_orm
         {
             if(row_value)
             {
-                return row_extractor<T>().extract(row_value); 
+                return row_extractor<T>().extract(row_value);
             }
             else
             {
@@ -85,7 +85,7 @@ namespace sqlite_orm
     struct type_is_nullable<std::optional<T>>
         : public std::true_type
     {
-        bool operator()(const std::optional<T> &t) const   
+        bool operator()(const std::optional<T> &t) const
         {
             return static_cast<bool>(t);
         }

@@ -49,7 +49,7 @@ void event_dispatcher::dispatch(
         std::shared_ptr<net::websocket_queue> queue)
 {
     if(text)
-    {     
+    {
         std::string str;
         str.resize(bytes_transferred);
         boost::asio::buffer_copy(
@@ -62,7 +62,7 @@ void event_dispatcher::dispatch(
 #endif
         rapidjson::Document request;
         request.Parse(str.c_str());
-        
+
         if(request.HasParseError())
         {
             send_error(queue, response_id::generic_error, "Invalid JSON.");

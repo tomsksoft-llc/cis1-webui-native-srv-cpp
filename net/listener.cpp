@@ -28,7 +28,7 @@ void listener::listen(
         fail(ec, "open");
         return;
     }
-    
+
     // Automaticly close socket on exec
     set_cloexec(acceptor_, ec);
     if(ec)
@@ -55,7 +55,7 @@ void listener::listen(
 
     // Start listening for connections
     acceptor_.listen(
-        boost::asio::socket_base::max_listen_connections, ec);
+            boost::asio::socket_base::max_listen_connections, ec);
     if(ec)
     {
         fail(ec, "listen");
@@ -68,18 +68,18 @@ void listener::run()
     if(!acceptor_.is_open())
     {
         return;
-    } 
+    }
     do_accept();
 }
 
 void listener::do_accept()
 {
     acceptor_.async_accept(
-        socket_,
-        std::bind(
-            &listener::on_accept,
-            shared_from_this(),
-            std::placeholders::_1));
+            socket_,
+            std::bind(
+                    &listener::on_accept,
+                    shared_from_this(),
+                    std::placeholders::_1));
 }
 
 void listener::on_accept(boost::beast::error_code ec)

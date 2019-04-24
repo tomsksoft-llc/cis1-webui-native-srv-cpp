@@ -75,12 +75,12 @@ void project_list::on_timer(boost::system::error_code ec)
     }
 
     timer_.async_wait(
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &project_list::on_timer,
-                shared_from_this(),
-                std::placeholders::_1)));
+            boost::asio::bind_executor(
+                    strand_,
+                    std::bind(
+                            &project_list::on_timer,
+                            shared_from_this(),
+                            std::placeholders::_1)));
 }
 
 void project_list::fetch_build(
@@ -118,9 +118,9 @@ void project_list::fetch_job(
         project::map_t::iterator it)
 {
     auto [job_it, result] = it->second.jobs.emplace(
-        std::piecewise_construct,
-        std::make_tuple(job_dir.path().filename()),
-        std::make_tuple());
+            std::piecewise_construct,
+            std::make_tuple(job_dir.path().filename()),
+            std::make_tuple());
 
     if(result == false)
     {
@@ -139,7 +139,7 @@ void project_list::fetch_job(
             {
                 //TODO prevent crash on invalid params file
                 auto& job_params = job_it->second.params;
-                std::ifstream params_file(dir_entry.path()); 
+                std::ifstream params_file(dir_entry.path());
                 while(params_file.good())
                 {
                     std::string param;
@@ -152,7 +152,7 @@ void project_list::fetch_job(
                     }
                     job_params.emplace(param, default_value);
                 }
-                
+
             }
             auto& job_files = job_it->second.files;
             job_files.emplace_back(dir_entry.path().filename());
@@ -191,6 +191,7 @@ void project_list::fetch()
 {
     using namespace sqlite_orm;
     projects_.clear();
+
     try
     {
         for(auto& dir_entry: fs::directory_iterator(cis_projects_path_))
@@ -201,7 +202,7 @@ void project_list::fetch()
                 auto db = db_.make_transaction();
                 auto project_ids = db->select(&database::project::id,
                         where(c(&database::project::name)
-                            == dir_entry.path().filename().c_str()));
+                                == dir_entry.path().filename().c_str()));
                 if(project_ids.size() == 1)
                 {
                     db->update_all(set(assign(&database::project::deleted, false)),

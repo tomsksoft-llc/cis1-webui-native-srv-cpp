@@ -30,8 +30,8 @@ struct sink_body
         }
         template<class ConstBufferSequence>
         std::size_t put(
-            ConstBufferSequence const& buffers,
-            boost::beast::error_code& ec)
+                ConstBufferSequence const& buffers,
+                boost::beast::error_code& ec)
         {
             ec.assign(0, ec.category());
             return boost::asio::buffer_size(buffers);
@@ -44,7 +44,7 @@ struct sink_body
 
     static std::uint64_t size(value_type const& body)
     {
-        return 0;   
+        return 0;
     }
 };
 

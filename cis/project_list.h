@@ -66,7 +66,7 @@ struct job_info
     std::vector<std::string> files;
 };
 
-struct job 
+struct job
 {
     explicit job(
             const std::string& job_name);

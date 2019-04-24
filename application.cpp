@@ -28,10 +28,10 @@ application::application(const init_params& params)
         rights_manager_))
 {
     signals_.async_wait(
-        [&](beast::error_code const&, int)
-        {
-            ioc_.stop();
-        });
+            [&](beast::error_code const&, int)
+            {
+                ioc_.stop();
+            });
     init_app();
     init_cis_app();
 }
@@ -40,25 +40,25 @@ void application::init_app()
 {
     app_->set_error_handler(
             std::bind(
-                &http::error_handler::operator(),
-                std::make_shared<http::error_handler>(),
-                _1, _2, _3));
+                    &http::error_handler::operator(),
+                    std::make_shared<http::error_handler>(),
+                    _1, _2, _3));
     app_->append_handler(&http::cookie_parser::parse);
     app_->append_handler(
             std::bind(
-                &http::handle_authenticate,
-                auth_manager_,
-                _1, _2, _3, _4));
+                    &http::handle_authenticate,
+                    auth_manager_,
+                    _1, _2, _3, _4));
     app_->append_handler(
             std::bind(
-                &http_router::operator(),
-                make_public_http_router(),
-                _1, _2, _3, _4));
+                    &http_router::operator(),
+                    make_public_http_router(),
+                    _1, _2, _3, _4));
     app_->append_ws_handler(
             std::bind(
-                &websocket_router::operator(),
-                make_ws_router(),
-                _1, _2, _3));
+                    &websocket_router::operator(),
+                    make_ws_router(),
+                    _1, _2, _3));
 
     app_->listen(ioc_, tcp::endpoint{params_.public_address, params_.public_port});
 }
@@ -67,14 +67,14 @@ void application::init_cis_app()
 {
     cis_app_->set_error_handler(
             std::bind(
-                &http::error_handler::operator(),
-                std::make_shared<http::error_handler>(),
-                _1, _2, _3));
+                    &http::error_handler::operator(),
+                    std::make_shared<http::error_handler>(),
+                    _1, _2, _3));
     cis_app_->append_handler(
             std::bind(
-                &http_router::operator(),
-                make_cis_http_router(),
-                _1, _2,_3, _4));
+                    &http_router::operator(),
+                    make_cis_http_router(),
+                    _1, _2,_3, _4));
 
     cis_app_->listen(ioc_, tcp::endpoint{params_.cis_address, params_.cis_port});
 }
@@ -83,28 +83,28 @@ std::shared_ptr<http_router> application::make_public_http_router()
 {
     auto router = std::make_shared<http_router>();
 
-    std::function <http::handle_result(
-        beast::http::request<beast::http::empty_body>&,
-        request_context&,
-        net::http_session::request_reader&,
-        net::http_session::queue&)> cb = std::bind(
-                &http::file_handler::single_file,
-                files_,
-                _1, _2, _3, _4,
-                "/index.html");
+    std::function<http::handle_result(
+            beast::http::request<beast::http::empty_body>&,
+            request_context&,
+            net::http_session::request_reader&,
+            net::http_session::queue&)> cb = std::bind(
+                    &http::file_handler::single_file,
+                    files_,
+                    _1, _2, _3, _4,
+                    "/index.html");
     router->add_route(url::root(), cb);
-    
+
     router->add_route(
             url::make() / CT_STRING("upload") / url::bound_string() / url::string(), 
-                [upload_handler = upload_handler_](auto&& ...args)
-                {
-                    return (*upload_handler)(std::forward<decltype(args)>(args)...);
-                });
-    
+            [upload_handler = upload_handler_](auto&& ...args)
+            {
+                return (*upload_handler)(std::forward<decltype(args)>(args)...);
+            });
+
     cb = std::bind(
-                    &http::file_handler::operator(),
-                    files_,
-                    _1, _2, _3, _4);
+            &http::file_handler::operator(),
+            files_,
+            _1, _2, _3, _4);
     router->add_route(url::make() / url::ignore(), cb);
 
     return router;
@@ -157,19 +157,19 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                 beast::http::request<beast::http::empty_body>& req,
                 request_context& ctx,
                 tcp::socket& socket)
-            {
-                net::queued_websocket_session::accept_handler(
-                        std::move(socket),
-                        std::move(req),
-                        std::bind(
-                            &ws::event_dispatcher::dispatch,
-                            dispatcher,
-                            ctx,
-                            _1, _2, _3, _4));
-                return http::handle_result::done;
-            };
+                {
+                    net::queued_websocket_session::accept_handler(
+                            std::move(socket),
+                            std::move(req),
+                            std::bind(
+                                &ws::event_dispatcher::dispatch,
+                                dispatcher,
+                                ctx,
+                                _1, _2, _3, _4));
+                    return http::handle_result::done;
+                };
     router->add_route(url::make() / CT_STRING("ws"), cb);
-    
+
     return router;
 }
 

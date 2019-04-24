@@ -28,7 +28,7 @@ void run_job(
             [project, name](int exit, std::vector<char>& buffer, const std::error_code& ec)
             {
                 std::cout << "job " + project
-                            + "/" + name + " finished" << std::endl;
+                        + "/" + name + " finished" << std::endl;
                 if(!ec)
                 {
                     std::cout << "process exited with " << exit << std::endl;

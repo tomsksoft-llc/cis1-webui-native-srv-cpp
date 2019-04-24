@@ -8,8 +8,9 @@ namespace net
 basic_websocket_session::basic_websocket_session(boost::asio::ip::tcp::socket socket)
     : ws_(std::move(socket))
     , strand_(ws_.get_executor())
-    , timer_(ws_.get_executor().context(),
-        (std::chrono::steady_clock::time_point::max)())
+    , timer_(
+            ws_.get_executor().context(),
+            (std::chrono::steady_clock::time_point::max)())
 {
 }
 
@@ -50,13 +51,14 @@ void basic_websocket_session::on_timer(boost::beast::error_code ec)
             timer_.expires_after(std::chrono::seconds(15));
 
             // Now send the ping
-            ws_.async_ping({},
-                boost::asio::bind_executor(
-                    strand_,
-                    std::bind(
-                        &basic_websocket_session::on_ping,
-                        shared_from_this(),
-                        std::placeholders::_1)));
+            ws_.async_ping(
+                    {},
+                    boost::asio::bind_executor(
+                            strand_,
+                            std::bind(
+                                    &basic_websocket_session::on_ping,
+                                    shared_from_this(),
+                                    std::placeholders::_1)));
         }
         else
         {
@@ -74,12 +76,12 @@ void basic_websocket_session::on_timer(boost::beast::error_code ec)
 
     // Wait on the timer
     timer_.async_wait(
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &basic_websocket_session::on_timer,
-                shared_from_this(),
-                std::placeholders::_1)));
+            boost::asio::bind_executor(
+                    strand_,
+                    std::bind(
+                            &basic_websocket_session::on_timer,
+                            shared_from_this(),
+                            std::placeholders::_1)));
 }
 
 void basic_websocket_session::activity()
@@ -117,8 +119,8 @@ void basic_websocket_session::on_ping(boost::beast::error_code ec)
 }
 
 void basic_websocket_session::on_control_callback(
-    boost::beast::websocket::frame_type kind,
-    boost::beast::string_view payload)
+        boost::beast::websocket::frame_type kind,
+        boost::beast::string_view payload)
 {
     boost::ignore_unused(kind, payload);
 

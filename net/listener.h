@@ -13,8 +13,8 @@ class listener
 {
 public:
     listener(
-        boost::asio::io_context& ioc,
-        std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket);
+            boost::asio::io_context& ioc,
+            std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket);
 
     void listen(
             const boost::asio::ip::tcp::endpoint& endpoint,

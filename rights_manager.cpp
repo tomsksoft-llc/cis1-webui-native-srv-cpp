@@ -15,8 +15,7 @@ using namespace sqlite_orm;
 
 rights_manager::rights_manager(database::database& db)
     : db_(db)
-{
-}
+{}
 
 std::optional<bool> rights_manager::check_user_permission(
         const std::string& username,
@@ -35,7 +34,7 @@ std::optional<bool> rights_manager::check_user_permission(
     {
         auto group_permission_count = db->count<group_permission>(
                 where(c(&group_permission::group_id) == groups[0]
-                    && c(&group_permission::permission_id) == permissions[0]));
+                        && c(&group_permission::permission_id) == permissions[0]));
 
         if(group_permission_count == 1)
         {
@@ -64,7 +63,7 @@ std::optional<project_user_right> rights_manager::check_project_right(
     {
         auto rights = db->get_all<project_user_right>(
                 where(c(&project_user_right::user_id) == users[0]
-                    && c(&project_user_right::project_id) == projects[0]));
+                        && c(&project_user_right::project_id) == projects[0]));
 
         if(rights.size() == 1)
         {
@@ -97,11 +96,10 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
         }
 
         auto projects_rights = db->select(
-                columns(
-                    &project::name,
-                    &project_user_right::read,
-                    &project_user_right::write,
-                    &project_user_right::execute),
+                columns(&project::name,
+                        &project_user_right::read,
+                        &project_user_right::write,
+                        &project_user_right::execute),
                 inner_join<project>(on(c(&project::id) == &project_user_right::project_id)),
                 where(c(&project_user_right::user_id) == users[0]));
 
@@ -137,7 +135,7 @@ bool rights_manager::set_user_project_permissions(
         rights.project_id = projects[0];
         auto ids = db->select(&project_user_right::id,
                 where(c(&project_user_right::user_id) == users[0]
-                    && c(&project_user_right::project_id) == projects[0]));
+                        && c(&project_user_right::project_id) == projects[0]));
 
         if(ids.size() == 1)
         {

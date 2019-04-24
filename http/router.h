@@ -50,7 +50,7 @@ public:
                 return handler->handle(req, ctx, std::forward<decltype(args)>(args)..., what);
             }
         }
-        //
+
         return handle_result::error;
     }
     template <
@@ -78,7 +78,7 @@ public:
                     Args... args,
                     const boost::smatch& what) const
             {
-                auto parsed_args = meta::maybe_tuple<RouteArgs...>(what, 1); 
+                auto parsed_args = meta::maybe_tuple<RouteArgs...>(what, 1);
                 if(parsed_args)
                 {
                     auto fn_args = std::tuple_cat(
@@ -89,7 +89,7 @@ public:
                 return handle_result::error;
             }
         };
-        
+
         auto&& inserted = routes_.emplace_back(
                 "^"s + ParseString::value + "$"s,
                 std::make_unique<handler_impl>(cb));
@@ -101,6 +101,6 @@ private:
 } // namespace http
 
 using http_router = http::router<
-    net::http_session::request_reader&,
-    net::http_session::queue&>;
+        net::http_session::request_reader&,
+        net::http_session::queue&>;
 using websocket_router = http::router<tcp::socket&>;

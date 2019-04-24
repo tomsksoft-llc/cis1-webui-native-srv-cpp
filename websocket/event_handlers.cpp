@@ -48,7 +48,7 @@ std::optional<std::string> authenticate(
 {
     auto login = get_string(request_data, "username");
     auto pass = get_string(request_data, "pass");
-    
+
     if(!login || !pass)
     {
         return "Invalid JSON.";
@@ -57,7 +57,7 @@ std::optional<std::string> authenticate(
     auto token = authentication_handler->authenticate(
             login.value(),
             pass.value());
-    
+
     if(token)
     {
         ctx.username = login.value();
@@ -66,16 +66,16 @@ std::optional<std::string> authenticate(
         response_data.AddMember(
                 "token",
                 rapidjson::Value().SetString(
-                    token.value().c_str(),
-                    token.value().length(),
-                    allocator),
+                        token.value().c_str(),
+                        token.value().length(),
+                        allocator),
                 allocator);
         response_data.AddMember(
                 "group",
                 rapidjson::Value().SetString(
-                    group.c_str(),
-                    group.length(),
-                    allocator),
+                        group.c_str(),
+                        group.length(),
+                        allocator),
                 allocator);
         return std::nullopt;
     }
@@ -99,7 +99,7 @@ std::optional<std::string> token(
     }
 
     auto username = authentication_handler->authenticate(token.value());
-    
+
     if(username)
     {
         ctx.username = username.value();
@@ -108,9 +108,9 @@ std::optional<std::string> token(
         response_data.AddMember(
                 "group",
                 rapidjson::Value().SetString(
-                    group.c_str(),
-                    group.length(),
-                    allocator),
+                        group.c_str(),
+                        group.length(),
+                        allocator),
                 allocator);
         return std::nullopt;
     }
@@ -169,8 +169,8 @@ std::optional<std::string> list_projects(
         {
             array.PushBack(
                     rapidjson::Value().CopyFrom(
-                        to_json(project),
-                        allocator),
+                            to_json(project),
+                            allocator),
                     allocator);
         }
     }
@@ -186,7 +186,7 @@ std::optional<std::string> get_project_info(
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
-{    
+{
     auto project_name = get_string(request_data, "project");
     if(!project_name)
     {
@@ -208,9 +208,9 @@ std::optional<std::string> get_project_info(
             array_value.AddMember(
                     "name",
                     rapidjson::Value().SetString(
-                        file.c_str(),
-                        file.length(),
-                        allocator),
+                            file.c_str(),
+                            file.length(),
+                            allocator),
                     allocator);
             array_value.AddMember(
                     "link",
@@ -226,8 +226,8 @@ std::optional<std::string> get_project_info(
         {
             array.PushBack(
                     rapidjson::Value().CopyFrom(
-                        to_json(job),
-                        allocator),
+                            to_json(job),
+                            allocator),
                     allocator);
         }
         response_data.AddMember("jobs", array, allocator);
@@ -258,7 +258,7 @@ std::optional<std::string> get_job_info(
     {
         return "Invalid JSON.";
     }
-   
+
     auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().read : true;
@@ -277,9 +277,9 @@ std::optional<std::string> get_job_info(
                 array_value.AddMember(
                         "name",
                         rapidjson::Value().SetString(
-                            file.c_str(),
-                            file.length(),
-                            allocator),
+                                file.c_str(),
+                                file.length(),
+                                allocator),
                         allocator);
                 array_value.AddMember(
                         "link",
@@ -297,16 +297,16 @@ std::optional<std::string> get_job_info(
                 array_value.AddMember(
                         "name",
                         rapidjson::Value().SetString(
-                            param.name.c_str(),
-                            param.name.length(),
-                            allocator),
+                                param.name.c_str(),
+                                param.name.length(),
+                                allocator),
                         allocator);
                 array_value.AddMember(
                         "default_value",
                         rapidjson::Value().SetString(
-                            param.default_value.c_str(),
-                            param.default_value.length(),
-                            allocator),
+                                param.default_value.c_str(),
+                                param.default_value.length(),
+                                allocator),
                         allocator);
                 array.PushBack(
                         array_value,
@@ -318,8 +318,8 @@ std::optional<std::string> get_job_info(
             {
                 array.PushBack(
                         rapidjson::Value().CopyFrom(
-                            to_json(build),
-                            allocator),
+                                to_json(build),
+                                allocator),
                         allocator);
             }
             response_data.AddMember("builds", array, allocator);
@@ -356,7 +356,7 @@ std::optional<std::string> run_job(
     {
         return "Invalid JSON.";
     }
-   
+
     auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().execute : true;
@@ -434,24 +434,24 @@ std::optional<std::string> list_users(
             array_value.AddMember(
                     "username",
                     rapidjson::Value().SetString(
-                        user.name.c_str(),
-                        user.name.length(),
-                        allocator),
+                            user.name.c_str(),
+                            user.name.length(),
+                            allocator),
                     allocator);
             array_value.AddMember(
                     "email",
                     rapidjson::Value().SetString(
-                        user.email.c_str(),
-                        user.email.length(),
-                        allocator),
+                            user.email.c_str(),
+                            user.email.length(),
+                            allocator),
                     allocator);
             array_value.AddMember(
                     "group",
                     rapidjson::Value().SetString(
-                        user.group_id == 2 //FIXME
-                        ? "admin"
-                        : "user",
-                        allocator),
+                            user.group_id == 2 //FIXME
+                            ? "admin"
+                            : "user",
+                            allocator),
                     allocator);
             array_value.AddMember(
                     "disabled",
@@ -464,9 +464,9 @@ std::optional<std::string> list_users(
                 array_value.AddMember(
                         "APIAccessSecretKey",
                         rapidjson::Value().SetString(
-                            key.c_str(),
-                            key.length(),
-                            allocator),
+                                key.c_str(),
+                                key.length(),
+                                allocator),
                         allocator);*/
             }
             else
@@ -499,7 +499,7 @@ std::optional<std::string> get_user_permissions(
 
     auto perm = rights->check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
-    
+
     if(permitted)
     {
         const auto permissions = rights->get_permissions(name.value());
@@ -512,9 +512,9 @@ std::optional<std::string> get_user_permissions(
             array_value.AddMember(
                     "username",
                     rapidjson::Value().SetString(
-                        project_name.c_str(),
-                        project_name.length(),
-                        allocator),
+                            project_name.c_str(),
+                            project_name.length(),
+                            allocator),
                     allocator);
             array_value.AddMember(
                     "read",
@@ -554,7 +554,7 @@ std::optional<std::string> set_user_permissions(
 
     auto perm = rights->check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
-    
+
     if(permitted)
     {
         for(auto& array_value : request_data["permissions"].GetArray())
@@ -628,7 +628,7 @@ std::optional<std::string> disable_user(
     {
         return "Invalid JSON.";
     }
-    
+
     if(authentication_handler->has_user(name.value()))
     {
         return "Invalid username.";
@@ -662,7 +662,7 @@ std::optional<std::string> generate_api_key(
         return "Invalid JSON.";
     }
 
-    if(ctx.username == name.value() 
+    if(ctx.username == name.value()
         || authentication_handler->get_group(ctx.username).value() == "admin")
     {
         auto api_key = authentication_handler->generate_api_key(name.value());
@@ -673,9 +673,9 @@ std::optional<std::string> generate_api_key(
         response_data.AddMember(
                 "APIAccessSecretKey",
                 rapidjson::Value().SetString(
-                    api_key.value().c_str(),
-                    api_key.value().length(),
-                    allocator),
+                        api_key.value().c_str(),
+                        api_key.value().length(),
+                        allocator),
                 allocator);
 
         return std::nullopt;
@@ -767,7 +767,7 @@ std::optional<std::string> get_build_info(
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
     if(project_it != projects->get().cend() && permitted)
-    {   
+    {
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
         {
@@ -790,9 +790,9 @@ std::optional<std::string> get_build_info(
                     array_value.AddMember(
                             "name",
                             rapidjson::Value().SetString(
-                                artifact.c_str(),
-                                artifact.length(),
-                                allocator),
+                                    artifact.c_str(),
+                                    artifact.length(),
+                                    allocator),
                             allocator);
                     array_value.AddMember(
                             "link",

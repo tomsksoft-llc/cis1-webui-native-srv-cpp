@@ -20,7 +20,7 @@ class multipart_form_handler
     std::shared_ptr<rights_manager> rights_;
     void handle_body(
             beast::http::request<multipart_form_body>&& req,
-            request_context& ctx, 
+            request_context& ctx,
             net::http_session::queue& queue);
 public:
     multipart_form_handler(

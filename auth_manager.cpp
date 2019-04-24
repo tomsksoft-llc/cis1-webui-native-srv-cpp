@@ -29,7 +29,7 @@ std::optional<std::string> auth_manager::authenticate(
     auto ids = db->select(
             &user::id,
             where(c(&user::name) == username
-                  && c(&user::pass) == pass));
+                    && c(&user::pass) == pass));
 
     if(ids.size() == 1)
     {
@@ -182,7 +182,7 @@ bool auth_manager::change_pass(
     auto users = db->select(
             &user::id,
             where(c(&user::name) == username
-                  && c(&user::pass) == old_pass));
+                    && c(&user::pass) == old_pass));
 
     if(users.size() == 1)
     {

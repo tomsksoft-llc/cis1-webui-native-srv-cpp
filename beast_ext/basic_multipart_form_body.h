@@ -20,8 +20,9 @@
 template<class File>
 struct basic_multipart_form_body
 {
-    static_assert(boost::beast::is_file<File>::value,
-        "File requirements not met");
+    static_assert(
+            boost::beast::is_file<File>::value,
+            "File requirements not met");
 
     /// The type of File this body uses
     using file_type = File;
@@ -48,7 +49,7 @@ class basic_multipart_form_body<File>::value_type
 
     // The cached file size
     std::uint64_t file_size_ = 0;
-    
+
     struct value_t
     {
         explicit value_t(bool is_file_arg, std::string content_arg)
@@ -80,7 +81,7 @@ public:
     value_type& operator=(value_type&& other) = default;
 
     void set_dir(const std::string& dir_path, boost::beast::error_code& ec);
-    
+
     const std::multimap<std::string, value_t>& get_values() const
     {
         return values_;
@@ -389,7 +390,7 @@ void basic_multipart_form_body<File>::reader::parse_content_disposition(
         }
 
         start = what[0].second;
-        // update flags: 
+        // update flags:
         flags |= boost::match_prev_avail;
         flags |= boost::match_not_bob;
     }

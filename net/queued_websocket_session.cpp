@@ -21,12 +21,12 @@ void websocket_queue::send()
         self_.ws_.async_write(
                 messages_.front().buffer,
                 boost::asio::bind_executor(
-                    self_.strand_,
-                    std::bind(
-                        &queued_websocket_session::on_write,
-                        self_.shared_from_this(),
-                        std::placeholders::_1,
-                        std::placeholders::_2)));
+                        self_.strand_,
+                        std::bind(
+                                &queued_websocket_session::on_write,
+                                self_.shared_from_this(),
+                                std::placeholders::_1,
+                                std::placeholders::_2)));
 }
 
 void websocket_queue::send_text(boost::asio::const_buffer buffer, std::function<void()> on_write)
@@ -60,9 +60,9 @@ bool websocket_queue::on_write()
 }
 
 void queued_websocket_session::accept_handler(
-            boost::asio::ip::tcp::socket&& socket,
-            boost::beast::http::request<boost::beast::http::empty_body>&& req,
-            request_handler_t handler)
+        boost::asio::ip::tcp::socket&& socket,
+        boost::beast::http::request<boost::beast::http::empty_body>&& req,
+        request_handler_t handler)
 {
     std::make_shared<queued_websocket_session>(
         std::move(socket), handler)->do_accept(std::move(req));
@@ -110,8 +110,8 @@ void queued_websocket_session::do_read()
 }
 
 void queued_websocket_session::on_read(
-    boost::beast::error_code ec,
-    std::size_t bytes_transferred)
+        boost::beast::error_code ec,
+        std::size_t bytes_transferred)
 {
     // Happens when the timer closes the socket
     if(ec == boost::asio::error::operation_aborted)
@@ -133,7 +133,7 @@ void queued_websocket_session::on_read(
     }
     // Note that there is activity
     activity();
-    
+
     handler_(ws_.got_text(), in_buffer_, bytes_transferred, get_queue());
 
     in_buffer_.consume(in_buffer_.size());
@@ -145,8 +145,8 @@ void queued_websocket_session::on_read(
 }
 
 void queued_websocket_session::on_write(
-    boost::beast::error_code ec,
-    std::size_t bytes_transferred)
+        boost::beast::error_code ec,
+        std::size_t bytes_transferred)
 {
     boost::ignore_unused(bytes_transferred);
 
@@ -160,7 +160,7 @@ void queued_websocket_session::on_write(
     {
         return fail(ec, "write");
     }
-    
+
     if(queue_.on_write())
     {
         do_read();

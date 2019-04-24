@@ -54,8 +54,8 @@ struct url_chain
     constexpr auto operator<<(const meta::ct_string<Args2...>& t)
     {
         using result_str = typename meta::concat_string<
-            ParseString,
-            meta::ct_string<Args2...>>::value;
+                ParseString,
+                meta::ct_string<Args2...>>::value;
         return url_chain<result_str, Args...>();
     }
 
@@ -63,41 +63,41 @@ struct url_chain
     constexpr auto operator<<(const token<TokenType>& t)
     {
         using result_str = typename meta::concat_string<
-            ParseString,
-            typename token<TokenType>::regex>::value;
+                ParseString,
+                typename token<TokenType>::regex>::value;
         return url_chain<result_str, Args..., typename token<TokenType>::value_type>();
     }
     constexpr auto operator<<(const ignore& t)
     {
         using result_str = typename meta::concat_string<
-            ParseString,
-            typename ignore::regex>::value;
+                ParseString,
+                typename ignore::regex>::value;
         return url_chain<result_str, Args...>();
     }
     template <char... Args2>
     constexpr auto operator/(const meta::ct_string<Args2...>& t)
     {
         using result_str = typename meta::string_cat<
-            ParseString,
-            meta::ct_string<'/'>,
-            meta::ct_string<Args2...>>::value;
+                ParseString,
+                meta::ct_string<'/'>,
+                meta::ct_string<Args2...>>::value;
         return url_chain<result_str, Args...>();
     }
     template <class TokenType>
     constexpr auto operator/(const token<TokenType>& t)
     {
         using result_str = typename meta::string_cat<
-            ParseString,
-            meta::ct_string<'/'>,
-            typename token<TokenType>::regex>::value;
+                ParseString,
+                meta::ct_string<'/'>,
+                typename token<TokenType>::regex>::value;
         return url_chain<result_str, Args..., typename token<TokenType>::value_type>();
     }
     constexpr auto operator/(const ignore& t)
     {
         using result_str = typename meta::string_cat<
-            ParseString,
-            meta::ct_string<'/'>,
-            typename ignore::regex>::value;
+                ParseString,
+                meta::ct_string<'/'>,
+                typename ignore::regex>::value;
         return url_chain<result_str, Args...>();
     }
 };

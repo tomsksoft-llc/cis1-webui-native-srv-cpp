@@ -43,7 +43,9 @@ public:
             boost::asio::ip::tcp::socket&& socket,
             boost::beast::http::request<boost::beast::http::empty_body>&& req,
             request_handler_t handler);
-    explicit queued_websocket_session(boost::asio::ip::tcp::socket socket, request_handler_t handler);
+    explicit queued_websocket_session(
+            boost::asio::ip::tcp::socket socket,
+            request_handler_t handler);
 #ifndef NDEBUG
     ~queued_websocket_session();
 #endif

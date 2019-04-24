@@ -26,15 +26,16 @@ void handlers_chain::set_error_handler(const error_handler_t& handler)
 
 void handlers_chain::listen(boost::asio::io_context& ioc, const tcp::endpoint& endpoint)
 {
-    auto accept_handler = [self = shared_from_this()](tcp::socket&& socket){
+    auto accept_handler = [self = shared_from_this()](tcp::socket&& socket)
+    {
         std::make_shared<net::http_session>(
-            std::move(socket),
-            self)->run();
+                std::move(socket),
+                self)->run();
     };
 
     auto l = std::make_shared<net::listener>(
-        ioc,
-        accept_handler);
+            ioc,
+            accept_handler);
     boost::beast::error_code ec;
     l->listen(endpoint, ec);
 

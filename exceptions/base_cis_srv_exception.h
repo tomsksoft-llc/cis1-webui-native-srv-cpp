@@ -13,5 +13,5 @@ public:
     virtual ~base_cis_srv_exception() = default;
     base_cis_srv_exception(const base_cis_srv_exception& other);
     base_cis_srv_exception& operator=(const base_cis_srv_exception& other);
-	virtual const char* what() const noexcept;
+    virtual const char* what() const noexcept;
 };

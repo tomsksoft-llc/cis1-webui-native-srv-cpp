@@ -40,7 +40,7 @@ void base_event_handler::handle(
     {
         response["data"].AddMember("errorMessage", "", response.GetAllocator());
     }
-    
+
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
     rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
     response.Accept(writer);

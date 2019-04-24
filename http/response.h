@@ -7,12 +7,12 @@ namespace beast = boost::beast;
 namespace http
 {
 
-namespace response 
+namespace response
 {
 
-using string_response_t = 
+using string_response_t =
     boost::beast::http::response<boost::beast::http::string_body>;
-using string_request_t = 
+using string_request_t =
     boost::beast::http::request<boost::beast::http::empty_body>;
 
 string_response_t accepted(string_request_t&& req);

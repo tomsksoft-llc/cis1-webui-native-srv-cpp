@@ -63,14 +63,14 @@ void basic_websocket_session::do_accept(boost::beast::http::request<Body, boost:
             this,
             std::placeholders::_1,
             std::placeholders::_2));
-    
+
     // Run the timer. The timer is operated
     // continuously, this simplifies the code.
     on_timer({});
 
     // Set the timer
     timer_.expires_after(std::chrono::seconds(15));
-    
+
     // Accept the websocket handshake
     ws_.async_accept(
         req,

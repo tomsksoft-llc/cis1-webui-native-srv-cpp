@@ -48,7 +48,7 @@ void http_session::do_read_header()
 
     // Make the new request_parser empty before reading,
     // otherwise the operation behavior is undefined.
-    request_reader_.prepare(); 
+    request_reader_.prepare();
 
     // Read a request
     boost::beast::http::async_read_header(socket_, buffer_,
@@ -86,12 +86,12 @@ void http_session::on_timer(boost::beast::error_code ec)
 
     // Wait on the timer
     timer_.async_wait(
-        boost::asio::bind_executor(
-            strand_,
-            std::bind(
-                &http_session::on_timer,
-                shared_from_this(),
-                std::placeholders::_1)));
+            boost::asio::bind_executor(
+                    strand_,
+                    std::bind(
+                            &http_session::on_timer,
+                            shared_from_this(),
+                            std::placeholders::_1)));
 }
 
 void http_session::on_read_header(boost::beast::error_code ec)
@@ -127,7 +127,7 @@ void http_session::on_read_header(boost::beast::error_code ec)
                 queue_);
         return;
     }
-    
+
     app_->handle_header(
             request_reader_.get_header_parser().get(),
             request_reader_,

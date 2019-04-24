@@ -7,7 +7,7 @@
 
 namespace meta
 {
-    
+
 template <class... Formats, size_t... Is>
 std::tuple<Formats...> as_tuple(const boost::smatch& arr, size_t offset,
                                 std::index_sequence<Is...>)
@@ -114,8 +114,9 @@ struct string_cat {};
 template <char... Str1, class... Strings>
 struct string_cat<ct_string<Str1...>, Strings...>
 {
-    using value = typename concat_string<ct_string<Str1...>,
-                             typename string_cat<Strings...>::value>::value;
+    using value = typename concat_string<
+            ct_string<Str1...>,
+            typename string_cat<Strings...>::value>::value;
 };
 
 template <>

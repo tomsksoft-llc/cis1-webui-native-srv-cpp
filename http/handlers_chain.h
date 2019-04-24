@@ -22,22 +22,22 @@ public:
     using request_header_t = boost::beast::http::request<boost::beast::http::empty_body>;
     using queue_t = net::http_session::queue;
     using context_t = request_context;
-    using handler_t = 
+    using handler_t =
         std::function<handle_result(
-            request_header_t&,
-            context_t&,
-            net::http_session::request_reader&,
-            queue_t&)>;
-    using ws_handler_t = 
+                request_header_t&,
+                context_t&,
+                net::http_session::request_reader&,
+                queue_t&)>;
+    using ws_handler_t =
         std::function<handle_result(
-            request_header_t&,
-            context_t&,
-            tcp::socket&)>;
-    using error_handler_t = 
+                request_header_t&,
+                context_t&,
+                tcp::socket&)>;
+    using error_handler_t =
         std::function<void(
-            request_header_t&,
-            context_t&,
-            queue_t&)>;
+                request_header_t&,
+                context_t&,
+                queue_t&)>;
 
     handlers_chain();
 
