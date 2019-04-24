@@ -8,11 +8,13 @@ base_cis_srv_exception::base_cis_srv_exception(const char* what_arg)
     : what_(what_arg)
 {}
 
-base_cis_srv_exception::base_cis_srv_exception(const base_cis_srv_exception& other)
+base_cis_srv_exception::base_cis_srv_exception(
+        const base_cis_srv_exception& other)
     : what_(other.what_)
 {}
 
-base_cis_srv_exception& base_cis_srv_exception::operator=(const base_cis_srv_exception& other)
+base_cis_srv_exception& base_cis_srv_exception::operator=(
+        const base_cis_srv_exception& other)
 {
     what_ = other.what_;
     return *this;

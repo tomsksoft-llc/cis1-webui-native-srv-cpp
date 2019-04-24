@@ -95,7 +95,7 @@ std::shared_ptr<http_router> application::make_public_http_router()
     router->add_route(url::root(), cb);
 
     router->add_route(
-            url::make() / CT_STRING("upload") / url::bound_string() / url::string(), 
+            url::make() / CT_STRING("upload") / url::bound_string() / url::string(),
             [&upload_handler = upload_handler_](auto&& ...args)
             {
                 return upload_handler(std::forward<decltype(args)>(args)...);
@@ -118,37 +118,80 @@ std::shared_ptr<websocket_router> application::make_ws_router()
 
     ws::event_dispatcher dispatcher;
     dispatcher.add_event_handler(ws::request_id::auth_login_pass,
-            std::bind(&wsh::authenticate, std::ref(std::ref(auth_manager_)), _1, _2, _3, _4));
+            std::bind(
+                    &wsh::authenticate,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::auth_token,
-            std::bind(&wsh::token, std::ref(std::ref(auth_manager_)), _1, _2, _3, _4));
+            std::bind(&wsh::token,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::logout,
-            std::bind(&wsh::logout, std::ref(std::ref(auth_manager_)), _1, _2, _3, _4));
+            std::bind(&wsh::logout,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::change_pass,
-            std::bind(&wsh::change_pass, std::ref(auth_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::change_pass,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::list_users,
-            std::bind(&wsh::list_users, std::ref(auth_manager_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::list_users,
+                std::ref(auth_manager_),
+                std::ref(rights_manager_),
+                _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_user_permissions,
-            std::bind(&wsh::get_user_permissions, std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::get_user_permissions,
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::set_user_permissions,
-            std::bind(&wsh::set_user_permissions, std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::set_user_permissions,
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::change_group,
-            std::bind(&wsh::change_group, std::ref(auth_manager_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::change_group,
+                    std::ref(auth_manager_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::disable_user,
-            std::bind(&wsh::disable_user, std::ref(auth_manager_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::disable_user,
+                    std::ref(auth_manager_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::generate_api_key,
-            std::bind(&wsh::generate_api_key, std::ref(auth_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::generate_api_key,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::list_projects,
-            std::bind(&wsh::list_projects, std::ref(projects_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::list_projects,
+                    std::ref(projects_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_project_info,
-            std::bind(&wsh::get_project_info, std::ref(projects_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::get_project_info,
+                    std::ref(projects_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_job_info,
-            std::bind(&wsh::get_job_info, std::ref(projects_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::get_job_info,
+                    std::ref(projects_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::run_job,
-            std::bind(&wsh::run_job, std::ref(projects_), std::ref(rights_manager_), std::ref(ioc_), _1, _2, _3, _4));
+            std::bind(&wsh::run_job,
+                    std::ref(projects_),
+                    std::ref(rights_manager_),
+                    std::ref(ioc_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::rename_job,
-            std::bind(&wsh::rename_job, std::ref(projects_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::rename_job,
+                    std::ref(projects_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_build_info,
-            std::bind(&wsh::get_build_info, std::ref(projects_), std::ref(rights_manager_), _1, _2, _3, _4));
+            std::bind(&wsh::get_build_info,
+                    std::ref(projects_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
 
     std::function <http::handle_result(
         beast::http::request<beast::http::empty_body>& req,

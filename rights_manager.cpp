@@ -99,8 +99,9 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
                         &project_user_right::read,
                         &project_user_right::write,
                         &project_user_right::execute),
-                inner_join<project>(on(c(&project::id) == &project_user_right::project_id)),
-                where(c(&project_user_right::user_id) == users[0]));
+                        inner_join<project>(on(c(&project::id)
+                                == &project_user_right::project_id)),
+                        where(c(&project_user_right::user_id) == users[0]));
 
         for(auto& [project_name, read, write, execute] : projects_rights)
         {

@@ -25,7 +25,10 @@ void run_job(
     cp->run(
             "sh",
             {"startjob", path_cat(project, "/" + name)},
-            [project, name](int exit, std::vector<char>& buffer, const std::error_code& ec)
+            [project, name](
+                    int exit,
+                    std::vector<char>& buffer,
+                    const std::error_code& ec)
             {
                 std::cout << "job " + project
                         + "/" + name + " finished" << std::endl;

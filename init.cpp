@@ -21,7 +21,8 @@ init_params parse_args(int argc, char* argv[])
     {
         pt::ptree pt;
         pt::ini_parser::read_ini(argv[1], pt);
-        result.public_address = net::ip::make_address(pt.get<std::string>("http.ip"));
+        result.public_address = net::ip::make_address(
+                pt.get<std::string>("http.ip"));
         result.public_port = pt.get<unsigned short>("http.port");
         result.doc_root = pt.get<std::string>("http.doc_root");
         auto opt_cis_root = pt.get_optional<std::string>("cis.cis_root");

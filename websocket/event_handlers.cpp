@@ -709,7 +709,11 @@ std::optional<std::string> rename_job(
         if(job_it != project_it->second.jobs.cend())
         {
             std::error_code ec;
-            cis::rename_job(project_name.value(), job_name.value(), new_job_name.value(), ec);
+            cis::rename_job(
+                    project_name.value(),
+                    job_name.value(),
+                    new_job_name.value(),
+                    ec);
             if(ec)
             {
                 return "Error while renaming.";
