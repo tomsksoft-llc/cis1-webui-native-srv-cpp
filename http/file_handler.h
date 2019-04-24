@@ -12,7 +12,7 @@ namespace http
 class file_handler
 {
 public:
-    file_handler(const std::string& doc_root);
+    file_handler(std::string doc_root);
 
     handle_result operator()(
             beast::http::request<beast::http::empty_body>& req,

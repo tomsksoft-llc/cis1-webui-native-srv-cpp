@@ -222,7 +222,7 @@ public:
     // Take ownership of the socket
     explicit http_session(
         boost::asio::ip::tcp::socket socket,
-        const std::shared_ptr<http_handler_interface const>& app);
+        std::shared_ptr<http_handler_interface const> app);
 
     // Start the asynchronous operation
     void run();

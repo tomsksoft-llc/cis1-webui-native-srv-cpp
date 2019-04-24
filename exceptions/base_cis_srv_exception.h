@@ -8,7 +8,7 @@ class base_cis_srv_exception
 {
     std::string what_;
 public:
-    base_cis_srv_exception(const std::string& what_arg);
+    base_cis_srv_exception(std::string what_arg);
     base_cis_srv_exception(const char* what_arg);
     virtual ~base_cis_srv_exception() = default;
     base_cis_srv_exception(const base_cis_srv_exception& other);

@@ -46,9 +46,9 @@ public:
     bool delete_token(
             const std::string& token);
     bool add_user(
-            std::string username,
-            std::string pass,
-            std::string email);
+            const std::string& username,
+            const std::string& pass,
+            const std::string& email);
 private:
     database::database& db_;
 };

@@ -1,7 +1,7 @@
 #include "base_cis_srv_exception.h"
 
-base_cis_srv_exception::base_cis_srv_exception(const std::string& what_arg)
-    : what_(what_arg)
+base_cis_srv_exception::base_cis_srv_exception(std::string what_arg)
+    : what_(std::move(what_arg))
 {}
 
 base_cis_srv_exception::base_cis_srv_exception(const char* what_arg)

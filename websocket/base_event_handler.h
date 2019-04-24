@@ -17,7 +17,7 @@ class base_event_handler
 {
 public:
     virtual void handle(
-            std::shared_ptr<net::websocket_queue> queue,
+            const std::shared_ptr<net::websocket_queue>& queue,
             request_context& ctx,
             const rapidjson::Value& request_data,
             request_id req_id,

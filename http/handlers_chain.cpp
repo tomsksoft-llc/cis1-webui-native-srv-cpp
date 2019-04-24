@@ -6,9 +6,6 @@
 namespace http
 {
 
-handlers_chain::handlers_chain()
-{}
-
 void handlers_chain::append_handler(const handler_t& handler)
 {
     handlers_.push_back(handler);

@@ -5,8 +5,8 @@
 namespace http
 {
 
-file_handler::file_handler(const std::string& doc_root)
-    : doc_root_(doc_root)
+file_handler::file_handler(std::string doc_root)
+    : doc_root_(std::move(doc_root))
 {}
 
 handle_result file_handler::operator()(
@@ -21,7 +21,7 @@ handle_result file_handler::operator()(
 handle_result file_handler::single_file(
         beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
-        net::http_session::request_reader& reader,
+        net::http_session::request_reader& /*reader*/,
         net::http_session::queue& queue,
         std::string_view path)
 {

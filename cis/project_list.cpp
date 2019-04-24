@@ -11,30 +11,30 @@ namespace cis
 {
 
 build::build(
-        const std::string& build_name,
+        std::string build_name,
         int build_status,
-        const std::string& build_date,
+        std::string build_date,
         std::vector<std::string> build_artifacts)
-    : name(build_name)
+    : name(std::move(build_name))
     , status(build_status)
-    , date(build_date)
+    , date(std::move(build_date))
     , artifacts(std::move(build_artifacts))
 {}
 
 param::param(
-        const std::string& param_name,
-        const std::string& param_default_value)
-    : name(param_name)
-    , default_value(param_default_value)
+        std::string param_name,
+        std::string param_default_value)
+    : name(std::move(param_name))
+    , default_value(std::move(param_default_value))
 {}
 
-job::job(const std::string& job_name)
-    : name(job_name)
+job::job(std::string job_name)
+    : name(std::move(job_name))
 {}
 
 
-project::project(const std::string& project_name)
-        : name(project_name)
+project::project(std::string project_name)
+        : name(std::move(project_name))
 {}
 
 project_list::project_list(boost::asio::io_context& ioc, database::database& db)
@@ -122,7 +122,7 @@ void project_list::fetch_job(
             std::make_tuple(job_dir.path().filename()),
             std::make_tuple());
 
-    if(result == false)
+    if(!result)
     {
         return;
     }

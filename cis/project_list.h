@@ -38,9 +38,9 @@ struct name_member_comparator
 struct build
 {
     explicit build(
-            const std::string& build_name,
+            std::string build_name,
             int build_status,
-            const std::string& build_date,
+            std::string build_date,
             std::vector<std::string> build_artifacts);
     std::string name;
     int status;
@@ -52,8 +52,8 @@ struct build
 struct param
 {
     explicit param(
-            const std::string& param_name,
-            const std::string& param_default_value);
+            std::string param_name,
+            std::string param_default_value);
     std::string name;
     std::string default_value;
     using map_t = std::set<param, name_member_comparator<param>>;
@@ -68,8 +68,7 @@ struct job_info
 
 struct job
 {
-    explicit job(
-            const std::string& job_name);
+    explicit job(std::string job_name);
 
     std::string name;
     using map_t = std::map<job, job_info, name_member_comparator<job>>;
@@ -84,8 +83,7 @@ struct project_info
 
 struct project
 {
-    explicit project(
-            const std::string& project_name);
+    explicit project(std::string project_name);
 
     std::string name;
     using map_t = std::map<project, project_info, name_member_comparator<project>>;

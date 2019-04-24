@@ -8,7 +8,7 @@ namespace http
 handle_result cookie_parser::parse(
         beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
-        net::http_session::request_reader& reader,
+        net::http_session::request_reader& /*reader*/,
         net::http_session::queue& /*queue*/)
 {
     std::string cookies_string{};

@@ -39,8 +39,6 @@ public:
                 context_t&,
                 queue_t&)>;
 
-    handlers_chain();
-
     void append_handler(const handler_t& handler);
     void append_ws_handler(const ws_handler_t& handler);
     void set_error_handler(const error_handler_t& handler);

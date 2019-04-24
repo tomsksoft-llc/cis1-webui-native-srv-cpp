@@ -33,7 +33,7 @@ std::optional<std::string> auth_manager::authenticate(
 
     if(ids.size() == 1)
     {
-        auto unix_timestamp = std::chrono::seconds(std::time(NULL));
+        auto unix_timestamp = std::chrono::seconds(std::time(nullptr));
         std::ostringstream os;
         os << unix_timestamp.count();
         std::string token_str = username + os.str();
@@ -62,7 +62,7 @@ std::optional<std::string> auth_manager::authenticate(const std::string& token_v
 
     if(ids.size() == 1)
     {
-        if(std::get<1>(ids[0]) < std::chrono::seconds(std::time(NULL)).count())
+        if(std::get<1>(ids[0]) < std::chrono::seconds(std::time(nullptr)).count())
         {
             db->remove_all<token>(where(c(&token::value) == token_value));
 
@@ -150,7 +150,7 @@ std::optional<std::string> auth_manager::generate_api_key(const std::string& use
 
     if(ids.size() == 1)
     {
-        auto unix_timestamp = std::chrono::seconds(std::time(NULL));
+        auto unix_timestamp = std::chrono::seconds(std::time(nullptr));
         std::ostringstream os;
         os << unix_timestamp.count();
         std::string key_str = username + os.str() + "SALT";
@@ -205,7 +205,7 @@ std::vector<user> auth_manager::get_users() const
 std::vector<user_info> auth_manager::get_user_infos() const
 {
     std::vector<user_info> result;
-    
+
     auto db = db_.make_transaction();
 
     auto users = db->select(
@@ -247,9 +247,9 @@ bool auth_manager::delete_token(const std::string& token_value)
 }
 
 bool auth_manager::add_user(
-        std::string username,
-        std::string pass,
-        std::string email)
+        const std::string& username,
+        const std::string& pass,
+        const std::string& email)
 {
     auto db = db_.make_transaction();
 

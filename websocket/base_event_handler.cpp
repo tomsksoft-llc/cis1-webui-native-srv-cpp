@@ -7,7 +7,7 @@ namespace websocket
 {
 
 void base_event_handler::handle(
-        std::shared_ptr<net::websocket_queue> queue,
+        const std::shared_ptr<net::websocket_queue>& queue,
         request_context& ctx,
         const rapidjson::Value& request_data,
         request_id req_id,
@@ -50,4 +50,4 @@ void base_event_handler::handle(
             [buffer](){});
 }
 
-}
+} // namespace websocket

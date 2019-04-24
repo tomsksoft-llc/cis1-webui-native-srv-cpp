@@ -76,10 +76,8 @@ std::optional<std::string> authenticate(
                 allocator);
         return std::nullopt;
     }
-    else
-    {
-        return "Wrong username or password.";
-    }
+
+    return "Wrong username or password.";
 }
 
 std::optional<std::string> token(
@@ -111,18 +109,16 @@ std::optional<std::string> token(
                 allocator);
         return std::nullopt;
     }
-    else
-    {
-        return "Invalid token.";
-    }
+
+    return "Invalid token.";
 }
 
 std::optional<std::string> logout(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        rapidjson::Value& /*response_data*/,
+        rapidjson::Document::AllocatorType& /*allocator*/)
 {
     auto token = get_string(request_data, "token");
     if(!token)
@@ -143,17 +139,15 @@ std::optional<std::string> logout(
         authentication_handler->delete_token(token.value());
         return std::nullopt;
     }
-    else
-    {
-        return "Invalid JSON.";
-    }
+
+    return "Invalid JSON.";
 }
 
 std::optional<std::string> list_projects(
         const std::shared_ptr<cis::project_list>& projects,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
+        const rapidjson::Value& /*request_data*/,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
@@ -162,7 +156,7 @@ std::optional<std::string> list_projects(
     for(auto& [project, jobs] : projects->get())
     {
         if(auto perm = rights->check_project_right(ctx.username, project.name);
-                (perm.has_value() && perm.value().read) || (!perm.has_value() && true))
+                (perm.has_value() && perm.value().read) || !perm.has_value())
         {
             array.PushBack(
                     rapidjson::Value().CopyFrom(
@@ -231,14 +225,13 @@ std::optional<std::string> get_project_info(
 
         return std::nullopt;
     }
-    else if(!permitted)
+
+    if(!permitted)
     {
         return "Action not permitted.";
     }
-    else
-    {
-        return "Project doesn't exists.";
-    }
+
+    return "Project doesn't exists.";
 }
 
 std::optional<std::string> get_job_info(
@@ -328,14 +321,13 @@ std::optional<std::string> get_job_info(
             return "Job doesn't exists.";
         }
     }
-    else if(!permitted)
+
+    if(!permitted)
     {
         return "Action not permitted.";
     }
-    else
-    {
-        return "Project doesn't exists.";
-    }
+
+    return "Project doesn't exists.";
 }
 
 std::optional<std::string> run_job(
@@ -344,8 +336,8 @@ std::optional<std::string> run_job(
         boost::asio::io_context& io_ctx,
         request_context& ctx,
         const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        rapidjson::Value& /*response_data*/,
+        rapidjson::Document::AllocatorType& /*allocator*/)
 {
     auto project_name = get_string(request_data, "project");
     auto job_name = get_string(request_data, "job");
@@ -373,22 +365,21 @@ std::optional<std::string> run_job(
             return "Job doesn't exists.";
         }
     }
-    else if(!permitted)
+
+    if(!permitted)
     {
         return "Action not permitted.";
     }
-    else
-    {
-        return "Project doesn't exists.";
-    }
+
+    return "Project doesn't exists.";
 }
 
 std::optional<std::string> change_pass(
         const std::shared_ptr<auth_manager>& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        rapidjson::Value& /*response_data*/,
+        rapidjson::Document::AllocatorType& /*allocator*/)
 {
     auto old_pass = get_string(request_data, "oldPassword");
     auto new_pass = get_string(request_data, "newPassword");
@@ -412,7 +403,7 @@ std::optional<std::string> list_users(
         const std::shared_ptr<auth_manager>& authentication_handler,
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
+        const rapidjson::Value& /*request_data*/,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
@@ -452,7 +443,7 @@ std::optional<std::string> list_users(
             array_value.AddMember(
                     "disabled",
                     rapidjson::Value().SetBool(
-                            user.group == "disabled" ? true : false),
+                            user.group == "disabled"),
                     allocator);
             if(user.api_access_key)
             {
@@ -538,8 +529,8 @@ std::optional<std::string> set_user_permissions(
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        rapidjson::Value& /*response_data*/,
+        rapidjson::Document::AllocatorType& /*allocator*/)
 {
     auto name = get_string(request_data, "username");
 
@@ -580,8 +571,8 @@ std::optional<std::string> change_group(
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        rapidjson::Value& /*response_data*/,
+        rapidjson::Document::AllocatorType& /*allocator*/)
 {
     auto name = get_string(request_data, "username");
     auto group = get_string(request_data, "group");
@@ -685,8 +676,8 @@ std::optional<std::string> rename_job(
         const std::shared_ptr<rights_manager>& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        rapidjson::Value& /*response_data*/,
+        rapidjson::Document::AllocatorType& /*allocator*/)
 {
     auto project_name = get_string(request_data, "project");
     auto job_name = get_string(request_data, "oldName");
@@ -701,7 +692,7 @@ std::optional<std::string> rename_job(
     {
         return "Empty name field.";
     }
-   
+
     auto project_it = projects->get().find(project_name.value());
     auto perm = rights->check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
@@ -727,19 +718,16 @@ std::optional<std::string> rename_job(
 
             return std::nullopt;
         }
-        else
-        {
-            return "Job doesn't exists.";
-        }
+
+        return "Job doesn't exists.";
     }
-    else if(!permitted)
+
+    if(!permitted)
     {
         return "Action not permitted.";
     }
-    else
-    {
-        return "Project doesn't exists.";
-    }
+
+    return "Project doesn't exists.";
 }
 
 std::optional<std::string> get_build_info(
@@ -802,24 +790,19 @@ std::optional<std::string> get_build_info(
 
                 return std::nullopt;
             }
-            else
-            {
-                return "Build doesn't exists.";
-            }
+
+            return "Build doesn't exists.";
         }
-        else
-        {
-            return "Job doesn't exists.";
-        }
+
+        return "Job doesn't exists.";
     }
-    else if(!permitted)
+
+    if(!permitted)
     {
         return "Action not permitted.";
     }
-    else
-    {
-        return "Project doesn't exists.";
-    }
+
+    return "Project doesn't exists.";
 }
 
 } // namespace handlers

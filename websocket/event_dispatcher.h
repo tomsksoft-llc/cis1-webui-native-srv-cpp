@@ -26,10 +26,10 @@ public:
             bool text,
             boost::beast::flat_buffer& buffer,
             size_t bytes_transferred,
-            std::shared_ptr<net::websocket_queue> queue);
+            const std::shared_ptr<net::websocket_queue>& queue);
     void add_event_handler(
             request_id event_id,
-            std::function<default_event_handler_t> cb);
+            const std::function<default_event_handler_t>& cb);
 private:
     std::map<int, std::shared_ptr<base_event_handler>> event_handlers_;
 };

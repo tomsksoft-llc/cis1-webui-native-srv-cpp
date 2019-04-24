@@ -8,15 +8,15 @@ namespace http
 multipart_form_handler::multipart_form_handler(
         std::filesystem::path files_root,
         std::shared_ptr<rights_manager> rights)
-    : files_root_(files_root)
-    , rights_(rights)
+    : files_root_(std::move(files_root))
+    , rights_(std::move(rights))
 {}
 
 handle_result multipart_form_handler::operator()(
         beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
         net::http_session::request_reader& reader,
-        net::http_session::queue& queue,
+        net::http_session::queue& /*queue*/,
         const std::string& project,
         const std::string& dir)
 {
@@ -54,7 +54,7 @@ handle_result multipart_form_handler::operator()(
 
 void multipart_form_handler::handle_body(
         beast::http::request<multipart_form_body>&& req,
-        request_context& ctx,
+        request_context& /*ctx*/,
         net::http_session::queue& queue)
 {
     beast::http::response<beast::http::empty_body> res{

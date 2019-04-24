@@ -12,9 +12,9 @@
 #endif
 
 void send_error(
-        std::shared_ptr<net::websocket_queue>& queue,
+        const std::shared_ptr<net::websocket_queue>& queue,
         websocket::response_id event_id,
-        std::string error_string)
+        const std::string& error_string)
 {
     rapidjson::Document document;
     rapidjson::Value value;
@@ -46,7 +46,7 @@ void event_dispatcher::dispatch(
         bool text,
         boost::beast::flat_buffer& buffer,
         size_t bytes_transferred,
-        std::shared_ptr<net::websocket_queue> queue)
+        const std::shared_ptr<net::websocket_queue>& queue)
 {
     if(text)
     {
@@ -108,7 +108,7 @@ void event_dispatcher::dispatch(
 
 void event_dispatcher::add_event_handler(
         request_id event_id,
-        std::function<default_event_handler_t> cb)
+        const std::function<default_event_handler_t>& cb)
 {
     class handler
         : public base_event_handler

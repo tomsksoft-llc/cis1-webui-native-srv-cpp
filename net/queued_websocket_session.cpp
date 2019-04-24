@@ -65,7 +65,7 @@ void queued_websocket_session::accept_handler(
         request_handler_t handler)
 {
     std::make_shared<queued_websocket_session>(
-        std::move(socket), handler)->do_accept(std::move(req));
+        std::move(socket), std::move(handler))->do_accept(std::move(req));
 #ifndef NDEBUG
     std::cout << "accept_handler()" << std::endl;
 #endif

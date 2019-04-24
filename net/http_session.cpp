@@ -10,12 +10,12 @@ namespace net
 
 http_session::http_session(
     boost::asio::ip::tcp::socket socket,
-    const std::shared_ptr<http_handler_interface const>& app)
+    std::shared_ptr<http_handler_interface const> app)
     : socket_(std::move(socket))
     , strand_(socket_.get_executor())
     , timer_(socket_.get_executor().context(),
         (std::chrono::steady_clock::time_point::max)())
-    , app_(app)
+    , app_(std::move(app))
     , queue_(*this)
     , request_reader_(*this)
 {

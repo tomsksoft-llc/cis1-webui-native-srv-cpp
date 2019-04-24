@@ -24,8 +24,8 @@ handle_result handle_authenticate(
 handle_result handle_update_projects(
         const std::shared_ptr<cis::project_list>& projects,
         beast::http::request<beast::http::empty_body>& req,
-        request_context& ctx,
-        net::http_session::request_reader& reader,
+        request_context& /*ctx*/,
+        net::http_session::request_reader& /*reader*/,
         net::http_session::queue& queue)
 {
     projects->fetch();
