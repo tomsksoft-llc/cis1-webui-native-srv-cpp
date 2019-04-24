@@ -7,9 +7,9 @@ namespace http
 
 multipart_form_handler::multipart_form_handler(
         std::filesystem::path files_root,
-        std::shared_ptr<rights_manager> rights)
+        rights_manager& rights)
     : files_root_(std::move(files_root))
-    , rights_(std::move(rights))
+    , rights_(rights)
 {}
 
 handle_result multipart_form_handler::operator()(
@@ -24,7 +24,7 @@ handle_result multipart_form_handler::operator()(
             && req[beast::http::field::content_type].find("multipart/form-data") == 0)
     {
         if(auto project_rights
-                = rights_->check_project_right(ctx.username, project);
+                = rights_.check_project_right(ctx.username, project);
                 !((!project_rights)
                 || (project_rights && project_rights.value().write)))
         {

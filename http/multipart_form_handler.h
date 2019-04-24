@@ -17,7 +17,7 @@ namespace http
 class multipart_form_handler
 {
     std::filesystem::path files_root_;
-    std::shared_ptr<rights_manager> rights_;
+    rights_manager& rights_;
     void handle_body(
             beast::http::request<multipart_form_body>&& req,
             request_context& ctx,
@@ -25,7 +25,7 @@ class multipart_form_handler
 public:
     multipart_form_handler(
             std::filesystem::path files_root,
-            std::shared_ptr<rights_manager> rights);
+            rights_manager& rights);
     handle_result operator()(
             beast::http::request<beast::http::empty_body>& req,
             request_context& ctx,

@@ -37,7 +37,7 @@ namespace handlers
 {
 
 std::optional<std::string> authenticate(
-        const std::shared_ptr<auth_manager>& authentication_handler,
+        auth_manager& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -51,14 +51,14 @@ std::optional<std::string> authenticate(
         return "Invalid JSON.";
     }
 
-    auto token = authentication_handler->authenticate(
+    auto token = authentication_handler.authenticate(
             login.value(),
             pass.value());
 
     if(token)
     {
         ctx.username = login.value();
-        auto group = authentication_handler->get_group(ctx.username).value();
+        auto group = authentication_handler.get_group(ctx.username).value();
         ctx.active_token = token.value();
         response_data.AddMember(
                 "token",
@@ -81,7 +81,7 @@ std::optional<std::string> authenticate(
 }
 
 std::optional<std::string> token(
-        const std::shared_ptr<auth_manager>& authentication_handler,
+        auth_manager& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -93,13 +93,13 @@ std::optional<std::string> token(
         return "Invalid JSON.";
     }
 
-    auto username = authentication_handler->authenticate(token.value());
+    auto username = authentication_handler.authenticate(token.value());
 
     if(username)
     {
         ctx.username = username.value();
         ctx.active_token = token.value();
-        auto group = authentication_handler->get_group(ctx.username).value();
+        auto group = authentication_handler.get_group(ctx.username).value();
         response_data.AddMember(
                 "group",
                 rapidjson::Value().SetString(
@@ -114,7 +114,7 @@ std::optional<std::string> token(
 }
 
 std::optional<std::string> logout(
-        const std::shared_ptr<auth_manager>& authentication_handler,
+        auth_manager& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& /*response_data*/,
@@ -126,7 +126,7 @@ std::optional<std::string> logout(
         return "Invalid JSON.";
     }
 
-    auto username = authentication_handler->authenticate(token.value());
+    auto username = authentication_handler.authenticate(token.value());
 
     if(username && username.value() == ctx.username)
     {
@@ -136,7 +136,7 @@ std::optional<std::string> logout(
             ctx.active_token = "";
             ctx.username = "";
         }
-        authentication_handler->delete_token(token.value());
+        authentication_handler.delete_token(token.value());
         return std::nullopt;
     }
 
@@ -144,8 +144,8 @@ std::optional<std::string> logout(
 }
 
 std::optional<std::string> list_projects(
-        const std::shared_ptr<cis::project_list>& projects,
-        const std::shared_ptr<rights_manager>& rights,
+        cis::project_list& projects,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& /*request_data*/,
         rapidjson::Value& response_data,
@@ -153,9 +153,9 @@ std::optional<std::string> list_projects(
 {
     rapidjson::Value array;
     array.SetArray();
-    for(auto& [project, jobs] : projects->get())
+    for(auto& [project, jobs] : projects.get())
     {
-        if(auto perm = rights->check_project_right(ctx.username, project.name);
+        if(auto perm = rights.check_project_right(ctx.username, project.name);
                 (perm.has_value() && perm.value().read) || !perm.has_value())
         {
             array.PushBack(
@@ -171,8 +171,8 @@ std::optional<std::string> list_projects(
 }
 
 std::optional<std::string> get_project_info(
-        const std::shared_ptr<cis::project_list>& projects,
-        const std::shared_ptr<rights_manager>& rights,
+        cis::project_list& projects,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -184,11 +184,11 @@ std::optional<std::string> get_project_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects->get().find(project_name.value());
-    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto project_it = projects.get().find(project_name.value());
+    auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().read : true;
 
-    if(project_it != projects->get().cend() && permitted)
+    if(project_it != projects.get().cend() && permitted)
     {
         rapidjson::Value array;
         rapidjson::Value array_value;
@@ -235,8 +235,8 @@ std::optional<std::string> get_project_info(
 }
 
 std::optional<std::string> get_job_info(
-        const std::shared_ptr<cis::project_list>& projects,
-        const std::shared_ptr<rights_manager>& rights,
+        cis::project_list& projects,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -249,11 +249,11 @@ std::optional<std::string> get_job_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects->get().find(project_name.value());
-    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto project_it = projects.get().find(project_name.value());
+    auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().read : true;
 
-    if(project_it != projects->get().cend() && permitted)
+    if(project_it != projects.get().cend() && permitted)
     {
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
@@ -331,8 +331,8 @@ std::optional<std::string> get_job_info(
 }
 
 std::optional<std::string> run_job(
-        const std::shared_ptr<cis::project_list>& projects,
-        const std::shared_ptr<rights_manager>& rights,
+        cis::project_list& projects,
+        rights_manager& rights,
         boost::asio::io_context& io_ctx,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -346,18 +346,18 @@ std::optional<std::string> run_job(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects->get().find(project_name.value());
-    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto project_it = projects.get().find(project_name.value());
+    auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().execute : true;
 
-    if(project_it != projects->get().cend() && permitted)
+    if(project_it != projects.get().cend() && permitted)
     {
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
         {
             cis::run_job(io_ctx, project_name.value(), job_name.value());
             return std::nullopt;
-            projects->defer_fetch();
+            projects.defer_fetch();
             return std::nullopt;
         }
         else
@@ -375,7 +375,7 @@ std::optional<std::string> run_job(
 }
 
 std::optional<std::string> change_pass(
-        const std::shared_ptr<auth_manager>& authentication_handler,
+        auth_manager& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& /*response_data*/,
@@ -387,7 +387,7 @@ std::optional<std::string> change_pass(
     {
         return "Invalid JSON.";
     }
-    bool ok = authentication_handler->change_pass(
+    bool ok = authentication_handler.change_pass(
             ctx.username,
             old_pass.value(),
             new_pass.value());
@@ -400,19 +400,19 @@ std::optional<std::string> change_pass(
 }
 
 std::optional<std::string> list_users(
-        const std::shared_ptr<auth_manager>& authentication_handler,
-        const std::shared_ptr<rights_manager>& rights,
+        auth_manager& authentication_handler,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& /*request_data*/,
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto perm = rights->check_user_permission(ctx.username, "users.list");
+    auto perm = rights.check_user_permission(ctx.username, "users.list");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        const auto users = authentication_handler->get_user_infos();
+        const auto users = authentication_handler.get_user_infos();
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
@@ -471,7 +471,7 @@ std::optional<std::string> list_users(
 }
 
 std::optional<std::string> get_user_permissions(
-        const std::shared_ptr<rights_manager>& rights,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -484,12 +484,12 @@ std::optional<std::string> get_user_permissions(
         return "Invalid JSON.";
     }
 
-    auto perm = rights->check_user_permission(ctx.username, "users.permissions");
+    auto perm = rights.check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        const auto permissions = rights->get_permissions(name.value());
+        const auto permissions = rights.get_permissions(name.value());
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
@@ -526,7 +526,7 @@ std::optional<std::string> get_user_permissions(
 }
 
 std::optional<std::string> set_user_permissions(
-        const std::shared_ptr<rights_manager>& rights,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& /*response_data*/,
@@ -539,7 +539,7 @@ std::optional<std::string> set_user_permissions(
         return "Invalid JSON.";
     }
 
-    auto perm = rights->check_user_permission(ctx.username, "users.permissions");
+    auto perm = rights.check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
@@ -554,7 +554,7 @@ std::optional<std::string> set_user_permissions(
             {
                 return "Invalid JSON.";
             }
-            rights->set_user_project_permissions(
+            rights.set_user_project_permissions(
                     name.value(),
                     project_name.value(),
                     {-1, -1, -1, read.value(), write.value(), execute.value()});
@@ -567,8 +567,8 @@ std::optional<std::string> set_user_permissions(
 }
 
 std::optional<std::string> change_group(
-        const std::shared_ptr<auth_manager>& authentication_handler,
-        const std::shared_ptr<rights_manager>& rights,
+        auth_manager& authentication_handler,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& /*response_data*/,
@@ -582,17 +582,17 @@ std::optional<std::string> change_group(
         return "Invalid JSON.";
     }
 
-    if(authentication_handler->has_user(name.value()))
+    if(authentication_handler.has_user(name.value()))
     {
         return "Invalid username.";
     }
 
-    auto perm = rights->check_user_permission(ctx.username, "users.change_group");
+    auto perm = rights.check_user_permission(ctx.username, "users.change_group");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        authentication_handler->change_group(name.value(), group.value());
+        authentication_handler.change_group(name.value(), group.value());
 
         return std::nullopt;
     }
@@ -601,8 +601,8 @@ std::optional<std::string> change_group(
 }
 
 std::optional<std::string> disable_user(
-        const std::shared_ptr<auth_manager>& authentication_handler,
-        const std::shared_ptr<rights_manager>& rights,
+        auth_manager& authentication_handler,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -616,17 +616,17 @@ std::optional<std::string> disable_user(
         return "Invalid JSON.";
     }
 
-    if(authentication_handler->has_user(name.value()))
+    if(authentication_handler.has_user(name.value()))
     {
         return "Invalid username.";
     }
 
-    auto perm = rights->check_user_permission(ctx.username, "users.change_group");
+    auto perm = rights.check_user_permission(ctx.username, "users.change_group");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        authentication_handler->change_group(
+        authentication_handler.change_group(
                 name.value(),
                 state.value() ? "disabled" : "user");
         return std::nullopt;
@@ -636,7 +636,7 @@ std::optional<std::string> disable_user(
 }
 
 std::optional<std::string> generate_api_key(
-        const std::shared_ptr<auth_manager>& authentication_handler,
+        auth_manager& authentication_handler,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -650,9 +650,9 @@ std::optional<std::string> generate_api_key(
     }
 
     if(ctx.username == name.value()
-        || authentication_handler->get_group(ctx.username).value() == "admin")
+        || authentication_handler.get_group(ctx.username).value() == "admin")
     {
-        auto api_key = authentication_handler->generate_api_key(name.value());
+        auto api_key = authentication_handler.generate_api_key(name.value());
         if(!api_key)
         {
             return "Can't generate APIAccessSecretKey.";
@@ -672,8 +672,8 @@ std::optional<std::string> generate_api_key(
 }
 
 std::optional<std::string> rename_job(
-        const std::shared_ptr<cis::project_list>& projects,
-        const std::shared_ptr<rights_manager>& rights,
+        cis::project_list& projects,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& /*response_data*/,
@@ -693,11 +693,11 @@ std::optional<std::string> rename_job(
         return "Empty name field.";
     }
 
-    auto project_it = projects->get().find(project_name.value());
-    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto project_it = projects.get().find(project_name.value());
+    auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
 
-    if(project_it != projects->get().cend() && permitted)
+    if(project_it != projects.get().cend() && permitted)
     {
         if(auto it = project_it->second.jobs.find(new_job_name.value());
                 it != project_it->second.jobs.cend())
@@ -714,7 +714,7 @@ std::optional<std::string> rename_job(
             {
                 return "Error while renaming.";
             }
-            projects->fetch();
+            projects.fetch();
 
             return std::nullopt;
         }
@@ -731,8 +731,8 @@ std::optional<std::string> rename_job(
 }
 
 std::optional<std::string> get_build_info(
-        const std::shared_ptr<cis::project_list>& projects,
-        const std::shared_ptr<rights_manager>& rights,
+        cis::project_list& projects,
+        rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
         rapidjson::Value& response_data,
@@ -747,10 +747,10 @@ std::optional<std::string> get_build_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects->get().find(project_name.value());
-    auto perm = rights->check_project_right(ctx.username, project_name.value());
+    auto project_it = projects.get().find(project_name.value());
+    auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
-    if(project_it != projects->get().cend() && permitted)
+    if(project_it != projects.get().cend() && permitted)
     {
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
