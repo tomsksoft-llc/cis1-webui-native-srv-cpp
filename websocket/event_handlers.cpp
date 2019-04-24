@@ -424,7 +424,7 @@ std::optional<std::string> list_users(
 
     if(permitted)
     {
-        const auto users = authentication_handler->get_users();
+        const auto users = authentication_handler->get_user_infos();
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
@@ -448,18 +448,17 @@ std::optional<std::string> list_users(
             array_value.AddMember(
                     "group",
                     rapidjson::Value().SetString(
-                            user.group_id == 2 //FIXME
-                            ? "admin"
-                            : "user",
+                            user.group.c_str(),
+                            user.group.length(),
                             allocator),
                     allocator);
             array_value.AddMember(
                     "disabled",
-                    rapidjson::Value().SetBool(false/*user.disabled*/),
+                    rapidjson::Value().SetBool(
+                            user.group == "disabled" ? true : false),
                     allocator);
-            if(false)//user.api_access_key)
+            if(user.api_access_key)
             {
-                /*
                 auto& key = user.api_access_key.value();
                 array_value.AddMember(
                         "APIAccessSecretKey",
@@ -467,7 +466,7 @@ std::optional<std::string> list_users(
                                 key.c_str(),
                                 key.length(),
                                 allocator),
-                        allocator);*/
+                        allocator);
             }
             else
             {

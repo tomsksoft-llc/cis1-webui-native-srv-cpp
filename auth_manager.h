@@ -10,6 +10,14 @@
 #include "request_context.h"
 #include "database.h"
 
+struct user_info
+{
+    std::string name;
+    std::string email;
+    std::string group;
+    std::optional<std::string> api_access_key;
+};
+
 class auth_manager
 {
 public:
@@ -34,6 +42,7 @@ public:
             const std::string& old_pass,
             const std::string& new_pass);
     std::vector<database::user> get_users() const;
+    std::vector<user_info> get_user_infos() const;
     bool delete_token(
             const std::string& token);
     bool add_user(

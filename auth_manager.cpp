@@ -202,6 +202,39 @@ std::vector<user> auth_manager::get_users() const
     return db_.get().get_all<user>();
 }
 
+std::vector<user_info> auth_manager::get_user_infos() const
+{
+    std::vector<user_info> result;
+    
+    auto db = db_.make_transaction();
+
+    auto users = db->select(
+            columns(&user::id,
+                    &user::name,
+                    &user::email,
+                    &group::name),
+            inner_join<user>(on(c(&user::group_id) == &group::id)));
+
+    result.resize(users.size());
+
+    size_t i = 0;
+    for(auto [id, name, email, group] : users)
+    {
+        std::optional<std::string> key;
+        auto api_access_keys = db->select(
+                &api_access_key::value,
+                where(c(&api_access_key::user_id) == id));
+        if(api_access_keys.size() == 1)
+        {
+            key = api_access_keys[0];
+        }
+        result[i] = {name, email, group, key};
+    }
+
+    db.commit();
+    return result;
+}
+
 bool auth_manager::delete_token(const std::string& token_value)
 {
     auto db = db_.make_transaction();
