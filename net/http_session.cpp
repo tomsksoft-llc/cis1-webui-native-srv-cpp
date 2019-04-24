@@ -171,8 +171,66 @@ void http_session::do_close()
     // At this point the connection is closed gracefully
 }
 
+http_session::http_session_queue::http_session_queue(http_session& self)
+    : self_(self)
+{
+    static_assert(limit > 0, "queue limit must be positive");
+}
+
+bool http_session::http_session_queue::is_full() const
+{
+    return items_.size() >= limit;
+}
+
+bool http_session::http_session_queue::on_write()
+{
+    BOOST_ASSERT(!items_.empty());
+    auto const was_full = is_full();
+    items_.erase(items_.begin());
+    if(! items_.empty())
+    {
+        (*items_.front())();
+    }
+    return was_full;
+}
+
 template <>
 void http_session::http_request_reader::upgrade_parser<boost::beast::http::empty_body>()
 {}
+
+boost::beast::http::request_parser<boost::beast::http::empty_body>&
+http_session::http_request_reader::get_header_parser()
+{
+    return get_parser<boost::beast::http::empty_body>();
+}
+
+void http_session::http_request_reader::prepare()
+{
+    done_ = false;
+    parser_ = std::make_unique<parser_wrapper_impl<boost::beast::http::empty_body>>();
+}
+
+void http_session::http_request_reader::done()
+{
+    if(done_)
+    {
+        return;
+    }
+
+    upgrade_parser<beast_ext::sink_body>();
+    boost::beast::http::async_read(
+            self_.socket_,
+            self_.buffer_,
+            get_parser<beast_ext::sink_body>(),
+            boost::asio::bind_executor(
+                    self_.strand_,
+                    std::bind(
+                            &http_session::on_read_body<beast_ext::sink_body>,
+                            self_.shared_from_this(),
+                            nullptr,
+                            std::placeholders::_1,
+                            std::placeholders::_2)));
+    done_ = true;
+}
 
 } // namespace net
