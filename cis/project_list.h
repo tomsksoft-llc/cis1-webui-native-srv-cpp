@@ -112,10 +112,11 @@ class project_list
 public:
     project_list(boost::asio::io_context& ioc, database::database& db);
     void run();
-    project::map_t projects;
+    const project::map_t& get() const;
     void fetch();
     void defer_fetch();
 private:
+    project::map_t projects_;
     std::filesystem::path cis_projects_path_;
     boost::asio::strand<
         boost::asio::io_context::executor_type> strand_;

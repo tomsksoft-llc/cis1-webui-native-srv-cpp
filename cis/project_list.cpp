@@ -163,7 +163,7 @@ void project_list::fetch_job(
 void project_list::fetch_project(
         const std::filesystem::directory_entry& project_dir)
 {
-    auto [it, result] = projects.emplace(
+    auto [it, result] = projects_.emplace(
             std::piecewise_construct,
             std::make_tuple(project_dir.path().filename()),
             std::make_tuple());
@@ -190,7 +190,7 @@ void project_list::fetch_project(
 void project_list::fetch()
 {
     using namespace sqlite_orm;
-    projects.clear();
+    projects_.clear();
     try
     {
         for(auto& dir_entry: fs::directory_iterator(cis_projects_path_))
@@ -265,6 +265,11 @@ rapidjson::Document to_json(
     value.SetString(b.date.c_str(), b.date.length(), document.GetAllocator());
     document.AddMember("date", value, document.GetAllocator());
     return document;
+}
+
+const project::map_t& project_list::get() const
+{
+    return projects_;
 }
 
 } // namespace cis
