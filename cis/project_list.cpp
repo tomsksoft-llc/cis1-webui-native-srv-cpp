@@ -38,7 +38,7 @@ project::project(const std::string& project_name)
 {}
 
 project_list::project_list(boost::asio::io_context& ioc, database::database& db)
-    : cis_projects_path_(path_cat(cis::get_root_dir(), cis::projects))
+    : cis_projects_path_(std::filesystem::path{cis::get_root_dir()} / cis::projects)
     , strand_(ioc.get_executor())
     , timer_(ioc,
             (std::chrono::steady_clock::time_point::max)())

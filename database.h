@@ -114,7 +114,7 @@ private:
 class database
 {
 public:
-    database(const std::string& path, std::optional<admin_user> admin);
+    database(const std::filesystem::path& path, std::optional<admin_user> admin);
 
     void init(
             const std::string& username,

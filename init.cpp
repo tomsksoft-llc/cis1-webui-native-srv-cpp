@@ -62,7 +62,7 @@ init_params parse_args(int argc, char* argv[])
 
     cis::set_root_dir(result.cis_root.c_str());
 
-    if(!std::filesystem::exists({result.db_root + "/db.sqlite"}))
+    if(!std::filesystem::exists(result.db_root / "db.sqlite"))
     {
         result.admin = admin_user{};
         std::cout << "Enter admin username: ";

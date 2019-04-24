@@ -14,7 +14,7 @@ using namespace std::placeholders;              // from <functional>
 
 application::application(const init_params& params)
     : params_(params)
-    , db_(params.db_root + "/db.sqlite", params.admin)
+    , db_(params.db_root / "db.sqlite", params.admin)
     , ioc_{}
     , signals_(ioc_, SIGINT, SIGTERM)
     , app_(std::make_shared<http::handlers_chain>())
@@ -24,7 +24,7 @@ application::application(const init_params& params)
     , rights_manager_(std::make_shared<rights_manager>(db_))
     , files_(std::make_shared<http::file_handler>(params.doc_root))
     , upload_handler_(std::make_shared<http::multipart_form_handler>(
-        std::filesystem::path{params.cis_root + cis::projects},
+        std::filesystem::path{params.cis_root / cis::projects},
         rights_manager_))
 {
     signals_.async_wait(

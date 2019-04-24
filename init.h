@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <filesystem>
 #include <boost/asio/ip/address.hpp>
 
 struct admin_user
@@ -16,9 +16,9 @@ struct init_params
     unsigned short public_port;
     boost::asio::ip::address cis_address;
     unsigned short cis_port;
-    std::string doc_root;
-    std::string cis_root;
-    std::string db_root;
+    std::filesystem::path doc_root;
+    std::filesystem::path cis_root;
+    std::filesystem::path db_root;
     std::optional<admin_user> admin;
 };
 

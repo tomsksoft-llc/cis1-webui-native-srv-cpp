@@ -9,7 +9,7 @@ using namespace sqlite_orm;
 namespace database
 {
 
-database::database(const std::string& path, std::optional<admin_user> admin)
+database::database(const std::filesystem::path& path, std::optional<admin_user> admin)
     : db_(detail::make_database(path.c_str()))
 {
     sync();

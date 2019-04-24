@@ -45,12 +45,12 @@ void run_job(
 
 void rename_job(
         const std::string& project,
-        const std::string& job,
-        const std::string& name,
+        const std::string& old_name,
+        const std::string& new_name,
         std::error_code& ec)
 {
-    auto project_path = path_cat(cis::get_root_dir(), path_cat(cis::projects, "/" + project));
-    std::filesystem::rename(path_cat(project_path, "/" + job), path_cat(project_path, "/" + name), ec);
+    auto project_path = std::filesystem::path{cis::get_root_dir()} / cis::projects / project;
+    std::filesystem::rename(project_path /old_name, project_path / new_name, ec);
 }
 
 } // namespace cis
