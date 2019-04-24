@@ -8,43 +8,29 @@ find_package(Boost COMPONENTS regex filesystem REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(SQLite3 REQUIRED)
 
-set(${PROJECT_NAME}_SRC
-    net/fail.cpp
-    net/http_session.cpp
-    net/listener.cpp
-    net/basic_websocket_session.cpp
-    net/queued_websocket_session.cpp
-    net/socket_util.cpp
-    cis/dirs.cpp
-    cis/job.cpp
-    cis/project_list.cpp
-    exceptions/base_cis_srv_exception.cpp
-    exceptions/generic_error.cpp
-    exceptions/load_config_error.cpp
-    http/handlers_chain.cpp
-    http/error_handler.cpp
-    http/cookie_parser.cpp
-    http/response.cpp
-    http/file_handler.cpp
-    http/multipart_form_handler.cpp
-    http/request_util.cpp
-    http/common_handlers.cpp
-    websocket/event_dispatcher.cpp
-    websocket/event_handlers.cpp
-    websocket/base_event_handler.cpp
-    auth_manager.cpp
-    file_util.cpp
-    child_process.cpp
-    init.cpp
-    rights_manager.cpp
-    application.cpp
-    database.cpp)
+aux_source_directory(beast_ext ${PROJECT_NAME}_BEAST_EXT_SRC)
+aux_source_directory(exceptions ${PROJECT_NAME}_EXCEPTIONS_SRC)
+aux_source_directory(cis ${PROJECT_NAME}_CIS_SRC)
+aux_source_directory(http ${PROJECT_NAME}_HTTP_SRC)
+aux_source_directory(net ${PROJECT_NAME}_NET_SRC)
+aux_source_directory(sqlite_orm_ext ${PROJECT_NAME}_SQLITE_ORM_EXT_SRC)
+aux_source_directory(websocket ${PROJECT_NAME}_WEBSOCKET_SRC)
+aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_NAME}_SRC)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
-add_executable(${PROJECT_NAME} main.cpp ${${PROJECT_NAME}_SRC})
+add_executable(${PROJECT_NAME}
+    ${${PROJECT_NAME}_BEAST_EXT_SRC}
+    ${${PROJECT_NAME}_EXCEPTIONS_SRC}
+    ${${PROJECT_NAME}_CIS_SRC}
+    ${${PROJECT_NAME}_HTTP_SRC}
+    ${${PROJECT_NAME}_NET_SRC}
+    ${${PROJECT_NAME}_SQLITE_ORM_EXT_SRC}
+    ${${PROJECT_NAME}_WEBSOCKET_SRC}
+    ${${PROJECT_NAME}_SRC})
+
+set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
 target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/third_party/sqlite_orm/include>)
-#set_property(TARGET ${PROJECT_NAME}
-#             PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
-target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} stdc++fs Boost::regex Boost::filesystem sqlite3)
-set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
+
+target_link_libraries(${PROJECT_NAME} ${CMAKE_THREAD_LIBS_INIT} stdc++fs Boost::filesystem Boost::regex sqlite3)
