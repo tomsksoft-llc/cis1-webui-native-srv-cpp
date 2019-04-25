@@ -341,9 +341,34 @@ std::optional<std::string> run_job(
 {
     auto project_name = get_string(request_data, "project");
     auto job_name = get_string(request_data, "job");
-    if(!project_name || !job_name)
+    if(!project_name || !job_name
+            || !(request_data.HasMember("params") && request_data["params"].IsArray()))
     {
         return "Invalid JSON.";
+    }
+
+    std::map<std::string, std::string> params;
+    for(auto& param : request_data["params"].GetArray())
+    {
+        if(param.IsObject())
+        {
+            auto param_name = get_string(param, "name");
+            auto param_value = get_string(param, "value");
+            if(param_name && param_value)
+            {
+                params.insert_or_assign(
+                        param_name.value(),
+                        param_value.value());
+            }
+            else
+            {
+                return "Invalid JSON.";
+            }
+        }
+        else
+        {
+            return "Invalid JSON.";
+        }
     }
 
     auto project_it = projects.get().find(project_name.value());
@@ -355,8 +380,29 @@ std::optional<std::string> run_job(
         auto job_it = project_it->second.jobs.find(job_name.value());
         if(job_it != project_it->second.jobs.cend())
         {
-            cis::run_job(io_ctx, project_name.value(), job_name.value());
-            return std::nullopt;
+            auto& job_params = job_it->second.params;
+            std::vector<std::string> param_values;
+            param_values.reserve(job_params.size());
+            for(auto& param : job_params)
+            {
+                if(!params.count(param.name))
+                {
+                    if(param.default_value.empty())
+                    {
+                        return "Invalid params.";
+                    }
+                    param_values.push_back(param.default_value);
+                }
+                else
+                {
+                    param_values.push_back(params[param.name]);
+                }
+            }
+            cis::run_job(
+                    io_ctx,
+                    project_name.value(),
+                    job_name.value(),
+                    param_values);
             projects.defer_fetch();
             return std::nullopt;
         }

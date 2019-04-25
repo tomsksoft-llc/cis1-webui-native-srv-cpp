@@ -57,13 +57,12 @@ struct param
             std::string param_default_value);
     std::string name;
     std::string default_value;
-    using map_t = std::set<param, name_member_comparator<param>>;
 };
 
 struct job_info
 {
     build::set_t builds;
-    param::map_t params;
+    std::vector<param> params;
     std::vector<std::string> files;
 };
 

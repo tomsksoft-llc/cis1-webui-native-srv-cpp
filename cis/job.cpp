@@ -17,14 +17,19 @@ namespace cis
 void run_job(
         boost::asio::io_context& ctx,
         const std::string& project,
-        const std::string& name)
+        const std::string& name,
+        const std::vector<std::string>& params)
 {
+    auto executable = canonical(
+                boost::filesystem::path{cis::get_root_dir()}
+                / cis::core / "startjob");
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = cis::get_root_dir();
+    env["cis_base_dir"] = 
+        boost::filesystem::canonical(cis::get_root_dir()).string();
     auto cp = std::make_shared<child_process>(ctx, env);
-    cp->run(
-            "sh",
-            {"startjob", path_cat(project, "/" + name)},
+    cp->set_interactive_params(params);
+    cp->run(executable.string(),
+            {path_cat(project, "/" + name)},
             [project, name](
                     int exit,
                     std::vector<char>& buffer,

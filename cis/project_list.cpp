@@ -134,7 +134,7 @@ void project_list::fetch_job(
         }
         else if(dir_entry.is_regular_file())
         {
-            if(dir_entry.path().filename() == "params")
+            if(dir_entry.path().filename() == "job.params")
             {
                 //TODO prevent crash on invalid params file
                 auto& job_params = job_it->second.params;
@@ -149,7 +149,7 @@ void project_list::fetch_job(
                     {
                         default_value = default_value.substr(1, default_value.size() - 2);
                     }
-                    job_params.emplace(param, default_value);
+                    job_params.emplace_back(param, default_value);
                 }
 
             }

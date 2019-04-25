@@ -5,6 +5,7 @@
 
 #include <boost/process.hpp>
 
+//TODO: write better abstraction for better interacting
 class child_process
     : public std::enable_shared_from_this<child_process>
 {
@@ -14,6 +15,10 @@ public:
             const boost::process::environment& env);
 
     ~child_process();
+
+    void set_interactive_params(
+            const std::vector<std::string>& params);
+
     void run(
             const std::string& programm,
             std::vector<std::string> args,
@@ -26,5 +31,6 @@ private:
     boost::process::environment env_;
     std::filesystem::path start_dir_;
     std::vector<char> buffer_;
+    std::vector<std::string> interactive_params_;
     boost::process::child *proc_ = nullptr;
 };
