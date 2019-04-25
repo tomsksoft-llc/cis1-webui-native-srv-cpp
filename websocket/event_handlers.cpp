@@ -477,7 +477,7 @@ std::optional<std::string> get_user_permissions(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator)
 {
-    auto name = get_string(request_data, "name");
+    auto name = get_string(request_data, "username");
 
     if(!name)
     {
@@ -582,7 +582,7 @@ std::optional<std::string> change_group(
         return "Invalid JSON.";
     }
 
-    if(authentication_handler.has_user(name.value()))
+    if(!authentication_handler.has_user(name.value()))
     {
         return "Invalid username.";
     }
@@ -616,7 +616,7 @@ std::optional<std::string> disable_user(
         return "Invalid JSON.";
     }
 
-    if(authentication_handler.has_user(name.value()))
+    if(!authentication_handler.has_user(name.value()))
     {
         return "Invalid username.";
     }

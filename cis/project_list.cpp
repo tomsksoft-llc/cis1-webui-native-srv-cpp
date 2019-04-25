@@ -71,7 +71,6 @@ void project_list::on_timer(boost::system::error_code ec)
     if(timer_.expiry() <= std::chrono::steady_clock::now())
     {
         fetch();
-        timer_.expires_after(std::chrono::seconds(15));
     }
 
     timer_.async_wait(
@@ -221,6 +220,8 @@ void project_list::fetch()
     }
     catch(std::filesystem::filesystem_error& err)
     {}
+
+    timer_.expires_after(std::chrono::seconds(15));
 }
 
 void project_list::defer_fetch()

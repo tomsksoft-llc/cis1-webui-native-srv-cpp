@@ -229,6 +229,7 @@ std::vector<user_info> auth_manager::get_user_infos() const
             key = api_access_keys[0];
         }
         result[i] = {name, email, group, key};
+        ++i;
     }
 
     db.commit();
