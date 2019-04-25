@@ -56,7 +56,7 @@ void project_list::run()
             strand_,
             std::bind(
                 &project_list::on_timer,
-                shared_from_this(),
+                this,
                 std::placeholders::_1)));
 }
 
@@ -78,7 +78,7 @@ void project_list::on_timer(boost::system::error_code ec)
                     strand_,
                     std::bind(
                             &project_list::on_timer,
-                            shared_from_this(),
+                            this,
                             std::placeholders::_1)));
 }
 

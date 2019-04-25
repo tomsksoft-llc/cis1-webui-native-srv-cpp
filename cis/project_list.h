@@ -106,7 +106,6 @@ rapidjson::Document to_json(
         rapidjson::Value value = {});
 
 class project_list
-    : public std::enable_shared_from_this<project_list>
 {
 public:
     project_list(boost::asio::io_context& ioc, database::database& db);

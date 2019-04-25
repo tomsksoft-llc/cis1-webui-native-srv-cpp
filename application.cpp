@@ -32,6 +32,7 @@ application::application(const init_params& params)
             {
                 ioc_.stop();
             });
+    projects_.run();
     init_app();
     init_cis_app();
 }
