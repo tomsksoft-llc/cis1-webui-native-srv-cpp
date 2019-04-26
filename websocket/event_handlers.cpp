@@ -144,7 +144,7 @@ std::optional<std::string> logout(
 }
 
 std::optional<std::string> list_projects(
-        cis::project_list& projects,
+        cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& /*request_data*/,
@@ -153,7 +153,7 @@ std::optional<std::string> list_projects(
 {
     rapidjson::Value array;
     array.SetArray();
-    for(auto& [project, jobs] : projects.get())
+    for(auto& [project, jobs] : cis_manager.get_projects())
     {
         if(auto perm = rights.check_project_right(ctx.username, project.name);
                 (perm.has_value() && perm.value().read) || !perm.has_value())
@@ -171,7 +171,7 @@ std::optional<std::string> list_projects(
 }
 
 std::optional<std::string> get_project_info(
-        cis::project_list& projects,
+        cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -184,16 +184,16 @@ std::optional<std::string> get_project_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects.get().find(project_name.value());
+    auto* project = cis_manager.get_project_info(project_name.value());
     auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().read : true;
 
-    if(project_it != projects.get().cend() && permitted)
+    if(project != nullptr && permitted)
     {
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
-        for(auto& file : project_it->second.files)
+        for(auto& file : project->files)
         {
             array_value.SetObject();
             array_value.AddMember(
@@ -213,7 +213,7 @@ std::optional<std::string> get_project_info(
         }
         response_data.AddMember("files", array, allocator);
         array.SetArray();
-        for(auto& [job, builds] : project_it->second.jobs)
+        for(auto& [job, builds] : project->jobs)
         {
             array.PushBack(
                     rapidjson::Value().CopyFrom(
@@ -235,7 +235,7 @@ std::optional<std::string> get_project_info(
 }
 
 std::optional<std::string> get_job_info(
-        cis::project_list& projects,
+        cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -249,77 +249,69 @@ std::optional<std::string> get_job_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects.get().find(project_name.value());
+    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
     auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().read : true;
 
-    if(project_it != projects.get().cend() && permitted)
+    if(job != nullptr && permitted)
     {
-        auto job_it = project_it->second.jobs.find(job_name.value());
-        if(job_it != project_it->second.jobs.cend())
+        rapidjson::Value array;
+        rapidjson::Value array_value;
+        array.SetArray();
+        for(auto& file : job->files)
         {
-            rapidjson::Value array;
-            rapidjson::Value array_value;
-            array.SetArray();
-            for(auto& file : job_it->second.files)
-            {
-                array_value.SetObject();
-                array_value.AddMember(
-                        "name",
-                        rapidjson::Value().SetString(
-                                file.c_str(),
-                                file.length(),
-                                allocator),
-                        allocator);
-                array_value.AddMember(
-                        "link",
-                        rapidjson::Value().SetString(""),
-                        allocator);
-                array.PushBack(
-                        array_value,
-                        allocator);
-            }
-            response_data.AddMember("files", array, allocator);
-            array.SetArray();
-            for(auto& param : job_it->second.params)
-            {
-                array_value.SetObject();
-                array_value.AddMember(
-                        "name",
-                        rapidjson::Value().SetString(
-                                param.name.c_str(),
-                                param.name.length(),
-                                allocator),
-                        allocator);
-                array_value.AddMember(
-                        "default_value",
-                        rapidjson::Value().SetString(
-                                param.default_value.c_str(),
-                                param.default_value.length(),
-                                allocator),
-                        allocator);
-                array.PushBack(
-                        array_value,
-                        allocator);
-            }
-            response_data.AddMember("params", array, allocator);
-            array.SetArray();
-            for(auto& build : job_it->second.builds)
-            {
-                array.PushBack(
-                        rapidjson::Value().CopyFrom(
-                                to_json(build),
-                                allocator),
-                        allocator);
-            }
-            response_data.AddMember("builds", array, allocator);
+            array_value.SetObject();
+            array_value.AddMember(
+                    "name",
+                    rapidjson::Value().SetString(
+                            file.c_str(),
+                            file.length(),
+                            allocator),
+                    allocator);
+            array_value.AddMember(
+                    "link",
+                    rapidjson::Value().SetString(""),
+                    allocator);
+            array.PushBack(
+                    array_value,
+                    allocator);
+        }
+        response_data.AddMember("files", array, allocator);
+        array.SetArray();
+        for(auto& param : job->params)
+        {
+            array_value.SetObject();
+            array_value.AddMember(
+                    "name",
+                    rapidjson::Value().SetString(
+                            param.name.c_str(),
+                            param.name.length(),
+                            allocator),
+                    allocator);
+            array_value.AddMember(
+                    "default_value",
+                    rapidjson::Value().SetString(
+                            param.default_value.c_str(),
+                            param.default_value.length(),
+                            allocator),
+                    allocator);
+            array.PushBack(
+                    array_value,
+                    allocator);
+        }
+        response_data.AddMember("params", array, allocator);
+        array.SetArray();
+        for(auto& build : job->builds)
+        {
+            array.PushBack(
+                    rapidjson::Value().CopyFrom(
+                            to_json(build),
+                            allocator),
+                    allocator);
+        }
+        response_data.AddMember("builds", array, allocator);
 
-            return std::nullopt;
-        }
-        else
-        {
-            return "Job doesn't exists.";
-        }
+        return std::nullopt;
     }
 
     if(!permitted)
@@ -327,11 +319,11 @@ std::optional<std::string> get_job_info(
         return "Action not permitted.";
     }
 
-    return "Project doesn't exists.";
+    return "Job doesn't exists.";
 }
 
 std::optional<std::string> run_job(
-        cis::project_list& projects,
+        cis::cis_manager& cis_manager,
         rights_manager& rights,
         boost::asio::io_context& io_ctx,
         request_context& ctx,
@@ -371,53 +363,43 @@ std::optional<std::string> run_job(
         }
     }
 
-    auto project_it = projects.get().find(project_name.value());
+    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
     auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().execute : true;
-
-    if(project_it != projects.get().cend() && permitted)
+    
+    if(job != nullptr && permitted)
     {
-        auto job_it = project_it->second.jobs.find(job_name.value());
-        if(job_it != project_it->second.jobs.cend())
+        auto& job_params = job->params;
+        std::vector<std::string> param_values;
+        param_values.reserve(job_params.size());
+        for(auto& param : job_params)
         {
-            auto& job_params = job_it->second.params;
-            std::vector<std::string> param_values;
-            param_values.reserve(job_params.size());
-            for(auto& param : job_params)
+            if(!params.count(param.name))
             {
-                if(!params.count(param.name))
+                if(param.default_value.empty())
                 {
-                    if(param.default_value.empty())
-                    {
-                        return "Invalid params.";
-                    }
-                    param_values.push_back(param.default_value);
+                    return "Invalid params.";
                 }
-                else
-                {
-                    param_values.push_back(params[param.name]);
-                }
+                param_values.push_back(param.default_value);
             }
-            cis::run_job(
-                    io_ctx,
-                    project_name.value(),
-                    job_name.value(),
-                    param_values);
-            projects.defer_fetch();
-            return std::nullopt;
+            else
+            {
+                param_values.push_back(params[param.name]);
+            }
         }
-        else
-        {
-            return "Job doesn't exists.";
-        }
+        cis_manager.run_job(
+                project_name.value(),
+                job_name.value(),
+                param_values);
+        
+        return std::nullopt;
     }
-
     if(!permitted)
     {
         return "Action not permitted.";
     }
 
-    return "Project doesn't exists.";
+    return "Job doesn't exists.";
 }
 
 std::optional<std::string> change_pass(
@@ -718,7 +700,7 @@ std::optional<std::string> generate_api_key(
 }
 
 std::optional<std::string> rename_job(
-        cis::project_list& projects,
+        cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -734,54 +716,32 @@ std::optional<std::string> rename_job(
         return "Invalid JSON.";
     }
 
-    if(new_job_name.value().empty())
+    if(new_job_name.value().empty() || job_name.value().empty())
     {
         return "Empty name field.";
     }
 
-    auto project_it = projects.get().find(project_name.value());
     auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
 
-    if(project_it != projects.get().cend() && permitted)
+    if(permitted)
     {
-        if(auto it = project_it->second.jobs.find(new_job_name.value());
-                it != project_it->second.jobs.cend())
-        {
-            return "Project with this name already exists.";
-        }
-
-        auto job_it = project_it->second.jobs.find(job_name.value());
-        if(job_it != project_it->second.jobs.cend())
-        {
-            std::error_code ec;
-            cis::rename_job(
+        if(cis_manager.rename_job(
                     project_name.value(),
                     job_name.value(),
-                    new_job_name.value(),
-                    ec);
-            if(ec)
-            {
-                return "Error while renaming.";
-            }
-            projects.fetch();
-
+                    new_job_name.value()))
+        {
             return std::nullopt;
         }
 
-        return "Job doesn't exists.";
+        return "Error while renaming.";
     }
 
-    if(!permitted)
-    {
-        return "Action not permitted.";
-    }
-
-    return "Project doesn't exists.";
+    return "Action not permitted.";
 }
 
 std::optional<std::string> get_build_info(
-        cis::project_list& projects,
+        cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
         const rapidjson::Value& request_data,
@@ -797,54 +757,46 @@ std::optional<std::string> get_build_info(
         return "Invalid JSON.";
     }
 
-    auto project_it = projects.get().find(project_name.value());
+    auto* build = cis_manager.get_build_info(
+            project_name.value(),
+            job_name.value(),
+            build_name.value());
     auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().write : true;
-    if(project_it != projects.get().cend() && permitted)
+
+    if(build != nullptr && permitted)
     {
-        auto job_it = project_it->second.jobs.find(job_name.value());
-        if(job_it != project_it->second.jobs.cend())
+        rapidjson::Value value;
+        value.SetInt(build->status);
+        response_data.AddMember("status", value, allocator);
+        value.SetString(
+                build->date.c_str(),
+                build->date.length(),
+                allocator);
+        response_data.AddMember("date", value, allocator);
+        value.SetArray();
+        rapidjson::Value array_value;
+        for(auto& artifact : build->artifacts)
         {
-            auto build_it = job_it->second.builds.find(build_name.value());
-            if(build_it != job_it->second.builds.cend())
-            {
-                rapidjson::Value value;
-                value.SetInt(build_it->status);
-                response_data.AddMember("status", value, allocator);
-                value.SetString(
-                        build_it->date.c_str(),
-                        build_it->date.length(),
-                        allocator);
-                response_data.AddMember("date", value, allocator);
-                value.SetArray();
-                rapidjson::Value array_value;
-                for(auto& artifact : build_it->artifacts)
-                {
-                    array_value.SetObject();
-                    array_value.AddMember(
-                            "name",
-                            rapidjson::Value().SetString(
-                                    artifact.c_str(),
-                                    artifact.length(),
-                                    allocator),
-                            allocator);
-                    array_value.AddMember(
-                            "link",
-                            rapidjson::Value().SetString(""),
-                            allocator);
-                    value.PushBack(
-                            array_value,
-                            allocator);
-                }
-                response_data.AddMember("artufacts", value, allocator);
-
-                return std::nullopt;
-            }
-
-            return "Build doesn't exists.";
+            array_value.SetObject();
+            array_value.AddMember(
+                    "name",
+                    rapidjson::Value().SetString(
+                            artifact.c_str(),
+                            artifact.length(),
+                            allocator),
+                    allocator);
+            array_value.AddMember(
+                    "link",
+                    rapidjson::Value().SetString(""),
+                    allocator);
+            value.PushBack(
+                    array_value,
+                    allocator);
         }
+        response_data.AddMember("artifacts", value, allocator);
 
-        return "Job doesn't exists.";
+        return std::nullopt;
     }
 
     if(!permitted)
@@ -852,7 +804,7 @@ std::optional<std::string> get_build_info(
         return "Action not permitted.";
     }
 
-    return "Project doesn't exists.";
+    return "Build doesn't exists.";
 }
 
 } // namespace handlers

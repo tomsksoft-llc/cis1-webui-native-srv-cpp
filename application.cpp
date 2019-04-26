@@ -17,9 +17,9 @@ application::application(const init_params& params)
     , db_(params.db_root / "db.sqlite", params.admin)
     , ioc_{}
     , signals_(ioc_, SIGINT, SIGTERM)
+    , cis_(ioc_, params.cis_root, db_)
     , app_(std::make_shared<http::handlers_chain>())
     , cis_app_(std::make_shared<http::handlers_chain>())
-    , projects_(ioc_, db_)
     , auth_manager_(db_)
     , rights_manager_(db_)
     , files_(params.doc_root)
@@ -32,7 +32,6 @@ application::application(const init_params& params)
             {
                 ioc_.stop();
             });
-    projects_.run();
     init_app();
     init_cis_app();
 }
@@ -164,33 +163,33 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::list_projects,
             std::bind(&wsh::list_projects,
-                    std::ref(projects_),
+                    std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_project_info,
             std::bind(&wsh::get_project_info,
-                    std::ref(projects_),
+                    std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_job_info,
             std::bind(&wsh::get_job_info,
-                    std::ref(projects_),
+                    std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::run_job,
             std::bind(&wsh::run_job,
-                    std::ref(projects_),
+                    std::ref(cis_),
                     std::ref(rights_manager_),
                     std::ref(ioc_),
                     _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::rename_job,
             std::bind(&wsh::rename_job,
-                    std::ref(projects_),
+                    std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_build_info,
             std::bind(&wsh::get_build_info,
-                    std::ref(projects_),
+                    std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
 
