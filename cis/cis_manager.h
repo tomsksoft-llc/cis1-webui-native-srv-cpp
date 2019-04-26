@@ -13,9 +13,6 @@ namespace cis
 
 class cis_manager
 {
-    boost::asio::io_context& ioc_;
-    std::filesystem::path cis_root_;
-    project_list projects_;
 public:
     cis_manager(
             boost::asio::io_context& ioc,
@@ -44,7 +41,21 @@ public:
             const std::string& project_name,
             const std::string& job_name,
             const std::vector<std::string>& params = {});
-
+private:
+    struct executables
+    {
+        std::string startjob;
+        std::string setparam;
+        std::string getparam;
+        std::string setvalue;
+        std::string getvalue;
+        bool set(const std::string& name, const std::string& file);
+        bool valid();
+    };
+    boost::asio::io_context& ioc_;
+    std::filesystem::path cis_root_;
+    project_list projects_;
+    executables execs_;
 };
 
 } // namespace cis

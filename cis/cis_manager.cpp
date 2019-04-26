@@ -4,6 +4,7 @@
 
 #include <boost/process.hpp>
 
+#include "exceptions/load_config_error.h"
 #include "child_process.h"
 #include "dirs.h"
 #include "file_util.h"
@@ -20,6 +21,27 @@ cis_manager::cis_manager(
     , projects_(ioc_, db)
 {
     projects_.run();
+    std::ifstream cis_core_conf(cis_root_ / core / "cis.conf");
+    while(cis_core_conf.good())
+    {
+        std::string exec_name;
+        std::string exec_file;
+        std::getline(cis_core_conf, exec_name, '=');
+        std::getline(cis_core_conf, exec_file, '\n');
+        if(exec_name.empty() || exec_file.empty())
+        {
+            break;
+        }
+        
+        if(!execs_.set(exec_name, exec_file))
+        {
+            throw load_config_error("Can't load cis.conf");
+        }
+    }
+    if(!execs_.valid())
+    {
+        throw load_config_error("Can't load cis.conf");
+    }
 }
 
 const project::map_t& cis_manager::get_projects() const
@@ -101,7 +123,7 @@ bool cis_manager::run_job(
     {
         return false;
     }
-    auto executable = canonical(cis_root_ / cis::core / "startjob");
+    auto executable = canonical(cis_root_ / core / execs_.startjob);
     auto env = boost::this_process::environment();
     env["cis_base_dir"] = canonical(cis_root_);
     auto cp = std::make_shared<child_process>(ioc_, env);
@@ -126,6 +148,52 @@ bool cis_manager::run_job(
                 //TODO update builds (emit cis_updated or something)
             });
     return true;
+}
+
+bool cis_manager::executables::set(
+        const std::string& name,
+        const std::string& value)
+{
+    if(name == "startjob")
+    {
+        startjob = value;
+        return true;
+    }
+    if(name == "setparam")
+    {
+        setparam = value;
+        return true;
+    }
+    if(name == "getparam")
+    {
+        getparam = value;
+        return true;
+    }
+    if(name == "setvalue")
+    {
+        setvalue = value;
+        return true;
+    }
+    if(name == "getvalue")
+    {
+        getvalue = value;
+        return true;
+    }
+
+    return false;
+}
+
+bool cis_manager::executables::valid()
+{
+    if(     !startjob.empty()
+        &&  !setparam.empty()
+        &&  !getparam.empty()
+        &&  !setvalue.empty()
+        &&  !getvalue.empty())
+    {
+        return true;
+    }
+    return false;
 }
 
 } // namespace cis
