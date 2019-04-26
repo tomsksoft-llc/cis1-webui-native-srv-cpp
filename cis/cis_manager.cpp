@@ -44,6 +44,11 @@ cis_manager::cis_manager(
     }
 }
 
+std::filesystem::path cis_manager::get_projects_path() const
+{
+    return cis_root_;
+}
+
 const project::map_t& cis_manager::get_projects() const
 {
     return projects_.get();
