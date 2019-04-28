@@ -139,6 +139,7 @@ void fs_cache_entry::load_childs()
     {
         return;
     }
+    childs_.clear();
     for(auto& entry: std::filesystem::directory_iterator(entry_))
     {
         if(entry.is_regular_file() || entry.is_directory())
