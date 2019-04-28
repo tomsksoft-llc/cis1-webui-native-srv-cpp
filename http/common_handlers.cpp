@@ -28,7 +28,7 @@ handle_result handle_update_projects(
         net::http_session::request_reader& /*reader*/,
         net::http_session::queue& queue)
 {
-    projects.fetch();
+    //projects.refresh();
 
     beast::http::response<beast::http::empty_body> res{
         beast::http::status::ok,

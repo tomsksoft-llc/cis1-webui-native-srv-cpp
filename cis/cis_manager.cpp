@@ -17,10 +17,10 @@ cis_manager::cis_manager(
         std::filesystem::path cis_root,
         database::database& db)
     : ioc_(ioc)
-    , cis_root_(cis_root)
-    , projects_(ioc_, db)
+    , cis_root_(std::move(cis_root))
+    , projects_(db)
+    , fs_(cis_root_ / cis::projects, &projects_)
 {
-    projects_.run();
     std::ifstream cis_core_conf(cis_root_ / core / "cis.conf");
     while(cis_core_conf.good())
     {
@@ -32,7 +32,7 @@ cis_manager::cis_manager(
         {
             break;
         }
-        
+
         if(!execs_.set(exec_name, exec_file))
         {
             throw load_config_error("Can't load cis.conf");
@@ -44,36 +44,50 @@ cis_manager::cis_manager(
     }
 }
 
+bool cis_manager::refresh(const std::filesystem::path& path)
+{
+    if(auto it = fs_.find(path);
+            it != fs_.end())
+    {
+        it->update();
+        return true;
+    }
+    return false;
+}
+
 std::filesystem::path cis_manager::get_projects_path() const
 {
     return cis_root_;
 }
 
-const project::map_t& cis_manager::get_projects() const
+immutable_container_proxy<
+            std::map<std::string, project>> cis_manager::get_projects()
 {
-    return projects_.get();
+    return projects_.get_projects();
 }
 
-const project_info* const cis_manager::get_project_info(
+const project* cis_manager::get_project_info(
         const std::string& project_name) const
 {
-    auto project_it = projects_.get().find(project_name);
-    if(project_it != projects_.get().cend())
+    auto& projects = projects_.get_projects();
+    if(auto project_it = projects.find(project_name);
+            project_it != projects.cend())
     {
         return &(project_it->second);
     }
     return nullptr;
 }
 
-const job_info* const cis_manager::get_job_info(
+const job* cis_manager::get_job_info(
         const std::string& project_name,
         const std::string& job_name) const
 {
     auto* project = get_project_info(project_name);
     if(project != nullptr)
     {
-        auto job_it = project->jobs.find(job_name);
-        if(job_it != project->jobs.cend())
+        auto& jobs = project->get_jobs();
+        if(auto job_it = jobs.find(job_name);
+                job_it != jobs.cend())
         {
             return &(job_it->second);
         }
@@ -81,7 +95,7 @@ const job_info* const cis_manager::get_job_info(
     return nullptr;
 }
 
-const build* const cis_manager::get_build_info(
+const build* cis_manager::get_build_info(
         const std::string& project_name,
         const std::string& job_name,
         const std::string& build_name) const
@@ -89,10 +103,11 @@ const build* const cis_manager::get_build_info(
     auto* job = get_job_info(project_name, job_name);
     if(job != nullptr)
     {
-        auto build_it = job->builds.find(build_name);
-        if(build_it != job->builds.cend())
+        auto& builds = job->get_builds();
+        if(auto build_it = builds.find(build_name);
+                build_it != builds.cend())
         {
-            return &(*build_it);
+            return &(build_it->second);
         }
     }
     return nullptr;
@@ -124,7 +139,7 @@ bool cis_manager::run_job(
         const std::string& job_name,
         const std::vector<std::string>& params)
 {
-    if(!get_job_info(project_name, job_name))
+    if(get_job_info(project_name, job_name) == nullptr)
     {
         return false;
     }
@@ -190,15 +205,11 @@ bool cis_manager::executables::set(
 
 bool cis_manager::executables::valid()
 {
-    if(     !startjob.empty()
+    return (!startjob.empty()
         &&  !setparam.empty()
         &&  !getparam.empty()
         &&  !setvalue.empty()
-        &&  !getvalue.empty())
-    {
-        return true;
-    }
-    return false;
+        &&  !getvalue.empty());
 }
 
 } // namespace cis

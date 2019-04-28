@@ -1,84 +1,85 @@
 #pragma once
 
-#include <filesystem>
+#include <stdexcept>
 
-class fs_cache;
+#include "fs_cache_node.h"
 
-class fs_cache_entry
-{
-public:
-    class const_iterator
-    {
-    public:
-        const_iterator(
-                const fs_cache_entry* parent,
-                const fs_cache_entry* pos);
-        explicit const_iterator(
-                const fs_cache_entry* parent);
-        bool operator!=(const const_iterator& other) const;
-        const_iterator& operator++();
-        const fs_cache_entry& operator*() const;
-        const fs_cache_entry* operator->() const;
-    private:
-        const fs_cache_entry* parent_entry_;
-        const fs_cache_entry* entry_;
-    };
-    class iterator
-    {
-    public:
-        iterator(
-                fs_cache_entry* parent,
-                fs_cache_entry* pos);
-        explicit iterator(
-                fs_cache_entry* parent);
-        bool operator!=(const iterator& other) const;
-        iterator& operator++();
-        fs_cache_entry& operator*();
-        fs_cache_entry* operator->();
-        const fs_cache_entry& operator*() const;
-        const fs_cache_entry* operator->() const;
-    private:
-        fs_cache_entry* parent_entry_;
-        fs_cache_entry* entry_;
-    };
-
-    friend class fs_cache;
-
-    explicit fs_cache_entry(std::filesystem::path dir);
-    explicit fs_cache_entry(std::filesystem::directory_entry entry);
-
-    void refresh();
-
-    const std::filesystem::directory_entry& get() const;
-    std::filesystem::file_time_type recursive_last_write_time() const;
-
-    iterator begin();
-    iterator end();
-
-    const_iterator begin() const;
-    const_iterator end() const;
-private:
-    std::filesystem::directory_entry entry_;
-    std::vector<fs_cache_entry> childs_;
-    std::filesystem::file_time_type recursive_last_write_time_;
-
-    void load_childs();
-};
-
+template <class Notifier>
 class fs_cache
 {
 public:
-    explicit fs_cache(std::filesystem::path root_dir);
+    using comparator = typename fs_cache_node<Notifier>::comparator;
 
-    void refresh();
+    template <class U>
+    fs_cache(std::filesystem::path path, U* context);
 
-    fs_cache_entry::iterator begin();
-    fs_cache_entry::iterator end();
+    fs_cache_node<Notifier>& at(std::filesystem::path path);
+    typename fs_cache_node<Notifier>::tree_t::iterator find(std::filesystem::path path);
 
-    fs_cache_entry::const_iterator begin() const;
-    fs_cache_entry::const_iterator end() const;
-
-    fs_cache_entry* at(std::filesystem::path path);
+    typename fs_cache_node<Notifier>::tree_t::iterator begin();
+    typename fs_cache_node<Notifier>::tree_t::iterator end();
 private:
-    fs_cache_entry root_;
+    fs_cache_node<Notifier> root_;
 };
+
+template <class Notifier>
+template <class U>
+fs_cache<Notifier>::fs_cache(std::filesystem::path path, U* context)
+    : root_(std::filesystem::directory_entry(path), 0)
+{
+    root_.data_.set_context(context);
+    root_.update();
+}
+
+template <class Notifier>
+fs_cache_node<Notifier>& fs_cache<Notifier>::at(std::filesystem::path path)
+{
+    fs_cache_node<Notifier>* current = &root_;
+    for(auto& part : path)
+    {
+        if(part == "/")
+        {
+            continue;
+        }
+        auto it = current->childs_.find(part.filename().string(), comparator{});
+        if(it == current->childs_.end())
+        {
+            throw std::out_of_range("Can't find sufficient child");
+        }
+        current = &(*it);
+    }
+    return *current;
+}
+
+template <class Notifier>
+typename fs_cache_node<Notifier>::tree_t::iterator fs_cache<Notifier>::find(
+        std::filesystem::path path)
+{
+    fs_cache_node<Notifier>* current = &root_;
+    for(auto& part : path)
+    {
+        if(part == "/")
+        {
+            continue;
+        }
+        auto it = current->childs_.find(part.filename().string(), comparator{});
+        if(it == current->childs_.end())
+        {
+            return end();
+        }
+        current = &(*it);
+    }
+    return current->parent_->childs_.iterator_to(*current);
+}
+
+template <class Notifier>
+typename fs_cache_node<Notifier>::tree_t::iterator fs_cache<Notifier>::begin()
+{
+    return root_.childs_.begin();
+}
+
+template <class Notifier>
+typename fs_cache_node<Notifier>::tree_t::iterator fs_cache<Notifier>::end()
+{
+    return root_.childs_.end();
+}

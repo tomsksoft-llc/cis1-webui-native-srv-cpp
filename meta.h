@@ -82,7 +82,7 @@ struct ct_string_builder
     template<unsigned... Indices>
     struct produce
     {
-        typedef  ct_string<LambdaStrType{}.chars[Indices]...>  result;
+        using result = ct_string<LambdaStrType{}.chars[Indices]...>;
     };
 };
 

@@ -17,7 +17,7 @@ application::application(const init_params& params)
     , db_(params.db_root / "db.sqlite", params.admin)
     , ioc_{}
     , signals_(ioc_, SIGINT, SIGTERM)
-    , cis_(ioc_, params.cis_root, db_)
+    , cis_(ioc_, params_.cis_root, db_)
     , app_(std::make_shared<http::handlers_chain>())
     , cis_app_(std::make_shared<http::handlers_chain>())
     , auth_manager_(db_)
@@ -189,6 +189,11 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_build_info,
             std::bind(&wsh::get_build_info,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::cis_refresh,
+            std::bind(&wsh::cis_refresh,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));

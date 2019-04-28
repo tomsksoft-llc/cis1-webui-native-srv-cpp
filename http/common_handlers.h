@@ -3,7 +3,7 @@
 #include "request_context.h"
 #include "net/http_session.h"
 #include "auth_manager.h"
-#include "cis/project_list.h"
+#include "cis/cis_structs.h"
 
 namespace beast = boost::beast;
 

@@ -140,7 +140,7 @@ std::optional<std::string> logout(
         return std::nullopt;
     }
 
-    return "Invalid JSON.";
+    return "Invalid token.";
 }
 
 std::optional<std::string> list_projects(
@@ -153,15 +153,20 @@ std::optional<std::string> list_projects(
 {
     rapidjson::Value array;
     array.SetArray();
-    for(auto& [project, jobs] : cis_manager.get_projects())
+    for(auto& [project_name, project] : cis_manager.get_projects())
     {
-        if(auto perm = rights.check_project_right(ctx.username, project.name);
+        if(auto perm = rights.check_project_right(ctx.username, project_name);
                 (perm.has_value() && perm.value().read) || !perm.has_value())
         {
             array.PushBack(
-                    rapidjson::Value().CopyFrom(
-                            to_json(project),
-                            allocator),
+                    rapidjson::Value().SetObject()
+                            .AddMember(
+                                    "name",
+                                    rapidjson::Value().SetString(
+                                            project_name.c_str(),
+                                            project_name.length(),
+                                            allocator),
+                                    allocator),
                     allocator);
         }
     }
@@ -193,14 +198,14 @@ std::optional<std::string> get_project_info(
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
-        for(auto& file : project->files)
+        for(auto& file : project->get_files())
         {
             array_value.SetObject();
             array_value.AddMember(
                     "name",
                     rapidjson::Value().SetString(
-                            file.c_str(),
-                            file.length(),
+                            file.filename().c_str(),
+                            file.filename().length(),
                             allocator),
                     allocator);
             array_value.AddMember(
@@ -213,12 +218,17 @@ std::optional<std::string> get_project_info(
         }
         response_data.AddMember("files", array, allocator);
         array.SetArray();
-        for(auto& [job, builds] : project->jobs)
+        for(auto& [job_name, job] : project->get_jobs())
         {
             array.PushBack(
-                    rapidjson::Value().CopyFrom(
-                            to_json(job),
-                            allocator),
+                    rapidjson::Value().SetObject()
+                            .AddMember(
+                                    "name",
+                                    rapidjson::Value().SetString(
+                                            job_name.c_str(),
+                                            job_name.length(),
+                                            allocator),
+                                    allocator),
                     allocator);
         }
         response_data.AddMember("jobs", array, allocator);
@@ -258,14 +268,14 @@ std::optional<std::string> get_job_info(
         rapidjson::Value array;
         rapidjson::Value array_value;
         array.SetArray();
-        for(auto& file : job->files)
+        for(auto& file : job->get_files())
         {
             array_value.SetObject();
             array_value.AddMember(
                     "name",
                     rapidjson::Value().SetString(
-                            file.c_str(),
-                            file.length(),
+                            file.filename().c_str(),
+                            file.filename().length(),
                             allocator),
                     allocator);
             array_value.AddMember(
@@ -278,7 +288,7 @@ std::optional<std::string> get_job_info(
         }
         response_data.AddMember("files", array, allocator);
         array.SetArray();
-        for(auto& param : job->params)
+        for(auto& param : job->get_params())
         {
             array_value.SetObject();
             array_value.AddMember(
@@ -301,12 +311,17 @@ std::optional<std::string> get_job_info(
         }
         response_data.AddMember("params", array, allocator);
         array.SetArray();
-        for(auto& build : job->builds)
+        for(auto& [build_name, build] : job->get_builds())
         {
             array.PushBack(
-                    rapidjson::Value().CopyFrom(
-                            to_json(build),
-                            allocator),
+                    rapidjson::Value().SetObject()
+                            .AddMember(
+                                    "name",
+                                    rapidjson::Value().SetString(
+                                            build_name.c_str(),
+                                            build_name.length(),
+                                            allocator),
+                                    allocator),
                     allocator);
         }
         response_data.AddMember("builds", array, allocator);
@@ -333,8 +348,10 @@ std::optional<std::string> run_job(
 {
     auto project_name = get_string(request_data, "project");
     auto job_name = get_string(request_data, "job");
-    if(!project_name || !job_name
-            || !(request_data.HasMember("params") && request_data["params"].IsArray()))
+    if(!project_name
+            || !job_name
+            || !(request_data.HasMember("params")
+            && request_data["params"].IsArray()))
     {
         return "Invalid JSON.";
     }
@@ -366,10 +383,10 @@ std::optional<std::string> run_job(
     auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
     auto perm = rights.check_project_right(ctx.username, project_name.value());
     auto permitted = perm.has_value() ? perm.value().execute : true;
-    
+
     if(job != nullptr && permitted)
     {
-        auto& job_params = job->params;
+        auto& job_params = job->get_params();
         std::vector<std::string> param_values;
         param_values.reserve(job_params.size());
         for(auto& param : job_params)
@@ -391,7 +408,7 @@ std::optional<std::string> run_job(
                 project_name.value(),
                 job_name.value(),
                 param_values);
-        
+
         return std::nullopt;
     }
     if(!permitted)
@@ -767,23 +784,38 @@ std::optional<std::string> get_build_info(
     if(build != nullptr && permitted)
     {
         rapidjson::Value value;
-        value.SetInt(build->status);
+        auto& info = build->get_info();
+        if(info.status)
+        {
+            value.SetInt(info.status.value());
+        }
+        else
+        {
+            value.SetNull();
+        }
         response_data.AddMember("status", value, allocator);
-        value.SetString(
-                build->date.c_str(),
-                build->date.length(),
-                allocator);
+        if(info.date)
+        {
+            value.SetString(
+                    info.date.value().c_str(),
+                    info.date.value().length(),
+                    allocator);
+        }
+        else
+        {
+            value.SetNull();
+        }
         response_data.AddMember("date", value, allocator);
         value.SetArray();
         rapidjson::Value array_value;
-        for(auto& artifact : build->artifacts)
+        for(auto& file : build->get_files())
         {
             array_value.SetObject();
             array_value.AddMember(
                     "name",
                     rapidjson::Value().SetString(
-                            artifact.c_str(),
-                            artifact.length(),
+                            file.filename().c_str(),
+                            file.filename().length(),
                             allocator),
                     allocator);
             array_value.AddMember(
@@ -805,6 +837,55 @@ std::optional<std::string> get_build_info(
     }
 
     return "Build doesn't exists.";
+}
+
+std::optional<std::string> cis_refresh(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto path_str = get_string(request_data, "path");
+
+    if(!path_str)
+    {
+        return "Invalid JSON.";
+    }
+
+    std::filesystem::path path(path_str.value());
+
+    if(path.root_path() != "/")
+    {
+        return "Invalid path.";
+    }
+
+    if(path.begin() != path.end())
+    {
+        auto path_it = path.begin();
+        ++path_it;
+        if(path_it != path.end())
+        {
+            auto perm = rights.check_project_right(
+                    ctx.username,
+                    *path_it);
+            auto permitted = perm.has_value() ? perm.value().read : true;
+            if(!permitted)
+            {
+                return "Action not permitted.";
+            }
+        }
+    }
+
+    auto refresh_result = cis_manager.refresh(path);
+
+    if(!refresh_result)
+    {
+        return "Path does not exists.";
+    }
+
+    return std::nullopt;
 }
 
 } // namespace handlers
