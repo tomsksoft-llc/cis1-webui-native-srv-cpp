@@ -50,14 +50,18 @@ public:
     void refresh();
 
     const std::filesystem::directory_entry& get() const;
+    std::filesystem::file_time_type recursive_last_write_time() const;
 
     iterator begin();
     iterator end();
+
     const_iterator begin() const;
     const_iterator end() const;
 private:
     std::filesystem::directory_entry entry_;
     std::vector<fs_cache_entry> childs_;
+    std::filesystem::file_time_type recursive_last_write_time_;
+
     void load_childs();
 };
 
@@ -73,6 +77,8 @@ public:
 
     fs_cache_entry::const_iterator begin() const;
     fs_cache_entry::const_iterator end() const;
+
+    fs_cache_entry* at(std::filesystem::path path);
 private:
     fs_cache_entry root_;
 };

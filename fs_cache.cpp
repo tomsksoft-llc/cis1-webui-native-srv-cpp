@@ -1,5 +1,7 @@
 #include "fs_cache.h"
 
+#include <functional>
+
 // fs_cache
 
 fs_cache::fs_cache(std::filesystem::path root_dir)
@@ -119,17 +121,20 @@ const fs_cache_entry* fs_cache_entry::const_iterator::operator->() const
 
 fs_cache_entry::fs_cache_entry(std::filesystem::path dir)
     : entry_(dir)
+    , recursive_last_write_time_(entry_.last_write_time())
 {
     load_childs();
 }
 
 fs_cache_entry::fs_cache_entry(std::filesystem::directory_entry entry)
     : entry_(entry)
+    , recursive_last_write_time_(entry_.last_write_time())
 {}
 
 void fs_cache_entry::refresh()
 {
     entry_.refresh();
+    recursive_last_write_time_ = entry_.last_write_time();
     load_childs();
 }
 
@@ -150,8 +155,17 @@ void fs_cache_entry::load_childs()
     for(auto& child : childs_)
     {
         child.load_childs();
+        if(child.recursive_last_write_time_ > recursive_last_write_time_)
+        {
+            recursive_last_write_time_ = child.recursive_last_write_time_;
+        }
     }
 };
+
+std::filesystem::file_time_type fs_cache_entry::recursive_last_write_time() const
+{
+    return recursive_last_write_time_;
+}
 
 const std::filesystem::directory_entry& fs_cache_entry::get() const
 {
