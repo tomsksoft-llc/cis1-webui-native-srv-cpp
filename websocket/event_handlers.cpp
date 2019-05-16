@@ -839,6 +839,30 @@ std::optional<std::string> get_build_info(
     return "Build doesn't exists.";
 }
 
+bool validate_path(const std::filesystem::path& path)
+{
+    return path.root_path() == "/";
+}
+
+std::optional<database::project_user_right> get_path_rights(
+        request_context& ctx,
+        rights_manager& rights,
+        const std::filesystem::path& path)
+{
+    if(path.begin() != path.end())
+    {
+        auto path_it = path.begin();
+        ++path_it;
+        if(path_it != path.end())
+        {
+            return rights.check_project_right(
+                    ctx.username,
+                    *path_it);
+        }
+    }
+    return std::nullopt;
+}
+
 std::optional<std::string> refresh_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
@@ -856,26 +880,15 @@ std::optional<std::string> refresh_fs_entry(
 
     std::filesystem::path path(path_str.value());
 
-    if(path.root_path() != "/")
+    if(!validate_path(path))
     {
         return "Invalid path.";
     }
 
-    if(path.begin() != path.end())
+    if(auto path_rights = get_path_rights(ctx, rights, path);
+            path_rights && !path_rights.value().read)
     {
-        auto path_it = path.begin();
-        ++path_it;
-        if(path_it != path.end())
-        {
-            auto perm = rights.check_project_right(
-                    ctx.username,
-                    *path_it);
-            auto permitted = perm.has_value() ? perm.value().read : true;
-            if(!permitted)
-            {
-                return "Action not permitted.";
-            }
-        }
+        return "Action not permitted.";
     }
 
     auto refresh_result = cis_manager.refresh(path);
@@ -883,6 +896,133 @@ std::optional<std::string> refresh_fs_entry(
     if(!refresh_result)
     {
         return "Path does not exists.";
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> remove_fs_entry(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto path_str = get_string(request_data, "path");
+
+    if(!path_str)
+    {
+        return "Invalid JSON.";
+    }
+
+    std::filesystem::path path(path_str.value());
+
+    if(!validate_path(path))
+    {
+        return "Invalid path.";
+    }
+
+    if(auto path_rights = get_path_rights(ctx, rights, path);
+            path_rights && !path_rights.value().write)
+    {
+        return "Action not permitted.";
+    }
+
+    auto remove_result = cis_manager.remove(path);
+
+    if(!remove_result)
+    {
+        return "Path does not exists.";
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> move_fs_entry(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto old_path_str = get_string(request_data, "oldPath");
+    auto new_path_str = get_string(request_data, "newPath");
+
+    if(!old_path_str && ! new_path_str)
+    {
+        return "Invalid JSON.";
+    }
+
+    std::filesystem::path old_path(old_path_str.value());
+    std::filesystem::path new_path(new_path_str.value());
+
+    if(!validate_path(old_path) || !validate_path(new_path))
+    {
+        return "Invalid path.";
+    }
+
+    if(auto path_rights = get_path_rights(ctx, rights, old_path);
+            path_rights && !path_rights.value().write)
+    {
+        return "Action not permitted.";
+    }
+    if(auto path_rights = get_path_rights(ctx, rights, new_path);
+            path_rights && !path_rights.value().write)
+    {
+        return "Action not permitted.";
+    }
+
+    auto& fs = cis_manager.fs();
+
+    std::error_code ec;
+    fs.move_entry(old_path, new_path, ec);
+
+    if(ec)
+    {
+        return "Error on move.";
+    }
+
+    return std::nullopt;
+}
+
+std::optional<std::string> new_directory(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto path_str = get_string(request_data, "path");
+
+    if(!path_str)
+    {
+        return "Invalid JSON.";
+    }
+
+    std::filesystem::path path(path_str.value());
+
+    if(!validate_path(path))
+    {
+        return "Invalid path.";
+    }
+
+    if(auto path_rights = get_path_rights(ctx, rights, path);
+            path_rights && !path_rights.value().write)
+    {
+        return "Action not permitted.";
+    }
+
+    auto& fs = cis_manager.fs();
+
+    std::error_code ec;
+    fs.create_directory(path, ec);
+
+    if(ec)
+    {
+        return "Error while creating directory.";
     }
 
     return std::nullopt;

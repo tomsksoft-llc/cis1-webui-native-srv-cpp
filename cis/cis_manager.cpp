@@ -55,9 +55,25 @@ bool cis_manager::refresh(const std::filesystem::path& path)
     return false;
 }
 
+bool cis_manager::remove(const std::filesystem::path& path)
+{
+    if(auto it = fs_.find(path);
+            it != fs_.end())
+    {
+        it->remove();
+        return true;
+    }
+    return false;
+}
+
 std::filesystem::path cis_manager::get_projects_path() const
 {
     return cis_root_;
+}
+
+fs_cache<fs_mapper>& cis_manager::fs()
+{
+    return fs_;
 }
 
 immutable_container_proxy<

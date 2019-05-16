@@ -28,9 +28,29 @@ public:
         return c_.empty();
     }
 
+    template <class Key>
+    typename Container::iterator find(const Key& key)
+    {
+        return c_.find(key);
+    }
+    template <class Key>
+    typename Container::const_iterator find(const Key& key) const
+    {
+        return c_.find(key);
+    }
+
+    template <class Key, class Comparator>
+    typename Container::iterator find(const Key& key, Comparator cmp)
+    {
+        return c_.find(key, cmp);
+    }
+    template <class Key, class Comparator>
+    typename Container::const_iterator find(const Key& key, Comparator cmp) const
+    {
+        return c_.find(key, cmp);
+    }
     //TODO add specific methods
     //map
-    //  find
     //  count
     //  equal_range
     //  lower_bound

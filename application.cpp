@@ -197,6 +197,21 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::remove_fs_entry,
+            std::bind(&wsh::remove_fs_entry,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::move_fs_entry,
+            std::bind(&wsh::move_fs_entry,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::new_directory,
+            std::bind(&wsh::new_directory,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
 
     std::function <http::handle_result(
         beast::http::request<beast::http::empty_body>& req,

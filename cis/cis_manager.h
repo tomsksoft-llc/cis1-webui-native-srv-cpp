@@ -26,7 +26,10 @@ public:
     cis_manager(const cis_manager&) = delete;
 
     bool refresh(const std::filesystem::path& path);
+    bool remove(const std::filesystem::path& path);
     std::filesystem::path get_projects_path() const;
+
+    fs_cache<fs_mapper>& fs();
 
     immutable_container_proxy<
             std::map<std::string, project>> get_projects();
