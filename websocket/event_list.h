@@ -21,7 +21,10 @@ enum class request_id
     run_job             = 71,
     rename_job          = 73,
     get_build_info      = 75,
-    cis_refresh         = 77
+    refresh_fs_entry    = 77,
+    remove_fs_entry     = 79,
+    move_fs_entry       = 81,
+    new_directory       = 83
 };
 
 enum class response_id
@@ -44,7 +47,10 @@ enum class response_id
     run_job             = 72,
     rename_job          = 74,
     get_build_info      = 76,
-    cis_refresh         = 78
+    refresh_fs_entry    = 78,
+    remove_fs_entry     = 80,
+    move_fs_entry       = 82,
+    new_directory       = 84
 };
 
 } // namespace websocket

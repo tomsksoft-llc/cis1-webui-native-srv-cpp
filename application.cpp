@@ -192,8 +192,8 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
-    dispatcher.add_event_handler(ws::request_id::cis_refresh,
-            std::bind(&wsh::cis_refresh,
+    dispatcher.add_event_handler(ws::request_id::refresh_fs_entry,
+            std::bind(&wsh::refresh_fs_entry,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));

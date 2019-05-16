@@ -143,7 +143,7 @@ std::optional<std::string> get_build_info(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> cis_refresh(
+std::optional<std::string> refresh_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
