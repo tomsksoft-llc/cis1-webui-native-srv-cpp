@@ -127,14 +127,6 @@ std::optional<std::string> run_job(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
-std::optional<std::string> rename_job(
-        cis::cis_manager& cis_manager,
-        rights_manager& rights,
-        request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
-
 std::optional<std::string> get_build_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,

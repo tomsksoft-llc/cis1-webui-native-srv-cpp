@@ -182,11 +182,6 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(rights_manager_),
                     std::ref(ioc_),
                     _1, _2, _3, _4));
-    dispatcher.add_event_handler(ws::request_id::rename_job,
-            std::bind(&wsh::rename_job,
-                    std::ref(cis_),
-                    std::ref(rights_manager_),
-                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::get_build_info,
             std::bind(&wsh::get_build_info,
                     std::ref(cis_),

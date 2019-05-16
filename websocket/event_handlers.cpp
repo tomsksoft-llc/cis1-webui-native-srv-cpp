@@ -716,47 +716,6 @@ std::optional<std::string> generate_api_key(
     return "Action not permitted.";
 }
 
-std::optional<std::string> rename_job(
-        cis::cis_manager& cis_manager,
-        rights_manager& rights,
-        request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& /*response_data*/,
-        rapidjson::Document::AllocatorType& /*allocator*/)
-{
-    auto project_name = get_string(request_data, "project");
-    auto job_name = get_string(request_data, "oldName");
-    auto new_job_name = get_string(request_data, "newName");
-
-    if(!project_name || !job_name || !new_job_name)
-    {
-        return "Invalid JSON.";
-    }
-
-    if(new_job_name.value().empty() || job_name.value().empty())
-    {
-        return "Empty name field.";
-    }
-
-    auto perm = rights.check_project_right(ctx.username, project_name.value());
-    auto permitted = perm.has_value() ? perm.value().write : true;
-
-    if(permitted)
-    {
-        if(cis_manager.rename_job(
-                    project_name.value(),
-                    job_name.value(),
-                    new_job_name.value()))
-        {
-            return std::nullopt;
-        }
-
-        return "Error while renaming.";
-    }
-
-    return "Action not permitted.";
-}
-
 std::optional<std::string> get_build_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
