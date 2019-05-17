@@ -176,5 +176,8 @@ void fs_cache<Notifier>::move_entry(
     }
 
     old_parent_dir_it->update();
-    new_parent_dir_it->update();
+    if(old_parent_dir_it != new_parent_dir_it)
+    {
+        new_parent_dir_it->update();
+    }
 }
