@@ -63,7 +63,7 @@ void event_dispatcher::dispatch(
         rapidjson::Document request;
         request.Parse(str.c_str());
 
-        if(request.HasParseError())
+        if(request.HasParseError() || !request.IsObject())
         {
             send_error(queue, response_id::generic_error, "Invalid JSON.");
             return;
