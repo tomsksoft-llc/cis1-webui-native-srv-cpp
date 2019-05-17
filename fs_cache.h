@@ -105,6 +105,16 @@ void fs_cache<Notifier>::create_directory(
         return;
     }
 
+    if(auto child_it = parent_dir_it->childs().find(
+                path.filename(),
+                comparator{});
+            child_it != parent_dir_it->childs().end())
+    {
+        //FIXME errorsystem
+        ec.assign(1, ec.category());
+        return;
+    }
+
     std::filesystem::create_directory(
             parent_dir_it->dir_entry().path() / path.filename(), ec);
 
