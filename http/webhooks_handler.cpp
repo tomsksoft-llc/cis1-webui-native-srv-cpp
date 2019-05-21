@@ -243,6 +243,8 @@ void webhooks_handler::finish(
 
     auto params = prepare_params(project, job, query_string, file_path, ev);
 
+    cis_.run_job(project, job, params);
+
     beast::http::response<beast::http::empty_body> res{
         beast::http::status::ok,
         req.version()};
