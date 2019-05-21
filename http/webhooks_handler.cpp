@@ -40,14 +40,12 @@ handle_result webhooks_handler::operator()(
     if(!user)
     {
         ctx.res_status = beast::http::status::not_found;
-        ctx.error = "User not found.";
         return http::handle_result::error;
     }
 
     if(!user->api_access_key)
     {
         ctx.res_status = beast::http::status::forbidden;
-        ctx.error = "Forbidden.";
         return handle_result::error;
     }
 

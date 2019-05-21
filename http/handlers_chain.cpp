@@ -62,11 +62,11 @@ void handlers_chain::handle_header(
                 reader.done();
                 return;
             case handle_result::error:
-                reader.done();
                 if(error_handler_)
                 {
                     error_handler_(req, ctx, queue);
                 }
+                reader.done();
                 return;
         };
     }

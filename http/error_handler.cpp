@@ -19,6 +19,10 @@ void error_handler::operator()(
             queue.send(response::not_found(std::move(req)));
             break;
         }
+        case status::forbidden:
+        {
+            queue.send(response::forbidden(std::move(req)));
+        }
         default:
         {
             queue.send(response::server_error(std::move(req), ctx.error));

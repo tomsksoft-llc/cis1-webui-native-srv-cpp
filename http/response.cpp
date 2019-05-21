@@ -38,6 +38,21 @@ beast::http::response<beast::http::string_body> not_found(
     return res;
 }
 
+beast::http::response<beast::http::string_body> forbidden(
+        beast::http::request<beast::http::empty_body>&& req)
+{
+    beast::http::response<beast::http::string_body> res{
+            beast::http::status::forbidden,
+                req.version()};
+    res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(beast::http::field::content_type, "text/html");
+    res.keep_alive(req.keep_alive());
+    res.body() = "Forbidden.";
+    res.prepare_payload();
+
+    return res;
+}
+
 beast::http::response<beast::http::string_body> bad_request(
         beast::http::request<beast::http::empty_body>&& req,
         beast::string_view why)

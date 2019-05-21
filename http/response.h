@@ -19,6 +19,8 @@ string_response_t accepted(string_request_t&& req);
 
 string_response_t not_found(string_request_t&& req);
 
+string_response_t forbidden(string_request_t&& req);
+
 string_response_t bad_request(
             string_request_t&& req,
             boost::beast::string_view why);
