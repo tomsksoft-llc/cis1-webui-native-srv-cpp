@@ -29,6 +29,19 @@ struct token<bound_string_tag>
     using regex = meta::ct_string<'(', '[','^','?','/',']', '+', ')'>;
 };
 
+struct query_string_tag;
+
+template <>
+struct token<query_string_tag>
+{
+    using value_type = std::string;
+    using regex = meta::ct_string<
+            '(', '\\', '?', '(', '?', ':', '[', '^', '=', ']', '+', ')', '\\',
+            '=', '(', '?', ':', '[', '^', '&', ']', '+', ')', '(', '?',
+            ':', '\\', '&', '(', '?', ':', '[', '^', '=', ']', '+', ')',
+            '\\', '=', '(', '?', ':', '[', '^', '&', ']', '+', ')', ')', '*', ')', '?'>;
+};
+
 template <>
 struct token<int>
 {
@@ -44,6 +57,8 @@ struct ignore
 using string = token<std::string>;
 
 using bound_string = token<bound_string_tag>;
+
+using query_string = token<query_string_tag>;
 
 using integer = token<int>;
 

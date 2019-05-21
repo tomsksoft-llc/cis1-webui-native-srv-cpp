@@ -9,6 +9,7 @@
 #include "http/router.h"
 #include "http/file_handler.h"
 #include "http/multipart_form_handler.h"
+#include "http/webhooks_handler.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
 namespace asio = boost::asio;                   // from <boost/asio.hpp>
@@ -32,6 +33,7 @@ private:
     rights_manager rights_manager_;
     http::file_handler files_;
     http::multipart_form_handler upload_handler_;
+    http::webhooks_handler webhooks_handler_;
 
     void init_app();
     void init_cis_app();

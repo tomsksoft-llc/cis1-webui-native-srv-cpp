@@ -41,6 +41,8 @@ public:
             const std::string& user,
             const std::string& old_pass,
             const std::string& new_pass);
+    std::optional<user_info> get_user_info(
+            const std::string& username) const;
     std::vector<database::user> get_users() const;
     std::vector<user_info> get_user_infos() const;
     bool delete_token(

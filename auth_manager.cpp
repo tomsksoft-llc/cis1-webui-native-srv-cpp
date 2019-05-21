@@ -40,7 +40,7 @@ std::optional<std::string> auth_manager::authenticate(
         os.clear();
 
         static const std::hash<std::string> hash_fn;
-        os << hash_fn(token_str);
+        os << hash_fn(token_str); //TODO rewrite with cryptographic hash?
         uint64_t expiration_time = (unix_timestamp + std::chrono::hours(24*7)).count();
 
         db->insert(token{-1, ids[0], os.str(), expiration_time});
@@ -200,6 +200,43 @@ bool auth_manager::change_pass(
 std::vector<user> auth_manager::get_users() const
 {
     return db_.get().get_all<user>();
+}
+
+std::optional<user_info> auth_manager::get_user_info(
+        const std::string& username) const
+{
+    auto db = db_.make_transaction();
+
+    auto users = db->select(
+            columns(&user::id,
+                    &user::name,
+                    &user::email,
+                    &group::name),
+            inner_join<user>(on(c(&user::group_id) == &group::id)),
+            where(c(&user::name) == username));
+
+    if(users.size() != 1)
+    {
+        return std::nullopt;
+    }
+    
+    auto api_access_keys = db->select(
+            &api_access_key::value,
+            where(c(&api_access_key::user_id) == std::get<0>(users[0])));
+    
+    std::optional<std::string> key;
+
+    if(api_access_keys.size() == 1)
+    {
+        key = api_access_keys[0];
+    }
+
+    db.commit();
+    return user_info{
+            std::get<1>(users[0]),
+            std::get<2>(users[0]),
+            std::get<3>(users[0]),
+            key};
 }
 
 std::vector<user_info> auth_manager::get_user_infos() const

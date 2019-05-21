@@ -21,6 +21,13 @@ init_params parse_args(int argc, char* argv[])
     {
         pt::ptree pt;
         pt::ini_parser::read_ini(argv[1], pt);
+        auto opt_working_dir = pt.get_optional<std::string>("global.working_dir");
+
+        if(opt_working_dir)
+        {
+            std::filesystem::current_path(opt_working_dir.value());
+        }
+
         result.public_address = net::ip::make_address(
                 pt.get<std::string>("http.ip"));
         result.public_port = pt.get<unsigned short>("http.port");
@@ -62,6 +69,11 @@ init_params parse_args(int argc, char* argv[])
     }
 
     cis::set_root_dir(result.cis_root.c_str());
+
+    if(!std::filesystem::exists("webhooks_temp"))
+    {
+        std::filesystem::create_directory("webhooks_temp");
+    }
 
     if(!std::filesystem::exists(result.db_root / "db.sqlite"))
     {

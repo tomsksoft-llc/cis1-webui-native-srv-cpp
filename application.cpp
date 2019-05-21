@@ -9,6 +9,7 @@
 #include "websocket/event_dispatcher.h"
 #include "websocket/event_handlers.h"
 #include "cis/dirs.h"
+#include "openssl_wrapper/openssl_wrapper.h"
 
 using namespace std::placeholders;              // from <functional>
 
@@ -26,7 +27,9 @@ application::application(const init_params& params)
     , upload_handler_(
         std::filesystem::path{params.cis_root / cis::projects},
         rights_manager_)
+    , webhooks_handler_(auth_manager_, rights_manager_, cis_)
 {
+    openssl::init();
     signals_.async_wait(
             [&](beast::error_code const&, int)
             {
@@ -99,6 +102,30 @@ std::shared_ptr<http_router> application::make_public_http_router()
             [&upload_handler = upload_handler_](auto&& ...args)
             {
                 return upload_handler(std::forward<decltype(args)>(args)...);
+            });
+
+    auto webhooks_url = url::make() /
+            CT_STRING("users") / url::bound_string() /
+            CT_STRING("webhooks");
+
+    router->add_route(
+            webhooks_url / CT_STRING("github") /
+                    url::bound_string() / url::bound_string() << url::query_string(),
+            [&whh = webhooks_handler_](auto&& ...args)
+            {
+                return whh(
+                        std::forward<decltype(args)>(args)...,
+                        whh.api::github);
+            });
+
+    router->add_route(
+            webhooks_url / CT_STRING("gitlab") /
+                    url::bound_string() / url::bound_string() << url::query_string(),
+            [&whh = webhooks_handler_](auto&& ...args)
+            {
+                return whh(
+                        std::forward<decltype(args)>(args)...,
+                        whh.api::gitlab);
             });
 
     cb = std::bind(
