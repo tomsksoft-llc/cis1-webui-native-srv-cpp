@@ -41,6 +41,7 @@ public:
 private:
     enum class hook_event
     {
+        ping,
         push,
         unknown
     };

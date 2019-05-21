@@ -120,6 +120,10 @@ handle_result webhooks_handler::handle_github_headers(
     {
         ev = hook_event::push;
     }
+    else if(event_it->value() == "ping")
+    {
+        ev = hook_event::ping;
+    }
 
     std::string signature{signature_it->value().substr(5, std::string::npos)};
 
@@ -239,11 +243,14 @@ void webhooks_handler::finish(
         const std::string& query_string,
         hook_event ev)
 {
-    auto file_path = save_body(req.body());
+    if(ev != hook_event::ping)
+    {
+        auto file_path = save_body(req.body());
 
-    auto params = prepare_params(project, job, query_string, file_path, ev);
+        auto params = prepare_params(project, job, query_string, file_path, ev);
 
-    cis_.run_job(project, job, params);
+        cis_.run_job(project, job, params);
+    }
 
     beast::http::response<beast::http::empty_body> res{
         beast::http::status::ok,
@@ -282,6 +289,10 @@ const char* webhooks_handler::ev_to_string(hook_event ev)
         case hook_event::push:
         {
             return "push";
+        }
+        case hook_event::ping:
+        {
+            return "ping";
         }
         case hook_event::unknown:
         [[fallthrough]];
