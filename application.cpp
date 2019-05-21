@@ -188,6 +188,14 @@ std::shared_ptr<websocket_router> application::make_ws_router()
             std::bind(&wsh::generate_api_key,
                     std::ref(auth_manager_),
                     _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::get_api_key,
+            std::bind(&wsh::get_api_key,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::remove_api_key,
+            std::bind(&wsh::remove_api_key,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
     dispatcher.add_event_handler(ws::request_id::list_projects,
             std::bind(&wsh::list_projects,
                     std::ref(cis_),

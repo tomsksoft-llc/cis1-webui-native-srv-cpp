@@ -158,13 +158,53 @@ std::optional<std::string> auth_manager::generate_api_key(const std::string& use
 
         static const std::hash<std::string> hash_fn;
         os << hash_fn(key_str);
-        db->insert(api_access_key{-1, ids[0], os.str()});
+        try
+        {
+            auto insertedId = db->insert(api_access_key{-1, ids[0], os.str()});
+        }
+        catch(std::system_error& err)
+        {
+            return std::nullopt;
+        }
 
         db.commit();
         return os.str();
     }
 
     return std::nullopt;
+}
+
+std::optional<std::string> auth_manager::get_api_key(const std::string& name)
+{
+    auto db = db_.make_transaction();
+    auto values = db->select(
+            &api_access_key::value,
+            inner_join<user>(on(c(&user::id) == &api_access_key::user_id)),
+            where(c(&user::name) == name));
+
+    if(values.size() == 1)
+    {
+        db.commit();
+        return values[0];
+    }
+
+    return std::nullopt;
+}
+
+bool auth_manager::remove_api_key(const std::string& name)
+{
+    auto db = db_.make_transaction();
+    auto ids = db->select(
+            &api_access_key::id,
+            inner_join<user>(on(c(&user::id) == &api_access_key::user_id)),
+            where(c(&user::name) == name));
+    if(ids.size() == 1)
+    {
+        db->remove<api_access_key>(ids[0]);
+        db.commit();
+        return true;
+    }
+    return false;
 }
 
 bool auth_manager::change_pass(

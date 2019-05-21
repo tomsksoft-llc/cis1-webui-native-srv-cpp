@@ -92,6 +92,20 @@ std::optional<std::string> generate_api_key(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
+std::optional<std::string> get_api_key(
+        auth_manager& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
+std::optional<std::string> remove_api_key(
+        auth_manager& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
 //cis
 
 std::optional<std::string> list_projects(

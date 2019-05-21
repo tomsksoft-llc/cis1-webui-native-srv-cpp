@@ -695,13 +695,16 @@ std::optional<std::string> generate_api_key(
     }
 
     if(ctx.username == name.value()
-        || authentication_handler.get_group(ctx.username).value() == "admin")
+        || (!ctx.username.empty()
+        && authentication_handler.get_group(ctx.username).value() == "admin"))
     {
         auto api_key = authentication_handler.generate_api_key(name.value());
+
         if(!api_key)
         {
             return "Can't generate APIAccessSecretKey.";
         }
+
         response_data.AddMember(
                 "APIAccessSecretKey",
                 rapidjson::Value().SetString(
@@ -709,6 +712,76 @@ std::optional<std::string> generate_api_key(
                         api_key.value().length(),
                         allocator),
                 allocator);
+
+        return std::nullopt;
+    }
+
+    return "Action not permitted.";
+}
+
+std::optional<std::string> get_api_key(
+        auth_manager& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto name = get_string(request_data, "username");
+
+    if(!name)
+    {
+        return "Invalid JSON.";
+    }
+
+    if(ctx.username == name.value()
+        || (!ctx.username.empty()
+        && authentication_handler.get_group(ctx.username).value() == "admin"))
+    {
+        auto api_key = authentication_handler.get_api_key(name.value());
+
+        if(!api_key)
+        {
+            return "Can't retrieve APIAccessSecretKey.";
+        }
+
+        response_data.AddMember(
+                "APIAccessSecretKey",
+                rapidjson::Value().SetString(
+                        api_key.value().c_str(),
+                        api_key.value().length(),
+                        allocator),
+                allocator);
+
+        return std::nullopt;
+    }
+
+    return "Action not permitted.";
+}
+
+std::optional<std::string> remove_api_key(
+        auth_manager& authentication_handler,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto name = get_string(request_data, "username");
+
+    if(!name)
+    {
+        return "Invalid JSON.";
+    }
+
+    if(ctx.username == name.value()
+        || (!ctx.username.empty()
+        && authentication_handler.get_group(ctx.username).value() == "admin"))
+    {
+        auto result = authentication_handler.remove_api_key(name.value());
+
+        if(!result)
+        {
+            return "Can't remove APIAccessSecretKey.";
+        }
 
         return std::nullopt;
     }

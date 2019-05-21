@@ -57,7 +57,7 @@ struct detail
                                 foreign_key(&token::user_id).references(&user::id).on_delete.cascade()),
                             make_table("api_access_keys",
                                 make_column("api_access_key_id", &api_access_key::id, autoincrement(), primary_key()),
-                                make_column("api_access_key_user_id", &api_access_key::user_id),
+                                make_column("api_access_key_user_id", &api_access_key::user_id, unique()),
                                 make_column("api_access_key_value", &api_access_key::value, unique()),
                                 foreign_key(&api_access_key::user_id).references(&user::id).on_delete.cascade()));
     }

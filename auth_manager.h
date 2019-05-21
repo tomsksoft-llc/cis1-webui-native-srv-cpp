@@ -37,6 +37,10 @@ public:
             const std::string& username) const;
     std::optional<std::string> generate_api_key(
             const std::string& name);
+    std::optional<std::string> get_api_key(
+            const std::string& name);
+    bool remove_api_key(
+            const std::string& name);
     bool change_pass(
             const std::string& user,
             const std::string& old_pass,
