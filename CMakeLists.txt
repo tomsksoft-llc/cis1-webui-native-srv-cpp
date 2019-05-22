@@ -9,27 +9,50 @@ find_package(RapidJSON REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(OpenSSL REQUIRED)
 
-aux_source_directory(beast_ext ${PROJECT_NAME}_BEAST_EXT_SRC)
-aux_source_directory(exceptions ${PROJECT_NAME}_EXCEPTIONS_SRC)
-aux_source_directory(cis ${PROJECT_NAME}_CIS_SRC)
-aux_source_directory(http ${PROJECT_NAME}_HTTP_SRC)
-aux_source_directory(net ${PROJECT_NAME}_NET_SRC)
-aux_source_directory(sqlite_orm_ext ${PROJECT_NAME}_SQLITE_ORM_EXT_SRC)
-aux_source_directory(websocket ${PROJECT_NAME}_WEBSOCKET_SRC)
-aux_source_directory(openssl_wrapper ${PROJECT_NAME}_OPENSSL_WRAPPER_SRC)
-aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR} ${PROJECT_NAME}_SRC)
+set(${PROJECT_NAME}_SRC
+
+    net/basic_websocket_session.cpp
+    net/http_session.cpp
+    net/socket_util.cpp
+    net/queued_websocket_session.cpp
+    net/listener.cpp
+    net/fail.cpp
+
+    websocket/event_dispatcher.cpp
+    websocket/base_event_handler.cpp
+    websocket/event_handlers.cpp
+
+    openssl_wrapper/openssl_wrapper.cpp
+
+    cis/dirs.cpp
+    cis/cis_structs.cpp
+    cis/fs_mapper.cpp
+    cis/cis_manager.cpp
+
+    exceptions/base_cis_srv_exception.cpp
+
+    http/request_util.cpp
+    http/response.cpp
+    http/file_handler.cpp
+    http/common_handlers.cpp
+    http/cookie_parser.cpp
+    http/multipart_form_handler.cpp
+    http/webhooks_handler.cpp
+    http/handlers_chain.cpp
+    http/error_handler.cpp
+
+    application.cpp
+    random_generator.cpp
+    init.cpp
+    auth_manager.cpp
+    database.cpp
+    file_util.cpp
+    rights_manager.cpp
+    child_process.cpp
+    main.cpp)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
-add_executable(${PROJECT_NAME}
-    ${${PROJECT_NAME}_BEAST_EXT_SRC}
-    ${${PROJECT_NAME}_EXCEPTIONS_SRC}
-    ${${PROJECT_NAME}_CIS_SRC}
-    ${${PROJECT_NAME}_HTTP_SRC}
-    ${${PROJECT_NAME}_NET_SRC}
-    ${${PROJECT_NAME}_SQLITE_ORM_EXT_SRC}
-    ${${PROJECT_NAME}_WEBSOCKET_SRC}
-    ${${PROJECT_NAME}_OPENSSL_WRAPPER_SRC}
-    ${${PROJECT_NAME}_SRC})
+add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SRC})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
