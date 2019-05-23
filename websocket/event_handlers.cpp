@@ -313,16 +313,48 @@ std::optional<std::string> get_job_info(
         array.SetArray();
         for(auto& [build_name, build] : job->get_builds())
         {
-            array.PushBack(
-                    rapidjson::Value().SetObject()
-                            .AddMember(
-                                    "name",
-                                    rapidjson::Value().SetString(
-                                            build_name.c_str(),
-                                            build_name.length(),
-                                            allocator),
-                                    allocator),
+            rapidjson::Value value;
+            value.SetObject();
+            value.AddMember(
+                    "name",
+                    rapidjson::Value().SetString(
+                            build_name.c_str(),
+                            build_name.length(),
+                            allocator),
                     allocator);
+            auto& info = build.get_info();
+            if(info.status)
+            {
+                value.AddMember(
+                        "status",
+                        rapidjson::Value().SetInt(info.status.value()),
+                        allocator);
+            }
+            else
+            {
+                value.AddMember(
+                        "status",
+                        rapidjson::Value().SetNull(),
+                        allocator);
+            }
+            if(info.date)
+            {
+                value.AddMember(
+                        "date",
+                        rapidjson::Value().SetString(
+                                info.date.value().c_str(),
+                                info.date.value().length(),
+                                allocator),
+                        allocator);
+            }
+            else
+            {
+                value.AddMember(
+                        "date",
+                        rapidjson::Value().SetNull(),
+                        allocator);
+            }
+            array.PushBack(value, allocator);
         }
         response_data.AddMember("builds", array, allocator);
 
