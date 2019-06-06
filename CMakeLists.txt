@@ -24,6 +24,10 @@ set(${PROJECT_NAME}_SRC
 
     openssl_wrapper/openssl_wrapper.cpp
 
+    beast_ext/knuth_morris_pratt_searcher.cpp
+    beast_ext/message_stream_parser.cpp
+    beast_ext/multipart_stream_parser.cpp
+
     cis/dirs.cpp
     cis/cis_structs.cpp
     cis/fs_mapper.cpp
