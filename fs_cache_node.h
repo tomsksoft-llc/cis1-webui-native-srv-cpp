@@ -75,7 +75,10 @@ public:
 
     const std::filesystem::directory_entry& dir_entry() const;
     std::string filename() const;
+    std::filesystem::path path() const;
+    std::filesystem::path relative_path() const;
     fs_cache_node* parent() const;
+    const fs_cache_node& root() const;
     immutable_container_proxy<tree_t> childs();
     const tree_t& childs() const;
 private:
@@ -230,9 +233,32 @@ std::string fs_cache_node<Notifier>::filename() const
 }
 
 template <class Notifier>
+std::filesystem::path fs_cache_node<Notifier>::path() const
+{
+    return dir_entry_.path();
+}
+
+template <class Notifier>
+std::filesystem::path fs_cache_node<Notifier>::relative_path() const
+{
+    return dir_entry_.path().lexically_relative(root().path());
+}
+
+template <class Notifier>
 fs_cache_node<Notifier>* fs_cache_node<Notifier>::parent() const
 {
     return parent_;
+}
+
+template <class Notifier>
+const fs_cache_node<Notifier>& fs_cache_node<Notifier>::root() const
+{
+    auto* node = this;
+
+    for(; node->parent_ != nullptr; node = node->parent_)
+    {}
+
+    return *node;
 }
 
 template <class Notifier>

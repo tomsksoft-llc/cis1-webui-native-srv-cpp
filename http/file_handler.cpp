@@ -5,8 +5,9 @@
 namespace http
 {
 
-file_handler::file_handler(std::string doc_root)
+file_handler::file_handler(std::string doc_root, bool ignore_mime)
     : doc_root_(std::move(doc_root))
+    , ignore_mime_(ignore_mime)
 {}
 
 handle_result file_handler::operator()(
@@ -53,7 +54,16 @@ handle_result file_handler::single_file(
             std::make_tuple(std::move(body)),
             std::make_tuple(beast::http::status::ok, req.version())};
         res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-        res.set(beast::http::field::content_type, mime_type(full_path));
+
+        if(!ignore_mime_)
+        {
+            res.set(beast::http::field::content_type, mime_type(full_path));
+        }
+        else
+        {
+            res.set(beast::http::field::content_type, "application/octet-stream");
+        }
+
         res.content_length(size);
         res.keep_alive(req.keep_alive());
 

@@ -41,6 +41,7 @@ set(${PROJECT_NAME}_SRC
     http/common_handlers.cpp
     http/cookie_parser.cpp
     http/multipart_form_handler.cpp
+    http/download_handler.cpp
     http/webhooks_handler.cpp
     http/handlers_chain.cpp
     http/error_handler.cpp

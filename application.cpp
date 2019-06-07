@@ -27,6 +27,9 @@ application::application(const init_params& params)
     , upload_handler_(
         std::filesystem::path{params.cis_root / cis::projects},
         rights_manager_)
+    , download_handler_(
+        std::filesystem::path{params.cis_root / cis::projects},
+        rights_manager_)
     , webhooks_handler_(auth_manager_, rights_manager_, cis_)
 {
     openssl::init();
@@ -102,6 +105,13 @@ std::shared_ptr<http_router> application::make_public_http_router()
             [&upload_handler = upload_handler_](auto&& ...args)
             {
                 return upload_handler(std::forward<decltype(args)>(args)...);
+            });
+
+    router->add_route(
+            url::make() / CT_STRING("download") / url::bound_string() / url::string(),
+            [&download_handler = download_handler_](auto&& ...args)
+            {
+                return download_handler(std::forward<decltype(args)>(args)...);
             });
 
     auto webhooks_url = url::make() /

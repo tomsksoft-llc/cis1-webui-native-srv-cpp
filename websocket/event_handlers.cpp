@@ -208,9 +208,13 @@ std::optional<std::string> get_project_info(
                             file.filename().length(),
                             allocator),
                     allocator);
+            auto link = ("/download" / file.relative_path()).string();
             array_value.AddMember(
                     "link",
-                    rapidjson::Value().SetString(""),
+                    rapidjson::Value().SetString(
+                        link.c_str(),
+                        link.length(),
+                        allocator),
                     allocator);
             array.PushBack(
                     array_value,
@@ -278,9 +282,13 @@ std::optional<std::string> get_job_info(
                             file.filename().length(),
                             allocator),
                     allocator);
+            auto link = ("/download" / file.relative_path()).string();
             array_value.AddMember(
                     "link",
-                    rapidjson::Value().SetString(""),
+                    rapidjson::Value().SetString(
+                        link.c_str(),
+                        link.length(),
+                        allocator),
                     allocator);
             array.PushBack(
                     array_value,
@@ -882,9 +890,13 @@ std::optional<std::string> get_build_info(
                             file.filename().length(),
                             allocator),
                     allocator);
+            auto link = ("/download" / file.relative_path()).string();
             array_value.AddMember(
                     "link",
-                    rapidjson::Value().SetString(""),
+                    rapidjson::Value().SetString(
+                        link.c_str(),
+                        link.length(),
+                        allocator),
                     allocator);
             value.PushBack(
                     array_value,
