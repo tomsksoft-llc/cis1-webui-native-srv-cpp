@@ -220,7 +220,7 @@ std::optional<std::string> get_project_info(
                     array_value,
                     allocator);
         }
-        response_data.AddMember("files", array, allocator);
+        response_data.AddMember("fs_entries", array, allocator);
         array.SetArray();
         for(auto& [job_name, job] : project->get_jobs())
         {
@@ -294,7 +294,7 @@ std::optional<std::string> get_job_info(
                     array_value,
                     allocator);
         }
-        response_data.AddMember("files", array, allocator);
+        response_data.AddMember("fs_entries", array, allocator);
         array.SetArray();
         for(auto& param : job->get_params())
         {
@@ -902,7 +902,7 @@ std::optional<std::string> get_build_info(
                     array_value,
                     allocator);
         }
-        response_data.AddMember("artifacts", value, allocator);
+        response_data.AddMember("fs_entries", value, allocator);
 
         return std::nullopt;
     }
