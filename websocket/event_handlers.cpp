@@ -208,6 +208,11 @@ std::optional<std::string> get_project_info(
                             file.filename().length(),
                             allocator),
                     allocator);
+            bool is_directory = file.dir_entry().is_directory();
+            array_value.AddMember(
+                    "directory",
+                    rapidjson::Value().SetBool(is_directory),
+                    allocator);
             auto link = ("/download" / file.relative_path()).string();
             array_value.AddMember(
                     "link",
@@ -281,6 +286,11 @@ std::optional<std::string> get_job_info(
                             file.filename().c_str(),
                             file.filename().length(),
                             allocator),
+                    allocator);
+            bool is_directory = file.dir_entry().is_directory();
+            array_value.AddMember(
+                    "directory",
+                    rapidjson::Value().SetBool(is_directory),
                     allocator);
             auto link = ("/download" / file.relative_path()).string();
             array_value.AddMember(
@@ -890,6 +900,11 @@ std::optional<std::string> get_build_info(
                             file.filename().length(),
                             allocator),
                     allocator);
+            bool is_directory = file.dir_entry().is_directory();
+            array_value.AddMember(
+                    "directory",
+                    rapidjson::Value().SetBool(is_directory),
+                    allocator);
             auto link = ("/download" / file.relative_path()).string();
             array_value.AddMember(
                     "link",
@@ -1146,6 +1161,11 @@ std::optional<std::string> list_directory(
                         file.filename().c_str(),
                         file.filename().length(),
                         allocator),
+                allocator);
+        bool is_directory = file.dir_entry().is_directory();
+        array_value.AddMember(
+                "directory",
+                rapidjson::Value().SetBool(is_directory),
                 allocator);
         auto link = ("/download" / file.relative_path()).string();
         array_value.AddMember(
