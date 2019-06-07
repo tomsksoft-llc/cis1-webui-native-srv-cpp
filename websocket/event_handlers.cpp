@@ -1104,6 +1104,66 @@ std::optional<std::string> new_directory(
     return std::nullopt;
 }
 
+std::optional<std::string> list_directory(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto path_str = get_string(request_data, "path");
+
+    if(!path_str)
+    {
+        return "Invalid JSON.";
+    }
+
+    std::filesystem::path path(path_str.value());
+
+    if(!validate_path(path))
+    {
+        return "Invalid path.";
+    }
+
+    if(auto path_rights = get_path_rights(ctx, rights, path);
+            path_rights && !path_rights.value().read)
+    {
+        return "Action not permitted.";
+    }
+
+    auto& fs = cis_manager.fs();
+
+    rapidjson::Value value;
+    value.SetArray();
+    rapidjson::Value array_value;
+    for(auto& file : fs)
+    {
+        array_value.SetObject();
+        array_value.AddMember(
+                "name",
+                rapidjson::Value().SetString(
+                        file.filename().c_str(),
+                        file.filename().length(),
+                        allocator),
+                allocator);
+        auto link = ("/download" / file.relative_path()).string();
+        array_value.AddMember(
+                "link",
+                rapidjson::Value().SetString(
+                    link.c_str(),
+                    link.length(),
+                    allocator),
+                allocator);
+        value.PushBack(
+                array_value,
+                allocator);
+    }
+    response_data.AddMember("fs_entries", value, allocator);
+
+    return std::nullopt;
+}
+
 } // namespace handlers
 
 } // namespace websocket
