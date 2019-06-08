@@ -2,12 +2,10 @@ cmake_minimum_required(VERSION 3.9)
 
 project(ts_ws)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+
 find_package(Threads REQUIRED)
-set(Boost_USE_STATIC_LIBS ON)
-find_package(Boost COMPONENTS regex filesystem REQUIRED)
-find_package(RapidJSON REQUIRED)
-find_package(SQLite3 REQUIRED)
-find_package(OpenSSL REQUIRED)
+find_package(Filesystem REQUIRED Final)
 
 set(${PROJECT_NAME}_SRC
 
@@ -56,27 +54,20 @@ set(${PROJECT_NAME}_SRC
     child_process.cpp
     main.cpp)
 
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
+
 add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SRC})
 
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
-target_include_directories(
-    ${PROJECT_NAME} PRIVATE
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
-target_include_directories(
-    ${PROJECT_NAME} PRIVATE
-    $<BUILD_INTERFACE:
-        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/sqlite_orm/include>)
-target_include_directories(
-    ${PROJECT_NAME} PRIVATE
-    $<BUILD_INTERFACE:${OPENSSL_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
 
 target_link_libraries(
     ${PROJECT_NAME}
-    ${CMAKE_THREAD_LIBS_INIT}
-    stdc++fs
-    Boost::filesystem
-    Boost::regex
-    sqlite3
-    OpenSSL::Crypto)
+    Threads::Threads
+    std::filesystem
+    ${CONAN_LIBS})
+
