@@ -1,8 +1,8 @@
 #pragma once
 
 #include <string>
+#include <regex>
 
-#include <boost/regex.hpp>
 #include <boost/lexical_cast.hpp>
 
 #include "meta.h"

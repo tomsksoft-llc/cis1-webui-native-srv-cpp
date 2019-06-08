@@ -15,7 +15,6 @@
 #include <boost/beast/http/message.hpp>
 #include <boost/assert.hpp>
 #include <boost/optional.hpp>
-#include <boost/regex.hpp>
 
 #include "multipart_stream_parser.h"
 #include "message_stream_parser.h"

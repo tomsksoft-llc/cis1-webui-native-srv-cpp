@@ -2,8 +2,7 @@
 
 #include <string>
 #include <utility>
-
-#include <boost/regex.hpp>
+#include <regex>
 
 namespace cis
 {
@@ -66,8 +65,8 @@ void fs_mapper::init(fs_cache_node<fs_mapper>* self)
         {
             static auto is_build = [](const std::string& dir_name)
             {
-                static const boost::regex build_mask("^\\d{6}$");
-                return boost::regex_match(dir_name, build_mask);
+                static const std::regex build_mask("^\\d{6}$");
+                return std::regex_match(dir_name, build_mask);
             };
             if(     parent().type_ == cis_obj_type::job
                  && self_->dir_entry_.is_directory()

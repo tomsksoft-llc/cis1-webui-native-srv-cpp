@@ -1,13 +1,13 @@
 #include "request_util.h"
 
-#include <boost/regex.hpp>
+#include <regex>
 
 namespace http
 {
 
-const boost::regex query_begin_regex("^\\??([^=]+)\\=([^&]+)");
-const boost::regex query_entry_regex("\\&([^=]+)\\=([^&]+)");
-const boost::regex cookies_regex("(.*?)=(.*?)($|;|,(?! ))");
+const std::regex query_begin_regex("^\\??([^=]+)\\=([^&]+)");
+const std::regex query_entry_regex("\\&([^=]+)\\=([^&]+)");
+const std::regex cookies_regex("(.*?)=(.*?)($|;|,(?! ))");
 
 unsigned char to_hex(unsigned char ch)
 {
@@ -94,16 +94,16 @@ std::map<std::string, std::string> parse_request_query(const std::string& body)
 
     auto start = body.cbegin();
     auto end = body.cend();
-    boost::match_results<std::string::const_iterator> what;
-    boost::match_flag_type flags = boost::match_default;
+    std::match_results<std::string::const_iterator> what;
+    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
 
     regex_search(start, end, what, query_begin_regex, flags);
 
     result.insert({what[1], what[2]});
     start = what[0].second;
     // update flags:
-    flags |= boost::match_prev_avail;
-    flags |= boost::match_not_bob;
+    flags |= std::regex_constants::match_prev_avail;
+    //flags |= std::regex_constants::match_not_bob;
 
     while(regex_search(start, end, what, query_entry_regex, flags))
     {
@@ -111,8 +111,8 @@ std::map<std::string, std::string> parse_request_query(const std::string& body)
 
         start = what[0].second;
         // update flags:
-        flags |= boost::match_prev_avail;
-        flags |= boost::match_not_bob;
+        flags |= std::regex_constants::match_prev_avail;
+        //flags |= std::regex_constants::match_not_bob;
     }
 
     return result;
@@ -124,8 +124,8 @@ std::map<std::string, std::string> parse_cookies(const std::string& cookies)
 
     auto start = cookies.cbegin();
     auto end = cookies.cend();
-    boost::match_results<std::string::const_iterator> what;
-    boost::match_flag_type flags = boost::match_default;
+    std::match_results<std::string::const_iterator> what;
+    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
 
     while(regex_search(start, end, what, cookies_regex, flags))
     {
@@ -137,8 +137,8 @@ std::map<std::string, std::string> parse_cookies(const std::string& cookies)
 
         start = what[0].second;
         // update flags:
-        flags |= boost::match_prev_avail;
-        flags |= boost::match_not_bob;
+        flags |= std::regex_constants::match_prev_avail;
+        //flags |= std::regex_constants::match_not_bob;
     }
 
     return result;

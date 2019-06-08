@@ -7,7 +7,6 @@
 #include <boost/beast/http/message.hpp>
 #include <boost/assert.hpp>
 #include <boost/optional.hpp>
-#include <boost/regex.hpp>
 
 namespace beast_ext
 {

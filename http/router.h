@@ -2,8 +2,8 @@
 
 #include <functional>
 #include <vector>
+#include <regex>
 
-#include <boost/regex.hpp>
 #include <boost/beast.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/asio.hpp>
@@ -37,15 +37,15 @@ public:
                 request_t&,
                 context_t&,
                 Args...,
-                const boost::smatch&) const = 0;
+                const std::smatch&) const = 0;
     };
     handle_result operator()(request_t& req, context_t& ctx, Args... args)
     {
         std::string target{req.target()}; //TODO: use string_view somehow
         for(auto&& [regexp, handler] : routes_)
         {
-            boost::smatch what;
-            if(boost::regex_match(target, what, regexp))
+            std::smatch what;
+            if(std::regex_match(target, what, regexp))
             {
                 return handler->handle(req, ctx, std::forward<decltype(args)>(args)..., what);
             }
@@ -76,7 +76,7 @@ public:
                     request_t& req,
                     context_t& ctx,
                     Args... args,
-                    const boost::smatch& what) const
+                    const std::smatch& what) const
             {
                 auto parsed_args = meta::maybe_tuple<RouteArgs...>(what, 1);
                 if(parsed_args)
@@ -95,7 +95,7 @@ public:
                 std::make_unique<handler_impl>(cb));
     }
 private:
-    std::vector<std::pair<boost::regex, std::unique_ptr<handler_interface>>> routes_;
+    std::vector<std::pair<std::regex, std::unique_ptr<handler_interface>>> routes_;
 };
 
 } // namespace http
