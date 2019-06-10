@@ -189,6 +189,22 @@ std::optional<std::string> list_directory(
         rapidjson::Value& response_data,
         rapidjson::Document::AllocatorType& allocator);
 
+std::optional<std::string> add_cis_cron(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
+std::optional<std::string> remove_cis_cron(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator);
+
 } // namespace handlers
 
 } // namespace websocket

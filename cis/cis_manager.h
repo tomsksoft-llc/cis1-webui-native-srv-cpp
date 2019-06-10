@@ -51,6 +51,14 @@ public:
             const std::string& project_name,
             const std::string& job_name,
             const std::vector<std::string>& params = {});
+    bool add_cron(
+        const std::string& project_name,
+        const std::string& job_name,
+        const std::string& cron_expression);
+    bool remove_cron(
+        const std::string& project_name,
+        const std::string& job_name,
+        const std::string& cron_expression);
 private:
     struct executables
     {
@@ -59,6 +67,7 @@ private:
         std::string getparam;
         std::string setvalue;
         std::string getvalue;
+        std::string cis_cron;
         bool set(const std::string& name, const std::string& value);
         bool valid();
     };

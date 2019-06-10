@@ -257,6 +257,16 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::add_cis_cron,
+            std::bind(&wsh::add_cis_cron,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
+    dispatcher.add_event_handler(ws::request_id::remove_cis_cron,
+            std::bind(&wsh::remove_cis_cron,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3, _4));
 
     std::function <http::handle_result(
         beast::http::request<beast::http::empty_body>& req,

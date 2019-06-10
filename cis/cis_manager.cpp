@@ -186,6 +186,52 @@ bool cis_manager::run_job(
     return true;
 }
 
+bool cis_manager::add_cron(
+        const std::string& project_name,
+        const std::string& job_name,
+        const std::string& cron_expression)
+{
+    if(get_job_info(project_name, job_name) == nullptr)
+    {
+        return false;
+    }
+    auto executable = canonical(cis_root_ / core / execs_.cis_cron);
+    auto env = boost::this_process::environment();
+    env["cis_base_dir"] = canonical(cis_root_);
+    auto cp = std::make_shared<child_process>(ioc_, env);
+    cp->run(executable.string(),
+            {"--add", cron_expression, path_cat(project_name, "/" + job_name)},
+            [project_name, job_name](
+                    int exit,
+                    std::vector<char>& buffer,
+                    const std::error_code& ec)
+            {});
+    return true;
+}
+
+bool cis_manager::remove_cron(
+        const std::string& project_name,
+        const std::string& job_name,
+        const std::string& cron_expression)
+{
+    if(get_job_info(project_name, job_name) == nullptr)
+    {
+        return false;
+    }
+    auto executable = canonical(cis_root_ / core / execs_.cis_cron);
+    auto env = boost::this_process::environment();
+    env["cis_base_dir"] = canonical(cis_root_);
+    auto cp = std::make_shared<child_process>(ioc_, env);
+    cp->run(executable.string(),
+            {"--del", cron_expression, path_cat(project_name, "/" + job_name)},
+            [project_name, job_name](
+                    int exit,
+                    std::vector<char>& buffer,
+                    const std::error_code& ec)
+            {});
+    return true;
+}
+
 bool cis_manager::executables::set(
         const std::string& name,
         const std::string& value)
@@ -215,6 +261,11 @@ bool cis_manager::executables::set(
         getvalue = value;
         return true;
     }
+    if(name == "cis_cron")
+    {
+        cis_cron = value;
+        return true;
+    }
 
     return false;
 }
@@ -225,7 +276,8 @@ bool cis_manager::executables::valid()
         &&  !setparam.empty()
         &&  !getparam.empty()
         &&  !setvalue.empty()
-        &&  !getvalue.empty());
+        &&  !getvalue.empty()
+        &&  !cis_cron.empty());
 }
 
 } // namespace cis

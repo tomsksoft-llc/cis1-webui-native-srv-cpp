@@ -2,6 +2,7 @@
 
 #include <rapidjson/writer.h>
 
+#include "cron_utils.h"
 #include "event_list.h"
 
 using namespace std::string_literals;
@@ -1182,6 +1183,92 @@ std::optional<std::string> list_directory(
     response_data.AddMember("fs_entries", value, allocator);
 
     return std::nullopt;
+}
+
+std::optional<std::string> add_cis_cron(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto project_name = get_string(request_data, "project");
+    auto job_name = get_string(request_data, "job");
+    auto cron_expr = get_string(request_data, "cron_expr");
+    if(!project_name || !job_name || !cron_expr)
+    {
+        return "Invalid JSON.";
+    }
+
+    if(!cron::validate_expr(cron_expr.value()))
+    {
+        return "Invalid cron expression.";
+    }
+
+    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
+    auto perm = rights.check_project_right(ctx.username, project_name.value());
+    auto permitted =
+        perm.has_value() ? (perm.value().execute && perm.value().write) : true;
+
+    if(job != nullptr && permitted)
+    {
+        cis_manager.add_cron(
+                project_name.value(),
+                job_name.value(),
+                cron_expr.value());
+
+        return std::nullopt;
+    }
+    if(!permitted)
+    {
+        return "Action not permitted.";
+    }
+
+    return "Job doesn't exists.";
+}
+
+std::optional<std::string> remove_cis_cron(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const rapidjson::Value& request_data,
+        rapidjson::Value& response_data,
+        rapidjson::Document::AllocatorType& allocator)
+{
+    auto project_name = get_string(request_data, "project");
+    auto job_name = get_string(request_data, "job");
+    auto cron_expr = get_string(request_data, "cron_expr");
+    if(!project_name || !job_name || !cron_expr)
+    {
+        return "Invalid JSON.";
+    }
+
+    if(!cron::validate_expr(cron_expr.value()))
+    {
+        return "Invalid cron expression.";
+    }
+
+    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
+    auto perm = rights.check_project_right(ctx.username, project_name.value());
+    auto permitted =
+        perm.has_value() ? (perm.value().execute && perm.value().write) : true;
+
+    if(job != nullptr && permitted)
+    {
+        cis_manager.remove_cron(
+                project_name.value(),
+                job_name.value(),
+                cron_expr.value());
+
+        return std::nullopt;
+    }
+    if(!permitted)
+    {
+        return "Action not permitted.";
+    }
+
+    return "Job doesn't exists.";
 }
 
 } // namespace handlers

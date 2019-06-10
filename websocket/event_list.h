@@ -26,7 +26,9 @@ enum class request_id
     remove_fs_entry     = 79,
     move_fs_entry       = 81,
     new_directory       = 83,
-    list_directory       = 85,
+    list_directory      = 85,
+    add_cis_cron        = 87,
+    remove_cis_cron     = 89,
 };
 
 enum class response_id
@@ -55,6 +57,8 @@ enum class response_id
     move_fs_entry       = 82,
     new_directory       = 84,
     list_directory      = 86,
+    add_cis_cron        = 88,
+    remove_cis_cron     = 90,
 };
 
 } // namespace websocket
