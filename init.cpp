@@ -77,13 +77,7 @@ init_params parse_args(int argc, char* argv[])
 
     if(!std::filesystem::exists(result.db_root / "db.sqlite"))
     {
-        result.admin = admin_user{};
-        std::cout << "Enter admin username: ";
-        std::cin >> result.admin.value().name;
-        std::cout << "Enter admin email: ";
-        std::cin >> result.admin.value().email;
-        std::cout << "Enter admin password: ";
-        std::cin >> result.admin.value().pass;
+        result.admin = admin_user{"admin", "admin@example.com" , "1234"};
     }
 
     return result;
