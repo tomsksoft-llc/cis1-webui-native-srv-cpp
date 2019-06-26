@@ -6,6 +6,7 @@
 #include <rapidjson/stringbuffer.h>
 
 #include "event_list.h"
+#include "const_stream_adapter.h"
 
 #ifndef NDEBUG
 #include <iostream>
@@ -50,18 +51,13 @@ void event_dispatcher::dispatch(
 {
     if(text)
     {
-        std::string str;
-        str.resize(bytes_transferred);
-        boost::asio::buffer_copy(
-                boost::asio::buffer(str.data(), bytes_transferred),
-                buffer.data(),
-                bytes_transferred);
+        const_stream_adapter bs(buffer.data());
 #ifndef NDEBUG
         const auto& user = ctx.username;
-        std::cout << "[" << user << "]:" << str << std::endl;
+        std::cout << "[" << user << "]:" << boost::beast::buffers(buffer.data()) << std::endl;
 #endif
         rapidjson::Document request;
-        request.Parse(str.c_str());
+        request.ParseStream(bs);
 
         if(request.HasParseError() || !request.IsObject())
         {
