@@ -18,6 +18,12 @@ struct meta_converter;
 template <class Type, class CTString>
 struct ignored_field
 {
+    constexpr ignored_field(ignored_field&& f)
+    {}
+
+    constexpr ignored_field()
+    {}
+
     constexpr ignored_field(std::tuple<>)
     {}
 
@@ -272,6 +278,17 @@ struct meta_converter_impl<
         field<Type, FieldType, Ptr, CTString, FieldValidators...> f(
                 std::make_tuple(field_validators...));
         return {std::move(*this), std::move(f)};
+    }
+
+    template <class CTString>
+    constexpr meta_converter_impl<
+            Type,
+            fields_pack<Fields...,
+                    ignored_field<Type, CTString>>,
+            validators_pack<Validators...>> add_field(
+            CTString ct_string)
+    {
+        return {std::move(*this), ignored_field<Type, CTString>{}};
     }
 
     template <
