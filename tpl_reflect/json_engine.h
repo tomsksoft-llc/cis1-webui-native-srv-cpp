@@ -114,6 +114,11 @@ bool engine::get(
         const char* str,
         FieldType& obj_field)
 {
+    if(!has(protocol_obj, str))
+    {
+        return false;
+    }
+
     auto& field = protocol_obj[str];
     return json::get(field, obj_field);
 }
@@ -132,18 +137,14 @@ bool engine::get(
 
             if constexpr (reflect::has_converter<FieldType>)
             {
-                if(param.IsObject())
-                {
-                    FieldType::get_converter().template get<engine>(param, arr_obj);
-                }
-                else
+                if(!param.IsObject() || !FieldType::get_converter().template get<engine>(param, arr_obj))
                 {
                     return false;
                 }
             }
-            else
+            else if (!json::get(param, arr_obj))
             {
-                json::get(param, arr_obj);
+                return false;
             }
 
             obj_field.push_back(arr_obj);
@@ -169,19 +170,16 @@ bool engine::get(
                 FieldType map_obj;
                 if constexpr (reflect::has_converter<FieldType>)
                 {
-                    if(value.IsObject())
-                    {
-                        FieldType::get_converter().template get<engine>(value, map_obj);
-                    }
-                    else
+                    if(!value.IsObject() || !FieldType::get_converter().template get<engine>(value, map_obj))
                     {
                         return false;
                     }
                 }
-                else
+                else if(!json::get(value, map_obj))
                 {
-                    json::get(value, map_obj);
+                    return false;
                 }
+
                 obj_field.insert({key.GetString(), map_obj});
             }
             else
@@ -302,6 +300,18 @@ namespace json
 {
 
 template <>
+bool get<bool>(const rapidjson::Value& from, bool& to)
+{
+    if(from.IsBool())
+    {
+        to = from.GetBool();
+        return true;
+    }
+
+    return false;
+}
+
+template <>
 bool get<int32_t>(const rapidjson::Value& from, int32_t& to)
 {
     if(from.IsInt())
@@ -335,6 +345,15 @@ bool get<std::string>(const rapidjson::Value& from, std::string& to)
     }
 
     return false;
+}
+
+template <>
+void set<bool>(
+        rapidjson::Value& to,
+        const bool& from,
+        engine::set_context allocator)
+{
+    to.SetBool(from);
 }
 
 template <>
