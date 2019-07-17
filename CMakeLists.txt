@@ -20,6 +20,8 @@ set(${PROJECT_NAME}_SRC
     websocket/base_event_handler.cpp
     websocket/event_handlers.cpp
 
+    tpl_reflect/json_engine.cpp
+
     openssl_wrapper/openssl_wrapper.cpp
 
     beast_ext/knuth_morris_pratt_searcher.cpp

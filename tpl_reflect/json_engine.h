@@ -101,13 +101,6 @@ void set(
             ctx);
 }
 
-bool engine::has(
-        const obj_type& protocol_obj,
-        const char* str)
-{
-    return protocol_obj.HasMember(str);
-}
-
 template <class FieldType>
 bool engine::get(
         const obj_type& protocol_obj,
@@ -193,13 +186,6 @@ bool engine::get(
     return false;
 }
 
-bool engine::get(
-        const obj_type& protocol_obj,
-        const char* str)
-{
-    return protocol_obj[str].IsObject() ? true : false;
-}
-
 template <class FieldType>
 void engine::set(
         obj_type& protocol_obj,
@@ -280,110 +266,40 @@ void engine::set(
             ctx);
 }
 
-void engine::set(
-        obj_type& protocol_obj,
-        const char* str,
-        set_context ctx)
-{
-    protocol_obj.AddMember(
-            rapidjson::Value().SetString(
-                    str,
-                    strlen(str),
-                    ctx),
-            rapidjson::Value().SetObject(),
-            ctx);
-}
-
-} // namespace json
-
-namespace json
-{
+template <>
+bool get<bool>(const rapidjson::Value& from, bool& to);
 
 template <>
-bool get<bool>(const rapidjson::Value& from, bool& to)
-{
-    if(from.IsBool())
-    {
-        to = from.GetBool();
-        return true;
-    }
-
-    return false;
-}
+bool get<int32_t>(const rapidjson::Value& from, int32_t& to);
 
 template <>
-bool get<int32_t>(const rapidjson::Value& from, int32_t& to)
-{
-    if(from.IsInt())
-    {
-        to = from.GetInt();
-        return true;
-    }
-
-    return false;
-}
+bool get<uint64_t>(const rapidjson::Value& from, uint64_t& to);
 
 template <>
-bool get<uint64_t>(const rapidjson::Value& from, uint64_t& to)
-{
-    if(from.IsUint64())
-    {
-        to = from.GetUint64();
-        return true;
-    }
-
-    return false;
-}
-
-template <>
-bool get<std::string>(const rapidjson::Value& from, std::string& to)
-{
-    if(from.IsString())
-    {
-        to = from.GetString();
-        return true;
-    }
-
-    return false;
-}
+bool get<std::string>(const rapidjson::Value& from, std::string& to);
 
 template <>
 void set<bool>(
         rapidjson::Value& to,
         const bool& from,
-        engine::set_context allocator)
-{
-    to.SetBool(from);
-}
+        engine::set_context allocator);
 
 template <>
 void set<int32_t>(
         rapidjson::Value& to,
         const int32_t& from,
-        engine::set_context allocator)
-{
-    to.SetInt(from);
-}
+        engine::set_context allocator);
 
 template <>
 void set<uint64_t>(
         rapidjson::Value& to,
         const uint64_t& from,
-        engine::set_context allocator)
-{
-    to.SetUint64(from);
-}
+        engine::set_context allocator);
 
 template <>
 void set<std::string>(
         rapidjson::Value& to,
         const std::string& from,
-        engine::set_context allocator)
-{
-    to.SetString(
-            from.c_str(),
-            from.length(),
-            allocator);
-}
+        engine::set_context allocator);
 
 } // namespace json
