@@ -12,6 +12,8 @@
 
 #include "file_util.h"
 #include "exceptions/load_config_error.h"
+#include "openssl_wrapper/openssl_wrapper.h"
+#include "base64.h"
 
 using namespace sqlite_orm;
 using namespace database;
@@ -33,20 +35,27 @@ std::optional<std::string> auth_manager::authenticate(
 
     if(ids.size() == 1)
     {
-        auto unix_timestamp = std::chrono::seconds(std::time(nullptr));
-        std::ostringstream os;
-        os << unix_timestamp.count();
-        std::string token_str = username + os.str();
-        os.clear();
+        uint64_t expiration_time = (std::chrono::seconds(std::time(nullptr))
+                                  + std::chrono::hours(24*7)).count();
 
-        static const std::hash<std::string> hash_fn;
-        os << hash_fn(token_str); //TODO rewrite with cryptographic hash?
-        uint64_t expiration_time = (unix_timestamp + std::chrono::hours(24*7)).count();
+        std::string token_str;
+        for(bool generated = false; !generated;)
+        {
+            std::array<unsigned char, 32> token_bytes;
+            openssl::rand(token_bytes.data(), token_bytes.size());
+            token_str = base64_encode(token_bytes.data(), token_bytes.size());
 
-        db->insert(token{-1, ids[0], os.str(), expiration_time});
+            try
+            {
+                db->insert(token{-1, ids[0], token_str, expiration_time});
+                generated = true;
+            }
+            catch(const std::system_error& ec)
+            {}
+        }
 
         db.commit();
-        return os.str();
+        return token_str;
     }
 
     return std::nullopt;

@@ -49,4 +49,16 @@ std::vector<unsigned char> hmac::calc_digest(
     return result;
 }
 
+bool rand(unsigned char* data, size_t size)
+{
+    int rc = RAND_bytes(data, size);
+
+    if(rc != 1)
+    {
+        return false;
+    }
+
+    return true;
+}
+
 } // namespace openssl

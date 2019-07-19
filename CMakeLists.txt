@@ -49,6 +49,7 @@ set(${PROJECT_NAME}_SRC
     http/error_handler.cpp
 
     application.cpp
+    base64.cpp
     cron_utils.cpp
     random_generator.cpp
     init.cpp

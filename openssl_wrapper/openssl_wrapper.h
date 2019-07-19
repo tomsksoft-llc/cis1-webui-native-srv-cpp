@@ -24,4 +24,6 @@ private:
     HMAC_CTX* ctx_;
 };
 
+bool rand(unsigned char* data, size_t size);
+
 } // namespace openssl
