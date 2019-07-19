@@ -26,11 +26,14 @@ public:
         if(auto queue = queue_.lock(); queue)
         {
             rapidjson::Document d;
-    
-            auto id = json::dto_to_event_id<Payload>();
-            
-            prepare_response(d, id);
 
+            auto id = json::dto_to_event_id<Payload>();
+
+            prepare_response(d, id);
+            d.AddMember(
+                    rapidjson::Value().SetString("errorMessage"),
+                    rapidjson::Value().SetString(""),
+                d.GetAllocator());
             const auto& conv = Payload::get_converter();
             conv.template set<json::engine>(
                     d["data"],

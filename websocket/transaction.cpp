@@ -2,6 +2,8 @@
 
 #include <rapidjson/writer.h>
 
+#include "protocol_message.h"
+
 namespace websocket
 {
 
@@ -22,7 +24,7 @@ void transaction::send_error(const std::string& err)
 
         prepare_response(d, default_error_id_);
 
-        d["data"].AddMember(
+        d.AddMember(
                 rapidjson::Value().SetString("errorMessage"),
                 rapidjson::Value().SetString(
                         err.c_str(),
@@ -45,18 +47,12 @@ void transaction::send_error(const std::string& err)
 void transaction::prepare_response(rapidjson::Document& doc, int32_t id)
 {
     doc.SetObject();
-    doc.AddMember(
-            rapidjson::Value().SetString("eventId"),
-            rapidjson::Value().SetInt(id),
-            doc.GetAllocator());
-    doc.AddMember(
-            rapidjson::Value().SetString("transactionId"),
-            rapidjson::Value().SetUint(transaction_id_),
-            doc.GetAllocator());
-    doc.AddMember(
-            rapidjson::Value().SetString("data"),
-            rapidjson::Value().SetObject(),
-            doc.GetAllocator());
+
+    protocol_message msg;
+    msg.event_id = id;
+    msg.transaction_id = transaction_id_;
+
+    msg.get_converter().set<json::engine>(doc, msg, doc.GetAllocator());
 }
 
 void transaction::send(
