@@ -51,7 +51,7 @@ struct token<int>
 
 struct ignore
 {
-    using regex = meta::ct_string<'.','+'>;
+    using regex = meta::ct_string<'.','*'>;
 };
 
 using string = token<std::string>;

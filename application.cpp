@@ -89,17 +89,6 @@ std::shared_ptr<http_router> application::make_public_http_router()
 {
     auto router = std::make_shared<http_router>();
 
-    std::function<http::handle_result(
-            beast::http::request<beast::http::empty_body>&,
-            request_context&,
-            net::http_session::request_reader&,
-            net::http_session::queue&)> cb = std::bind(
-                    &http::file_handler::single_file,
-                    files_,
-                    _1, _2, _3, _4,
-                    "/index.html");
-    router->add_route(url::root(), cb);
-
     router->add_route(
             url::make() / CT_STRING("upload") / url::bound_string() / url::string(),
             [&upload_handler = upload_handler_](auto&& ...args)
@@ -138,10 +127,23 @@ std::shared_ptr<http_router> application::make_public_http_router()
                         whh.api::gitlab);
             });
 
-    cb = std::bind(
+    std::function<http::handle_result(
+            beast::http::request<beast::http::empty_body>&,
+            request_context&,
+            net::http_session::request_reader&,
+            net::http_session::queue&)> cb = std::bind(
             &http::file_handler::operator(),
             files_,
             _1, _2, _3, _4);
+
+    router->add_route(url::make() / CT_STRING("test_suite.html"), cb);
+    router->add_route(url::make() / CT_STRING("static") / url::ignore(), cb);
+
+    cb = std::bind(
+            &http::file_handler::single_file,
+            files_,
+            _1, _2, _3, _4,
+            "/index.html");
     router->add_route(url::make() / url::ignore(), cb);
 
     return router;
