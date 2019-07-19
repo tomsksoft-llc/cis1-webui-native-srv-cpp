@@ -5,31 +5,31 @@
 #include "cron_utils.h"
 #include "event_list.h"
 
-using namespace std::string_literals;
-
-std::optional<std::string> get_string(
-        const rapidjson::Value& value,
-        const char* name)
-{
-    if(value.HasMember(name) && value[name].IsString())
-    {
-        return value[name].GetString();
-    }
-
-    return std::nullopt;
-}
-
-std::optional<bool> get_bool(
-        const rapidjson::Value& value,
-        const char* name)
-{
-    if(value.HasMember(name) && value[name].IsBool())
-    {
-        return value[name].GetBool();
-    }
-
-    return std::nullopt;
-}
+#include "websocket/dto/auth_login_pass_response.h"
+#include "websocket/dto/auth_token_response.h"
+#include "websocket/dto/logout_response.h"
+#include "websocket/dto/change_pass_response.h"
+#include "websocket/dto/get_user_list_response.h"
+#include "websocket/dto/get_user_permissions_response.h"
+#include "websocket/dto/set_user_permissions_response.h"
+#include "websocket/dto/change_group_response.h"
+#include "websocket/dto/disable_user_response.h"
+#include "websocket/dto/generate_api_key_response.h"
+#include "websocket/dto/get_api_key_response.h"
+#include "websocket/dto/remove_api_key_response.h"
+#include "websocket/dto/get_project_list_response.h"
+#include "websocket/dto/get_project_info_response.h"
+#include "websocket/dto/get_job_info_response.h"
+#include "websocket/dto/run_job_response.h"
+#include "websocket/dto/get_build_info_response.h"
+#include "websocket/dto/refresh_fs_entry_response.h"
+#include "websocket/dto/remove_fs_entry_response.h"
+#include "websocket/dto/move_fs_entry_response.h"
+#include "websocket/dto/new_directory_response.h"
+#include "websocket/dto/list_directory_response.h"
+#include "websocket/dto/add_cis_cron_response.h"
+#include "websocket/dto/remove_cis_cron_response.h"
+#include "websocket/dto/list_cis_cron_response.h"
 
 namespace websocket
 {
@@ -37,402 +37,231 @@ namespace websocket
 namespace handlers
 {
 
-std::optional<std::string> authenticate(
+void authenticate(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::auth_login_pass_request& req,
+        transaction tr)
 {
-    auto login = get_string(request_data, "username");
-    auto pass = get_string(request_data, "pass");
-
-    if(!login || !pass)
-    {
-        return "Invalid JSON.";
-    }
-
     auto token = authentication_handler.authenticate(
-            login.value(),
-            pass.value());
+            req.username,
+            req.pass);
 
     if(token)
     {
-        ctx.username = login.value();
-        auto group = authentication_handler.get_group(ctx.username).value();
+        ctx.username = req.username;
         ctx.active_token = token.value();
-        response_data.AddMember(
-                "token",
-                rapidjson::Value().SetString(
-                        token.value().c_str(),
-                        token.value().length(),
-                        allocator),
-                allocator);
-        response_data.AddMember(
-                "group",
-                rapidjson::Value().SetString(
-                        group.c_str(),
-                        group.length(),
-                        allocator),
-                allocator);
-        return std::nullopt;
+
+        auto group = authentication_handler.get_group(ctx.username);
+
+        if(group)
+        {
+            dto::auth_login_pass_response res;
+            res.token = token.value();
+            res.group = group.value();
+
+            return tr.send(res);
+        }
+
+        return tr.send_error("Internal error.");
     }
 
-    return "Wrong username or password.";
+    return tr.send_error("Wrong username or password.");
 }
 
-std::optional<std::string> token(
+void token(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::auth_token_request& req,
+        transaction tr)
 {
-    auto token = get_string(request_data, "token");
-    if(!token)
-    {
-        return "Invalid JSON.";
-    }
-
-    auto username = authentication_handler.authenticate(token.value());
+    auto username = authentication_handler.authenticate(req.token);
 
     if(username)
     {
         ctx.username = username.value();
-        ctx.active_token = token.value();
-        auto group = authentication_handler.get_group(ctx.username).value();
-        response_data.AddMember(
-                "group",
-                rapidjson::Value().SetString(
-                        group.c_str(),
-                        group.length(),
-                        allocator),
-                allocator);
-        return std::nullopt;
+        ctx.active_token = req.token;
+
+        auto group = authentication_handler.get_group(ctx.username);
+
+        if(group)
+        {
+            dto::auth_token_response res;
+            res.group = group.value();
+
+            return tr.send(res);
+        }
+
+        return tr.send_error("Internal error.");
     }
 
-    return "Invalid token.";
+    return tr.send_error("Invalid token.");
 }
 
-std::optional<std::string> logout(
+void logout(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& /*response_data*/,
-        rapidjson::Document::AllocatorType& /*allocator*/)
+        const dto::logout_request& req,
+        transaction tr)
 {
-    auto token = get_string(request_data, "token");
-    if(!token)
-    {
-        return "Invalid JSON.";
-    }
-
-    auto username = authentication_handler.authenticate(token.value());
+    auto username = authentication_handler.authenticate(req.token);
 
     if(username && username.value() == ctx.username)
     {
-        if(token == ctx.active_token)
+        if(req.token == ctx.active_token)
         {
             //TODO clean subs?
             ctx.active_token = "";
             ctx.username = "";
         }
-        authentication_handler.delete_token(token.value());
-        return std::nullopt;
+
+        authentication_handler.delete_token(req.token);
+
+        dto::logout_response res;
+
+        return tr.send(res);
     }
 
-    return "Invalid token.";
+    return tr.send_error("Invalid token.");
 }
 
-std::optional<std::string> list_projects(
+void list_projects(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& /*request_data*/,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::get_project_list_request& req,
+        transaction tr)
 {
-    rapidjson::Value array;
-    array.SetArray();
+    dto::get_project_list_response res;
+
     for(auto& [project_name, project] : cis_manager.get_projects())
     {
         if(auto perm = rights.check_project_right(ctx.username, project_name);
                 (perm.has_value() && perm.value().read) || !perm.has_value())
         {
-            array.PushBack(
-                    rapidjson::Value().SetObject()
-                            .AddMember(
-                                    "name",
-                                    rapidjson::Value().SetString(
-                                            project_name.c_str(),
-                                            project_name.length(),
-                                            allocator),
-                                    allocator),
-                    allocator);
+            res.projects.push_back({project_name});
         }
     }
-    response_data.AddMember("projects", array, allocator);
 
-    return std::nullopt;
+    return tr.send(res);
 }
 
-std::optional<std::string> get_project_info(
+void get_project_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::get_project_info_request& req,
+        transaction tr)
 {
-    auto project_name = get_string(request_data, "project");
-    if(!project_name)
-    {
-        return "Invalid JSON.";
-    }
+    auto* project = cis_manager.get_project_info(req.project);
 
-    auto* project = cis_manager.get_project_info(project_name.value());
-    auto perm = rights.check_project_right(ctx.username, project_name.value());
+    auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(project != nullptr && permitted)
     {
-        rapidjson::Value array;
-        rapidjson::Value array_value;
-        array.SetArray();
+        dto::get_project_info_response res;
+
         for(auto& file : project->get_files())
         {
-            array_value.SetObject();
-            array_value.AddMember(
-                    "name",
-                    rapidjson::Value().SetString(
-                            file.filename().c_str(),
-                            file.filename().length(),
-                            allocator),
-                    allocator);
             bool is_directory = file.dir_entry().is_directory();
-            array_value.AddMember(
-                    "directory",
-                    rapidjson::Value().SetBool(is_directory),
-                    allocator);
             auto link = ("/download" / file.relative_path()).string();
-            array_value.AddMember(
-                    "link",
-                    rapidjson::Value().SetString(
-                        link.c_str(),
-                        link.length(),
-                        allocator),
-                    allocator);
-            array.PushBack(
-                    array_value,
-                    allocator);
+
+            res.fs_entries.push_back(dto::fs_entry{
+                    file.filename(),
+                    false,
+                    is_directory,
+                    link});
         }
-        response_data.AddMember("fs_entries", array, allocator);
-        array.SetArray();
+
         for(auto& [job_name, job] : project->get_jobs())
         {
-            array.PushBack(
-                    rapidjson::Value().SetObject()
-                            .AddMember(
-                                    "name",
-                                    rapidjson::Value().SetString(
-                                            job_name.c_str(),
-                                            job_name.length(),
-                                            allocator),
-                                    allocator),
-                    allocator);
+            res.jobs.push_back({job_name});
         }
-        response_data.AddMember("jobs", array, allocator);
 
-        return std::nullopt;
+        return tr.send(res);
     }
 
     if(!permitted)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
-    return "Project doesn't exists.";
+    return tr.send_error("Project doesn't exists.");
 }
 
-std::optional<std::string> get_job_info(
+void get_job_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::get_job_info_request& req,
+        transaction tr)
 {
-    auto project_name = get_string(request_data, "project");
-    auto job_name = get_string(request_data, "job");
-    if(!project_name || !job_name)
-    {
-        return "Invalid JSON.";
-    }
+    auto* job = cis_manager.get_job_info(req.project, req.job);
 
-    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
-    auto perm = rights.check_project_right(ctx.username, project_name.value());
+    auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(job != nullptr && permitted)
     {
-        rapidjson::Value array;
-        rapidjson::Value array_value;
-        array.SetArray();
+        dto::get_job_info_response res;
+
         for(auto& file : job->get_files())
         {
-            array_value.SetObject();
-            array_value.AddMember(
-                    "name",
-                    rapidjson::Value().SetString(
-                            file.filename().c_str(),
-                            file.filename().length(),
-                            allocator),
-                    allocator);
             bool is_directory = file.dir_entry().is_directory();
-            array_value.AddMember(
-                    "directory",
-                    rapidjson::Value().SetBool(is_directory),
-                    allocator);
             auto link = ("/download" / file.relative_path()).string();
-            array_value.AddMember(
-                    "link",
-                    rapidjson::Value().SetString(
-                        link.c_str(),
-                        link.length(),
-                        allocator),
-                    allocator);
-            array.PushBack(
-                    array_value,
-                    allocator);
+
+            res.fs_entries.push_back(dto::fs_entry{
+                    file.filename(),
+                    false,
+                    is_directory,
+                    link});
         }
-        response_data.AddMember("fs_entries", array, allocator);
-        array.SetArray();
+
         for(auto& param : job->get_params())
         {
-            array_value.SetObject();
-            array_value.AddMember(
-                    "name",
-                    rapidjson::Value().SetString(
-                            param.name.c_str(),
-                            param.name.length(),
-                            allocator),
-                    allocator);
-            array_value.AddMember(
-                    "default_value",
-                    rapidjson::Value().SetString(
-                            param.default_value.c_str(),
-                            param.default_value.length(),
-                            allocator),
-                    allocator);
-            array.PushBack(
-                    array_value,
-                    allocator);
+            res.params.push_back({param.name, param.default_value});
         }
-        response_data.AddMember("params", array, allocator);
-        array.SetArray();
+
         for(auto& [build_name, build] : job->get_builds())
         {
-            rapidjson::Value value;
-            value.SetObject();
-            value.AddMember(
-                    "name",
-                    rapidjson::Value().SetString(
-                            build_name.c_str(),
-                            build_name.length(),
-                            allocator),
-                    allocator);
             auto& info = build.get_info();
-            if(info.status)
-            {
-                value.AddMember(
-                        "status",
-                        rapidjson::Value().SetInt(info.status.value()),
-                        allocator);
-            }
-            else
-            {
-                value.AddMember(
-                        "status",
-                        rapidjson::Value().SetNull(),
-                        allocator);
-            }
-            if(info.date)
-            {
-                value.AddMember(
-                        "date",
-                        rapidjson::Value().SetString(
-                                info.date.value().c_str(),
-                                info.date.value().length(),
-                                allocator),
-                        allocator);
-            }
-            else
-            {
-                value.AddMember(
-                        "date",
-                        rapidjson::Value().SetNull(),
-                        allocator);
-            }
-            array.PushBack(value, allocator);
-        }
-        response_data.AddMember("builds", array, allocator);
 
-        return std::nullopt;
+            res.builds.push_back({
+                    build_name,
+                    info.status ? info.status.value() : -1,
+                    info.date ? info.date.value() : ""});
+        }
+
+        return tr.send(res);
     }
 
     if(!permitted)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
-    return "Job doesn't exists.";
+    return tr.send_error("Job doesn't exists.");
 }
 
-std::optional<std::string> run_job(
+void run_job(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         boost::asio::io_context& io_ctx,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& /*response_data*/,
-        rapidjson::Document::AllocatorType& /*allocator*/)
+        const dto::run_job_request& req,
+        transaction tr)
 {
-    auto project_name = get_string(request_data, "project");
-    auto job_name = get_string(request_data, "job");
-    if(!project_name
-            || !job_name
-            || !(request_data.HasMember("params")
-            && request_data["params"].IsArray()))
-    {
-        return "Invalid JSON.";
-    }
-
     std::map<std::string, std::string> params;
-    for(auto& param : request_data["params"].GetArray())
+
+    for(auto& param : req.params)
     {
-        if(param.IsObject())
-        {
-            auto param_name = get_string(param, "name");
-            auto param_value = get_string(param, "value");
-            if(param_name && param_value)
-            {
-                params.insert_or_assign(
-                        param_name.value(),
-                        param_value.value());
-            }
-            else
-            {
-                return "Invalid JSON.";
-            }
-        }
-        else
-        {
-            return "Invalid JSON.";
-        }
+        params.insert({param.name, param.value});
     }
 
-    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
-    auto perm = rights.check_project_right(ctx.username, project_name.value());
+    auto* job = cis_manager.get_job_info(req.project, req.job);
+
+    auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted = perm.has_value() ? perm.value().execute : true;
 
     if(job != nullptr && permitted)
@@ -440,13 +269,14 @@ std::optional<std::string> run_job(
         auto& job_params = job->get_params();
         std::vector<std::string> param_values;
         param_values.reserve(job_params.size());
+
         for(auto& param : job_params)
         {
             if(!params.count(param.name))
             {
                 if(param.default_value.empty())
                 {
-                    return "Invalid params.";
+                    return tr.send_error("Invalid params.");
                 }
                 param_values.push_back(param.default_value);
             }
@@ -455,53 +285,52 @@ std::optional<std::string> run_job(
                 param_values.push_back(params[param.name]);
             }
         }
+
         cis_manager.run_job(
-                project_name.value(),
-                job_name.value(),
+                req.project,
+                req.job,
                 param_values);
 
-        return std::nullopt;
+        dto::run_job_response res;
+
+        return tr.send(res);
     }
+
     if(!permitted)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
-    return "Job doesn't exists.";
+    return tr.send_error("Job doesn't exists.");
 }
 
-std::optional<std::string> change_pass(
+void change_pass(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& /*response_data*/,
-        rapidjson::Document::AllocatorType& /*allocator*/)
+        const dto::change_pass_request& req,
+        transaction tr)
 {
-    auto old_pass = get_string(request_data, "oldPassword");
-    auto new_pass = get_string(request_data, "newPassword");
-    if(!old_pass || !new_pass)
-    {
-        return "Invalid JSON.";
-    }
     bool ok = authentication_handler.change_pass(
             ctx.username,
-            old_pass.value(),
-            new_pass.value());
+            req.old_password,
+            req.new_password);
+
     if(!ok)
     {
-        return "Invalid password";
+        return tr.send_error("Invalid password");
     }
 
-    return std::nullopt;
+    dto::change_pass_response res;
+
+    return tr.send(res);
 }
 
-std::optional<std::string> list_users(
+void list_users(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& /*request_data*/,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::get_user_list_request& req,
+        transaction tr)
 {
     auto perm = rights.check_user_permission(ctx.username, "users.list");
     auto permitted = perm.has_value() ? perm.value() : false;
@@ -509,178 +338,93 @@ std::optional<std::string> list_users(
     if(permitted)
     {
         const auto users = authentication_handler.get_user_infos();
-        rapidjson::Value array;
-        rapidjson::Value array_value;
-        array.SetArray();
+
+        dto::get_user_list_response res;
+
         for(auto& user : users)
         {
-            array_value.SetObject();
-            array_value.AddMember(
-                    "username",
-                    rapidjson::Value().SetString(
-                            user.name.c_str(),
-                            user.name.length(),
-                            allocator),
-                    allocator);
-            array_value.AddMember(
-                    "email",
-                    rapidjson::Value().SetString(
-                            user.email.c_str(),
-                            user.email.length(),
-                            allocator),
-                    allocator);
-            array_value.AddMember(
-                    "group",
-                    rapidjson::Value().SetString(
-                            user.group.c_str(),
-                            user.group.length(),
-                            allocator),
-                    allocator);
-            array_value.AddMember(
-                    "disabled",
-                    rapidjson::Value().SetBool(
-                            user.group == "disabled"),
-                    allocator);
-            if(user.api_access_key)
-            {
-                auto& key = user.api_access_key.value();
-                array_value.AddMember(
-                        "APIAccessSecretKey",
-                        rapidjson::Value().SetString(
-                                key.c_str(),
-                                key.length(),
-                                allocator),
-                        allocator);
-            }
-            else
-            {
-                array_value.AddMember("APIAccessSecretKey", "", allocator);
-            }
-            array.PushBack(array_value, allocator);
+            res.users.push_back({
+                    user.name,
+                    user.email,
+                    user.group,
+                    false,
+                    user.api_access_key ? user.api_access_key.value() : ""});
         }
-        response_data.AddMember("users", array, allocator);
 
-        return std::nullopt;
+        return tr.send(res);
     }
 
-    return "Action not permitted";
+    return tr.send_error("Action not permitted");
 }
 
-std::optional<std::string> get_user_permissions(
+void get_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::get_user_permissions_request& req,
+        transaction tr)
 {
-    auto name = get_string(request_data, "username");
-
-    if(!name)
-    {
-        return "Invalid JSON.";
-    }
-
     auto perm = rights.check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        const auto permissions = rights.get_permissions(name.value());
-        rapidjson::Value array;
-        rapidjson::Value array_value;
-        array.SetArray();
+        const auto permissions = rights.get_permissions(req.username);
+
+        dto::get_user_permissions_response res;
+
         for(auto [project_name, project_rights] : permissions)
         {
-            array_value.SetObject();
-            array_value.AddMember(
-                    "username",
-                    rapidjson::Value().SetString(
-                            project_name.c_str(),
-                            project_name.length(),
-                            allocator),
-                    allocator);
-            array_value.AddMember(
-                    "read",
-                    rapidjson::Value().SetBool(project_rights.read),
-                    allocator);
-            array_value.AddMember(
-                    "write",
-                    rapidjson::Value().SetBool(project_rights.write),
-                    allocator);
-            array_value.AddMember(
-                    "execute",
-                    rapidjson::Value().SetBool(project_rights.execute),
-                    allocator);
-            array.PushBack(array_value, allocator);
+            res.permissions.push_back({
+                        project_name,
+                        project_rights.read,
+                        project_rights.write,
+                        project_rights.execute});
         }
-        response_data.AddMember("permissions", array, allocator);
 
-        return std::nullopt;
+        return tr.send(res);
     }
 
-    return "Action not permitted";
+    return tr.send_error("Action not permitted");
 }
 
-std::optional<std::string> set_user_permissions(
+void set_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& /*response_data*/,
-        rapidjson::Document::AllocatorType& /*allocator*/)
+        const dto::set_user_permissions_request& req,
+        transaction tr)
 {
-    auto name = get_string(request_data, "username");
-
-    if(!name || !request_data.HasMember("permissions") || !request_data["permissions"].IsArray())
-    {
-        return "Invalid JSON.";
-    }
-
     auto perm = rights.check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        for(auto& array_value : request_data["permissions"].GetArray())
+        for(auto& perm : req.permissions)
         {
-            auto project_name = get_string(array_value, "project");
-            auto read = get_bool(array_value, "read");
-            auto write = get_bool(array_value, "write");
-            auto execute = get_bool(array_value, "execute");
-            if(!project_name || !read || !write || !execute)
-            {
-                return "Invalid JSON.";
-            }
             rights.set_user_project_permissions(
-                    name.value(),
-                    project_name.value(),
-                    {-1, -1, -1, read.value(), write.value(), execute.value()});
+                    req.username,
+                    perm.project,
+                    {-1, -1, -1, perm.read, perm.write, perm.execute});
         }
 
-        return std::nullopt;
+        dto::set_user_permissions_response res;
+
+        return tr.send(res);
     }
 
-    return "Action not permitted";
+    return tr.send_error("Action not permitted");
 }
 
-std::optional<std::string> change_group(
+void change_group(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& /*response_data*/,
-        rapidjson::Document::AllocatorType& /*allocator*/)
+        const dto::change_group_request& req,
+        transaction tr)
 {
-    auto name = get_string(request_data, "username");
-    auto group = get_string(request_data, "group");
 
-    if(!name || !group)
+    if(!authentication_handler.has_user(req.username))
     {
-        return "Invalid JSON.";
-    }
-
-    if(!authentication_handler.has_user(name.value()))
-    {
-        return "Invalid username.";
+        return tr.send_error("Invalid username.");
     }
 
     auto perm = rights.check_user_permission(ctx.username, "users.change_group");
@@ -688,33 +432,27 @@ std::optional<std::string> change_group(
 
     if(permitted)
     {
-        authentication_handler.change_group(name.value(), group.value());
+        authentication_handler.change_group(req.username, req.group);
 
-        return std::nullopt;
+        dto::change_group_response res;
+
+        return tr.send(res);
     }
 
-    return "Action not permitted.";
+    return tr.send_error("Action not permitted.");
 }
 
-std::optional<std::string> disable_user(
+void disable_user(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::disable_user_request& req,
+        transaction tr)
 {
-    auto name = get_string(request_data, "username");
-    auto state = get_bool(request_data, "state");
 
-    if(!name || !state)
+    if(!authentication_handler.has_user(req.username))
     {
-        return "Invalid JSON.";
-    }
-
-    if(!authentication_handler.has_user(name.value()))
-    {
-        return "Invalid username.";
+        return tr.send_error("Invalid username.");
     }
 
     auto perm = rights.check_user_permission(ctx.username, "users.change_group");
@@ -723,212 +461,138 @@ std::optional<std::string> disable_user(
     if(permitted)
     {
         authentication_handler.change_group(
-                name.value(),
-                state.value() ? "disabled" : "user");
-        return std::nullopt;
+                req.username,
+                req.state ? "disabled" : "user");
+
+        dto::disable_user_response res;
+
+        return tr.send(res);
     }
 
-    return "Action not permitted.";
+    return tr.send_error("Action not permitted.");
 }
 
-std::optional<std::string> generate_api_key(
+void generate_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::generate_api_key_request& req,
+        transaction tr)
 {
-    auto name = get_string(request_data, "username");
-
-    if(!name)
-    {
-        return "Invalid JSON.";
-    }
-
-    if(ctx.username == name.value()
+    if(ctx.username == req.username
         || (!ctx.username.empty()
         && authentication_handler.get_group(ctx.username).value() == "admin"))
     {
-        auto api_key = authentication_handler.generate_api_key(name.value());
+        auto api_key = authentication_handler.generate_api_key(req.username);
 
         if(!api_key)
         {
-            return "Can't generate APIAccessSecretKey.";
+            return tr.send_error("Can't generate APIAccessSecretKey.");
         }
 
-        response_data.AddMember(
-                "APIAccessSecretKey",
-                rapidjson::Value().SetString(
-                        api_key.value().c_str(),
-                        api_key.value().length(),
-                        allocator),
-                allocator);
+        dto::generate_api_key_response res;
+        res.api_key = api_key.value();
 
-        return std::nullopt;
+        return tr.send(res);
     }
 
-    return "Action not permitted.";
+    return tr.send_error("Action not permitted.");
 }
 
-std::optional<std::string> get_api_key(
+void get_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::get_api_key_request& req,
+        transaction tr)
 {
-    auto name = get_string(request_data, "username");
 
-    if(!name)
-    {
-        return "Invalid JSON.";
-    }
-
-    if(ctx.username == name.value()
+    if(ctx.username == req.username
         || (!ctx.username.empty()
         && authentication_handler.get_group(ctx.username).value() == "admin"))
     {
-        auto api_key = authentication_handler.get_api_key(name.value());
+        auto api_key = authentication_handler.get_api_key(req.username);
 
         if(!api_key)
         {
-            return "Can't retrieve APIAccessSecretKey.";
+            return tr.send_error("Can't retrieve APIAccessSecretKey.");
         }
 
-        response_data.AddMember(
-                "APIAccessSecretKey",
-                rapidjson::Value().SetString(
-                        api_key.value().c_str(),
-                        api_key.value().length(),
-                        allocator),
-                allocator);
+        dto::get_api_key_response res;
+        res.api_key = api_key.value();
 
-        return std::nullopt;
+        return tr.send(res);
     }
 
-    return "Action not permitted.";
+    return tr.send_error("Action not permitted.");
 }
 
-std::optional<std::string> remove_api_key(
+void remove_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::remove_api_key_request& req,
+        transaction tr)
 {
-    auto name = get_string(request_data, "username");
-
-    if(!name)
-    {
-        return "Invalid JSON.";
-    }
-
-    if(ctx.username == name.value()
+    if(ctx.username == req.username
         || (!ctx.username.empty()
         && authentication_handler.get_group(ctx.username).value() == "admin"))
     {
-        auto result = authentication_handler.remove_api_key(name.value());
+        auto result = authentication_handler.remove_api_key(req.username);
 
         if(!result)
         {
-            return "Can't remove APIAccessSecretKey.";
+            return tr.send_error("Can't remove APIAccessSecretKey.");
         }
 
-        return std::nullopt;
+        dto::remove_api_key_response res;
+
+        return tr.send(res);
     }
 
-    return "Action not permitted.";
+    return tr.send_error("Action not permitted.");
 }
 
-std::optional<std::string> get_build_info(
+void get_build_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::get_build_info_request& req,
+        transaction tr)
 {
-    auto project_name = get_string(request_data, "project");
-    auto job_name = get_string(request_data, "job");
-    auto build_name = get_string(request_data, "build");
-
-    if(!project_name || !job_name || !build_name)
-    {
-        return "Invalid JSON.";
-    }
-
     auto* build = cis_manager.get_build_info(
-            project_name.value(),
-            job_name.value(),
-            build_name.value());
-    auto perm = rights.check_project_right(ctx.username, project_name.value());
+            req.project,
+            req.job,
+            req.build);
+
+    auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted = perm.has_value() ? perm.value().write : true;
 
     if(build != nullptr && permitted)
     {
-        rapidjson::Value value;
         auto& info = build->get_info();
-        if(info.status)
-        {
-            value.SetInt(info.status.value());
-        }
-        else
-        {
-            value.SetNull();
-        }
-        response_data.AddMember("status", value, allocator);
-        if(info.date)
-        {
-            value.SetString(
-                    info.date.value().c_str(),
-                    info.date.value().length(),
-                    allocator);
-        }
-        else
-        {
-            value.SetNull();
-        }
-        response_data.AddMember("date", value, allocator);
-        value.SetArray();
-        rapidjson::Value array_value;
+        dto::get_build_info_response res;
+        res.status = info.status ? info.status.value() : -1;
+        res.date = info.date ? info.date.value() : "";
+
         for(auto& file : build->get_files())
         {
-            array_value.SetObject();
-            array_value.AddMember(
-                    "name",
-                    rapidjson::Value().SetString(
-                            file.filename().c_str(),
-                            file.filename().length(),
-                            allocator),
-                    allocator);
             bool is_directory = file.dir_entry().is_directory();
-            array_value.AddMember(
-                    "directory",
-                    rapidjson::Value().SetBool(is_directory),
-                    allocator);
             auto link = ("/download" / file.relative_path()).string();
-            array_value.AddMember(
-                    "link",
-                    rapidjson::Value().SetString(
-                        link.c_str(),
-                        link.length(),
-                        allocator),
-                    allocator);
-            value.PushBack(
-                    array_value,
-                    allocator);
+            
+            res.fs_entries.push_back(dto::fs_entry{
+                    file.filename(),
+                    false,
+                    is_directory,
+                    link});
         }
-        response_data.AddMember("fs_entries", value, allocator);
 
-        return std::nullopt;
+        return tr.send(res);
     }
 
     if(!permitted)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
-    return "Build doesn't exists.";
+    return tr.send_error("Build doesn't exists.");
 }
 
 bool validate_path(const std::filesystem::path& path)
@@ -952,118 +616,100 @@ std::optional<database::project_user_right> get_path_rights(
                     *path_it);
         }
     }
+
     return std::nullopt;
 }
 
-std::optional<std::string> refresh_fs_entry(
+void refresh_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::refresh_fs_entry_request& req,
+        transaction tr)
 {
-    auto path_str = get_string(request_data, "path");
-
-    if(!path_str)
-    {
-        return "Invalid JSON.";
-    }
-
-    std::filesystem::path path(path_str.value());
+    std::filesystem::path path(req.path);
 
     if(!validate_path(path))
     {
-        return "Invalid path.";
+        return tr.send_error("Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().read)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
     auto refresh_result = cis_manager.refresh(path);
 
     if(!refresh_result)
     {
-        return "Path does not exists.";
+        return tr.send_error("Path does not exists.");
     }
 
-    return std::nullopt;
+    dto::refresh_fs_entry_response res;
+
+    return tr.send(res);
 }
 
-std::optional<std::string> remove_fs_entry(
+void remove_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::remove_fs_entry_request& req,
+        transaction tr)
 {
-    auto path_str = get_string(request_data, "path");
-
-    if(!path_str)
-    {
-        return "Invalid JSON.";
-    }
-
-    std::filesystem::path path(path_str.value());
+    std::filesystem::path path(req.path);
 
     if(!validate_path(path))
     {
-        return "Invalid path.";
+        return tr.send_error("Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().write)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
     auto remove_result = cis_manager.remove(path);
 
     if(!remove_result)
     {
-        return "Path does not exists.";
+        return tr.send_error("Path does not exists.");
     }
 
-    return std::nullopt;
+    dto::remove_fs_entry_response res;
+
+    return tr.send(res);
 }
 
-std::optional<std::string> move_fs_entry(
+void move_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::move_fs_entry_request& req,
+        transaction tr)
 {
-    auto old_path_str = get_string(request_data, "oldPath");
-    auto new_path_str = get_string(request_data, "newPath");
 
-    if(!old_path_str && ! new_path_str)
-    {
-        return "Invalid JSON.";
-    }
-
-    std::filesystem::path old_path(old_path_str.value());
-    std::filesystem::path new_path(new_path_str.value());
+    std::filesystem::path old_path(req.old_path);
+    std::filesystem::path new_path(req.new_path);
 
     if(!validate_path(old_path) || !validate_path(new_path))
     {
-        return "Invalid path.";
+        return tr.send_error("Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, old_path);
             path_rights && !path_rights.value().write)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
+
     if(auto path_rights = get_path_rights(ctx, rights, new_path);
             path_rights && !path_rights.value().write)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -1073,38 +719,32 @@ std::optional<std::string> move_fs_entry(
 
     if(ec)
     {
-        return "Error on move.";
+        return tr.send_error("Error on move.");
     }
+    
+    dto::move_fs_entry_response res;
 
-    return std::nullopt;
+    return tr.send(res);
 }
 
-std::optional<std::string> new_directory(
+void new_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::new_directory_request& req,
+        transaction tr)
 {
-    auto path_str = get_string(request_data, "path");
-
-    if(!path_str)
-    {
-        return "Invalid JSON.";
-    }
-
-    std::filesystem::path path(path_str.value());
+    std::filesystem::path path(req.path);
 
     if(!validate_path(path))
     {
-        return "Invalid path.";
+        return tr.send_error("Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().write)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -1114,161 +754,127 @@ std::optional<std::string> new_directory(
 
     if(ec)
     {
-        return "Error while creating directory.";
+        return tr.send_error("Error while creating directory.");
     }
 
-    return std::nullopt;
+    dto::new_directory_response res;
+
+    return tr.send(res);
 }
 
-std::optional<std::string> list_directory(
+void list_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::list_directory_request& req,
+        transaction tr)
 {
-    auto path_str = get_string(request_data, "path");
-
-    if(!path_str)
-    {
-        return "Invalid JSON.";
-    }
-
-    std::filesystem::path path(path_str.value());
+    std::filesystem::path path(req.path);
 
     if(!validate_path(path))
     {
-        return "Invalid path.";
+        return tr.send_error("Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().read)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
 
-    rapidjson::Value value;
-    value.SetArray();
-    rapidjson::Value array_value;
+    dto::list_directory_response res;
+
     for(auto& file : fs)
     {
-        array_value.SetObject();
-        array_value.AddMember(
-                "name",
-                rapidjson::Value().SetString(
-                        file.filename().c_str(),
-                        file.filename().length(),
-                        allocator),
-                allocator);
         bool is_directory = file.dir_entry().is_directory();
-        array_value.AddMember(
-                "directory",
-                rapidjson::Value().SetBool(is_directory),
-                allocator);
         auto link = ("/download" / file.relative_path()).string();
-        array_value.AddMember(
-                "link",
-                rapidjson::Value().SetString(
-                    link.c_str(),
-                    link.length(),
-                    allocator),
-                allocator);
-        value.PushBack(
-                array_value,
-                allocator);
+        
+        res.entries.push_back(dto::fs_entry{
+                file.filename(),
+                false,
+                is_directory,
+                link});
     }
-    response_data.AddMember("fs_entries", value, allocator);
 
-    return std::nullopt;
+    return tr.send(res);
 }
 
-std::optional<std::string> add_cis_cron(
+void add_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::add_cis_cron_request& req,
+        transaction tr)
 {
-    auto project_name = get_string(request_data, "project");
-    auto job_name = get_string(request_data, "job");
-    auto cron_expr = get_string(request_data, "cron_expr");
-    if(!project_name || !job_name || !cron_expr)
+
+    if(!cron::validate_expr(req.cron_expr))
     {
-        return "Invalid JSON.";
+        return tr.send_error("Invalid cron expression.");
     }
 
-    if(!cron::validate_expr(cron_expr.value()))
-    {
-        return "Invalid cron expression.";
-    }
-
-    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
-    auto perm = rights.check_project_right(ctx.username, project_name.value());
+    auto* job = cis_manager.get_job_info(req.project, req.job);
+    auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted =
         perm.has_value() ? (perm.value().execute && perm.value().write) : true;
 
     if(job != nullptr && permitted)
     {
         cis_manager.add_cron(
-                project_name.value(),
-                job_name.value(),
-                cron_expr.value());
+                req.project,
+                req.job,
+                req.cron_expr);
+        
+        dto::add_cis_cron_response res;
 
-        return std::nullopt;
+        return tr.send(res);
     }
+
     if(!permitted)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
-    return "Job doesn't exists.";
+    return tr.send_error("Job doesn't exists.");
 }
 
-std::optional<std::string> remove_cis_cron(
+void remove_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator)
+        const dto::remove_cis_cron_request& req,
+        transaction tr)
 {
-    auto project_name = get_string(request_data, "project");
-    auto job_name = get_string(request_data, "job");
-    auto cron_expr = get_string(request_data, "cron_expr");
-    if(!project_name || !job_name || !cron_expr)
+
+    if(!cron::validate_expr(req.cron_expr))
     {
-        return "Invalid JSON.";
+        return tr.send_error("Invalid cron expression.");
     }
 
-    if(!cron::validate_expr(cron_expr.value()))
-    {
-        return "Invalid cron expression.";
-    }
-
-    auto* job = cis_manager.get_job_info(project_name.value(), job_name.value());
-    auto perm = rights.check_project_right(ctx.username, project_name.value());
+    auto* job = cis_manager.get_job_info(req.project, req.job);
+    auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted =
         perm.has_value() ? (perm.value().execute && perm.value().write) : true;
 
     if(job != nullptr && permitted)
     {
         cis_manager.remove_cron(
-                project_name.value(),
-                job_name.value(),
-                cron_expr.value());
+                req.project,
+                req.job,
+                req.cron_expr);
 
-        return std::nullopt;
+        dto::remove_cis_cron_response res;
+        
+        return tr.send(res);
     }
+
     if(!permitted)
     {
-        return "Action not permitted.";
+        return tr.send_error("Action not permitted.");
     }
 
-    return "Job doesn't exists.";
+    return tr.send_error("Job doesn't exists.");
 }
 
 } // namespace handlers

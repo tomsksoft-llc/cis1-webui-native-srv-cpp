@@ -13,7 +13,7 @@ namespace dto
 
 struct list_directory_response
 {
-    std::vector<entry> entries;
+    std::vector<fs_entry> entries;
 
     static constexpr auto get_converter()
     {

@@ -1,6 +1,7 @@
 #include "event_dispatcher.h"
 
 #include <string>
+#include <variant>
 
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
@@ -8,9 +9,65 @@
 #include "event_list.h"
 #include "const_stream_adapter.h"
 
-#ifndef NDEBUG
-#include <iostream>
-#endif
+#include "tpl_reflect/meta_converter.h"
+#include "tpl_reflect/json_engine.h"
+#include "tpl_helpers/overloaded.h"
+
+namespace websocket
+{
+
+enum class error
+{
+    parse,
+    invalid_json,
+};
+
+struct protocol_message
+{
+    int32_t event_id;
+    uint64_t transaction_id;
+    rapidjson::Document data;
+
+    static constexpr auto get_converter()
+    {
+        using namespace reflect;
+        return make_meta_converter<protocol_message>()
+                .add_field(
+                        CT_STRING("eventId"),
+                        ptr_v<&protocol_message::event_id>{})
+                .add_field(
+                        CT_STRING("transactionId"),
+                        ptr_v<&protocol_message::transaction_id>{})
+                .add_field(
+                        CT_STRING("data"))
+                .done();
+    }
+};
+
+std::variant<protocol_message, error> parse_protocol_message(
+        boost::beast::flat_buffer& buffer)
+{
+    const_stream_adapter bs(buffer.data());
+    rapidjson::Document request;
+    request.ParseStream(bs);
+
+    if(request.HasParseError())
+    {
+        return error::parse;
+    }
+
+    auto c = protocol_message::get_converter();
+    protocol_message result;
+
+    if(    c.has<json::engine>(request)
+        && c.get<json::engine>(request, result))
+    {
+        result.data.CopyFrom(request["data"], result.data.GetAllocator());
+        return result;
+    }
+
+    return error::invalid_json;
+}
 
 void send_error(
         const std::shared_ptr<net::websocket_queue>& queue,
@@ -39,9 +96,6 @@ void send_error(
             [buffer](){});
 }
 
-namespace websocket
-{
-
 void event_dispatcher::dispatch(
         request_context& ctx,
         bool text,
@@ -51,80 +105,32 @@ void event_dispatcher::dispatch(
 {
     if(text)
     {
-        const_stream_adapter bs(buffer.data());
-#ifndef NDEBUG
-        const auto& user = ctx.username;
-        std::cout << "[" << user << "]:" << boost::beast::buffers(buffer.data()) << std::endl;
-#endif
-        rapidjson::Document request;
-        request.ParseStream(bs);
+        auto msg = parse_protocol_message(buffer);
 
-        if(request.HasParseError() || !request.IsObject())
-        {
-            send_error(queue, response_id::generic_error, "Invalid JSON.");
-            return;
-        }
-
-        if(   request.HasMember("eventId") && request["eventId"].IsInt()
-           && request.HasMember("transactionId") && request["transactionId"].IsInt())
-        {
-            auto event_id = request["eventId"].GetInt();
-            if(auto it = event_handlers_.find(request["eventId"].GetInt());
-                    it != event_handlers_.end())
-            {
-                if(request.HasMember("data") && request["data"].IsObject())
+        std::visit(
+                meta::overloaded{
+                [&](const error& err)
                 {
-                    it->second->handle(
-                            queue,
-                            ctx,
-                            request["data"],
-                            static_cast<request_id>(event_id),
-                            request["transactionId"].GetInt());
-                }
-                else
+                    std::cout << "err" << std::endl;
+                },
+                [&](const protocol_message& msg)
                 {
-                    send_error(
-                            queue,
-                            static_cast<response_id>(event_id),
-                            "Request doesn't contain 'data' member.");
-                    return;
-                }
-            }
-        }
-        else
-        {
-            send_error(
-                    queue,
-                    response_id::generic_error,
-                    "Request doesn't contain 'eventId' or 'transactionId' member.");
-            return;
-        }
+                    if(auto it = event_handlers_.find(msg.event_id);
+                            it != event_handlers_.end())
+                    {
+                        (it->second)(
+                                queue,
+                                ctx,
+                                msg.data,
+                                msg.transaction_id);
+                    }
+                    else
+                    {
+                        std::cout << "unknown event_id" << std::endl;
+                    }
+                }},
+                msg);
     }
-}
-
-void event_dispatcher::add_event_handler(
-        request_id event_id,
-        const std::function<default_event_handler_t>& cb)
-{
-    class handler
-        : public base_event_handler
-    {
-        std::function<default_event_handler_t> process_;
-    public:
-        handler(std::function<default_event_handler_t> p)
-            : process_(p)
-        {}
-        std::optional<std::string> process(
-                request_context& ctx,
-                const rapidjson::Value& request_data,
-                rapidjson::Value& response_data,
-                rapidjson::Document::AllocatorType& allocator) override
-        {
-            return process_(ctx, request_data, response_data, allocator);
-        }
-    };
-
-    event_handlers_.try_emplace(static_cast<int>(event_id), std::make_shared<handler>(cb));
 }
 
 } // namespace websocket

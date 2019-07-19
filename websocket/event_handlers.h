@@ -8,8 +8,33 @@
 #include "auth_manager.h"
 #include "rights_manager.h"
 #include "cis/cis_manager.h"
+#include "transaction.h"
 
-#include <rapidjson/document.h>
+#include "websocket/dto/auth_login_pass_request.h"
+#include "websocket/dto/auth_token_request.h"
+#include "websocket/dto/logout_request.h"
+#include "websocket/dto/change_pass_request.h"
+#include "websocket/dto/get_user_list_request.h"
+#include "websocket/dto/get_user_permissions_request.h"
+#include "websocket/dto/set_user_permissions_request.h"
+#include "websocket/dto/change_group_request.h"
+#include "websocket/dto/disable_user_request.h"
+#include "websocket/dto/generate_api_key_request.h"
+#include "websocket/dto/get_api_key_request.h"
+#include "websocket/dto/remove_api_key_request.h"
+#include "websocket/dto/get_project_list_request.h"
+#include "websocket/dto/get_project_info_request.h"
+#include "websocket/dto/get_job_info_request.h"
+#include "websocket/dto/run_job_request.h"
+#include "websocket/dto/get_build_info_request.h"
+#include "websocket/dto/refresh_fs_entry_request.h"
+#include "websocket/dto/remove_fs_entry_request.h"
+#include "websocket/dto/move_fs_entry_request.h"
+#include "websocket/dto/new_directory_request.h"
+#include "websocket/dto/list_directory_request.h"
+#include "websocket/dto/add_cis_cron_request.h"
+#include "websocket/dto/remove_cis_cron_request.h"
+#include "websocket/dto/list_cis_cron_request.h"
 
 namespace websocket
 {
@@ -19,191 +44,167 @@ namespace handlers
 
 //users
 
-std::optional<std::string> authenticate(
+void authenticate(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::auth_login_pass_request& reg,
+        transaction tr);
 
-std::optional<std::string> token(
+void token(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::auth_token_request& reg,
+        transaction tr);
 
-std::optional<std::string> logout(
+void logout(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::logout_request& reg,
+        transaction tr);
 
-std::optional<std::string> change_pass(
+void change_pass(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::change_pass_request& reg,
+        transaction tr);
 
-std::optional<std::string> list_users(
+void list_users(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::get_user_list_request& reg,
+        transaction tr);
 
-std::optional<std::string> get_user_permissions(
+void get_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::get_user_permissions_request& reg,
+        transaction tr);
 
-std::optional<std::string> set_user_permissions(
+void set_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::set_user_permissions_request& reg,
+        transaction tr);
 
-std::optional<std::string> change_group(
+void change_group(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::change_group_request& reg,
+        transaction tr);
 
-std::optional<std::string> disable_user(
+void disable_user(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::disable_user_request& reg,
+        transaction tr);
 
-std::optional<std::string> generate_api_key(
+void generate_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::generate_api_key_request& reg,
+        transaction tr);
 
-std::optional<std::string> get_api_key(
+void get_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::get_api_key_request& reg,
+        transaction tr);
 
-std::optional<std::string> remove_api_key(
+void remove_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::remove_api_key_request& reg,
+        transaction tr);
 
 //cis
 
-std::optional<std::string> list_projects(
+void list_projects(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::get_project_list_request& reg,
+        transaction tr);
 
-std::optional<std::string> get_project_info(
+void get_project_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::get_project_info_request& reg,
+        transaction tr);
 
-std::optional<std::string> get_job_info(
+void get_job_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::get_job_info_request& reg,
+        transaction tr);
 
-std::optional<std::string> run_job(
+void run_job(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         boost::asio::io_context& io_ctx,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::run_job_request& reg,
+        transaction tr);
 
-std::optional<std::string> get_build_info(
+void get_build_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::get_build_info_request& reg,
+        transaction tr);
 
-std::optional<std::string> refresh_fs_entry(
+void refresh_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::refresh_fs_entry_request& reg,
+        transaction tr);
 
-std::optional<std::string> remove_fs_entry(
+void remove_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::remove_fs_entry_request& reg,
+        transaction tr);
 
-std::optional<std::string> move_fs_entry(
+void move_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::move_fs_entry_request& reg,
+        transaction tr);
 
-std::optional<std::string> new_directory(
+void new_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::new_directory_request& reg,
+        transaction tr);
 
-std::optional<std::string> list_directory(
+void list_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::list_directory_request& reg,
+        transaction tr);
 
-std::optional<std::string> add_cis_cron(
+void add_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::add_cis_cron_request& reg,
+        transaction tr);
 
-std::optional<std::string> remove_cis_cron(
+void remove_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const rapidjson::Value& request_data,
-        rapidjson::Value& response_data,
-        rapidjson::Document::AllocatorType& allocator);
+        const dto::remove_cis_cron_request& reg,
+        transaction tr);
 
 } // namespace handlers
 

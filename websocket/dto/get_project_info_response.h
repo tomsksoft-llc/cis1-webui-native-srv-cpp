@@ -38,10 +38,10 @@ struct get_project_info_response
         return make_meta_converter<get_project_info_response>()
                 .add_field(
                         CT_STRING("fs_entries"),
-                        ptr_v<&get_fs_entries_info_response::fs_entries>{})
+                        ptr_v<&get_project_info_response::fs_entries>{})
                 .add_field(
                         CT_STRING("jobs"),
-                        ptr_v<&get_jobs_info_response::jobs>{})
+                        ptr_v<&get_project_info_response::jobs>{})
                 .done();
     }
 };

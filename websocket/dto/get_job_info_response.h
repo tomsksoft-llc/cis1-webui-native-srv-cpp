@@ -65,11 +65,14 @@ struct get_job_info_response
         using namespace reflect;
         return make_meta_converter<get_job_info_response>()
                 .add_field(
-                        CT_STRING("project"),
-                        ptr_v<&get_job_info_response::project>{})
+                        CT_STRING("fs_entries"),
+                        ptr_v<&get_job_info_response::fs_entries>{})
                 .add_field(
-                        CT_STRING("job"),
-                        ptr_v<&get_job_info_response::job>{})
+                        CT_STRING("params"),
+                        ptr_v<&get_job_info_response::params>{})
+                .add_field(
+                        CT_STRING("builds"),
+                        ptr_v<&get_job_info_response::builds>{})
                 .done();
     }
 };

@@ -18,6 +18,7 @@ struct get_project_list_response
         std::string name;
         static constexpr auto get_converter()
         {
+            using namespace reflect;
             return make_meta_converter<project>()
                 .add_field(
                         CT_STRING("name"),
