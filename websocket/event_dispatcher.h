@@ -40,7 +40,7 @@ public:
         event_handlers_.insert({
                 (int)event_id,
                 [cb, event_id](const std::shared_ptr<net::websocket_queue>& queue,
-                     request_context ctx,
+                     request_context& ctx,
                      const rapidjson::Value& json,
                      uint64_t transaction_id)
                 {
@@ -61,7 +61,7 @@ public:
 private:
     using event_handler_t = void(
             const std::shared_ptr<net::websocket_queue>& queue,
-            request_context ctx,
+            request_context& ctx,
             const rapidjson::Value& json,
             uint64_t transaction_id);
 
