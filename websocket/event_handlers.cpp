@@ -165,12 +165,14 @@ void get_project_info(
         for(auto& file : project->get_files())
         {
             bool is_directory = file.dir_entry().is_directory();
+            auto path = ("/" / file.relative_path()).string();
             auto link = ("/download" / file.relative_path()).string();
 
             res.fs_entries.push_back(dto::fs_entry{
                     file.filename(),
                     false,
                     is_directory,
+                    path,
                     link});
         }
 
@@ -209,12 +211,14 @@ void get_job_info(
         for(auto& file : job->get_files())
         {
             bool is_directory = file.dir_entry().is_directory();
+            auto path = ("/" / file.relative_path()).string();
             auto link = ("/download" / file.relative_path()).string();
 
             res.fs_entries.push_back(dto::fs_entry{
                     file.filename(),
                     false,
                     is_directory,
+                    path,
                     link});
         }
 
@@ -575,12 +579,14 @@ void get_build_info(
         for(auto& file : build->get_files())
         {
             bool is_directory = file.dir_entry().is_directory();
+            auto path = ("/" / file.relative_path()).string();
             auto link = ("/download" / file.relative_path()).string();
-            
+
             res.fs_entries.push_back(dto::fs_entry{
                     file.filename(),
                     false,
                     is_directory,
+                    path,
                     link});
         }
 
@@ -789,12 +795,14 @@ void list_directory(
     for(auto& file : fs)
     {
         bool is_directory = file.dir_entry().is_directory();
+        auto path = ("/" / file.relative_path()).string();
         auto link = ("/download" / file.relative_path()).string();
-        
+
         res.entries.push_back(dto::fs_entry{
                 file.filename(),
                 false,
                 is_directory,
+                path,
                 link});
     }
 

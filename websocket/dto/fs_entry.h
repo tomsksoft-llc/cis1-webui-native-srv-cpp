@@ -17,6 +17,7 @@ struct fs_entry
     std::string name;
     bool binary;
     bool directory;
+    std::string path;
     std::string link;
 
     static constexpr auto get_converter()
@@ -32,6 +33,9 @@ struct fs_entry
                 .add_field(
                         CT_STRING("directory"),
                         ptr_v<&fs_entry::directory>{})
+                .add_field(
+                        CT_STRING("path"),
+                        ptr_v<&fs_entry::path>{})
                 .add_field(
                         CT_STRING("link"),
                         ptr_v<&fs_entry::link>{})
