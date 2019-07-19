@@ -11,6 +11,10 @@
 #include "protocol_message.h"
 #include "tpl_helpers/overloaded.h"
 
+#ifndef NDEBUG
+#include <iostream>
+#endif
+
 namespace websocket
 {
 
@@ -81,6 +85,10 @@ void event_dispatcher::dispatch(
 {
     if(text)
     {
+#ifndef NDEBUG
+        std::cout << "[" << ctx.username << "]: " 
+                  << boost::beast::buffers_to_string(buffer.data()) << std::endl;
+#endif
         auto msg = parse_protocol_message(buffer);
 
         std::visit(
