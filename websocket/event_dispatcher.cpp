@@ -49,33 +49,6 @@ std::variant<protocol_message, error> parse_protocol_message(
     return error::invalid_json;
 }
 
-void send_error(
-        const std::shared_ptr<net::websocket_queue>& queue,
-        websocket::response_id event_id,
-        const std::string& error_string)
-{
-    rapidjson::Document document;
-    rapidjson::Value value;
-    document.SetObject();
-
-    value.SetInt(static_cast<int>(event_id));
-    document.AddMember("eventId", value, document.GetAllocator());
-
-    rapidjson::Value data_value;
-    data_value.SetObject();
-    value.SetString(error_string.c_str(), error_string.length(), document.GetAllocator());
-    data_value.AddMember("errorMessage", value, document.GetAllocator());
-    document.AddMember("data", data_value, document.GetAllocator());
-
-    auto buffer = std::make_shared<rapidjson::StringBuffer>();
-    rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);
-    document.Accept(writer);
-
-    queue->send_text(
-            boost::asio::const_buffer(buffer->GetString(), buffer->GetSize()),
-            [buffer](){});
-}
-
 void event_dispatcher::dispatch(
         request_context& ctx,
         bool text,
@@ -95,10 +68,12 @@ void event_dispatcher::dispatch(
                 meta::overloaded{
                 [&](const error& err)
                 {
-                    std::cout << "err" << std::endl;
+                    transaction(queue, 0, -1).send_error("Invalid json.");
                 },
                 [&](const protocol_message& msg)
                 {
+                    transaction tr(queue, msg.transaction_id, msg.event_id + 1);
+
                     if(auto it = event_handlers_.find(msg.event_id);
                             it != event_handlers_.end())
                     {
@@ -106,11 +81,11 @@ void event_dispatcher::dispatch(
                                 queue,
                                 ctx,
                                 msg.data,
-                                msg.transaction_id);
+                                std::move(tr));
                     }
                     else
                     {
-                        std::cout << "unknown event_id" << std::endl;
+                        tr.send_error("Unknown eventId.");
                     }
                 }},
                 msg);

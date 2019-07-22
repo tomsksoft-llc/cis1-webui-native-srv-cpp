@@ -42,20 +42,23 @@ public:
                 [cb, event_id](const std::shared_ptr<net::websocket_queue>& queue,
                      request_context& ctx,
                      const rapidjson::Value& json,
-                     uint64_t transaction_id)
+                     transaction tr)
                 {
                     ReqType req;
                     const auto& conv = ReqType::get_converter();
+
                     if(    conv.template has<json::engine>(json)
                         && conv.template get<json::engine>(json, req))
                     {
-                        cb(ctx, req, transaction(
-                                    queue,
-                                    transaction_id,
-                                    static_cast<int32_t>(event_id) + 1));
+                        cb(
+                                ctx,
+                                req,
+                                std::move(tr));
                     }
-
-                    //TODO send unknown event id error
+                    else
+                    {
+                        tr.send_error("Invalid json.");
+                    }
                 }});
     }
 private:
@@ -63,7 +66,7 @@ private:
             const std::shared_ptr<net::websocket_queue>& queue,
             request_context& ctx,
             const rapidjson::Value& json,
-            uint64_t transaction_id);
+            transaction tr);
 
     std::map<int, std::function<event_handler_t>> event_handlers_;
 };
