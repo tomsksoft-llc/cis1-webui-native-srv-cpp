@@ -790,23 +790,30 @@ void list_directory(
 
     auto& fs = cis_manager.fs();
 
-    dto::list_directory_response res;
-
-    for(auto& file : fs)
+    if(auto it = fs.find(path); it != fs.end())
     {
-        bool is_directory = file.dir_entry().is_directory();
-        auto path = ("/" / file.relative_path()).string();
-        auto link = ("/download" / file.relative_path()).string();
+        dto::list_directory_response res;
 
-        res.entries.push_back(dto::fs_entry{
-                file.filename(),
-                false,
-                is_directory,
-                path,
-                link});
+        for(auto& file : it->childs())
+        {
+            bool is_directory = file.dir_entry().is_directory();
+            auto path = ("/" / file.relative_path()).string();
+            auto link = ("/download" / file.relative_path()).string();
+
+            res.entries.push_back(dto::fs_entry{
+                    file.filename(),
+                    false,
+                    is_directory,
+                    path,
+                    link});
+        }
+
+        return tr.send(res);
     }
-
-    return tr.send(res);
+    else
+    {
+        tr.send_error("Directory not found.");
+    }
 }
 
 void add_cis_cron(
