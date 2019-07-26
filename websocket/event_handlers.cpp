@@ -727,7 +727,7 @@ void move_fs_entry(
     {
         return tr.send_error("Error on move.");
     }
-    
+
     dto::move_fs_entry_response res;
 
     return tr.send(res);
@@ -833,7 +833,7 @@ void add_cis_cron(
                 req.project,
                 req.job,
                 req.cron_expr);
-        
+
         dto::add_cis_cron_response res;
 
         return tr.send(res);
@@ -873,7 +873,7 @@ void remove_cis_cron(
                 req.cron_expr);
 
         dto::remove_cis_cron_response res;
-        
+
         return tr.send(res);
     }
 
@@ -883,6 +883,41 @@ void remove_cis_cron(
     }
 
     return tr.send_error("Job doesn't exists.");
+}
+/*
+void list_cis_cron_2(transaction tr)
+{
+    tr.send_error("done!");
+}
+
+void long_async_op()
+{
+
+}
+
+template <class Executor>*/
+void list_cis_cron(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const dto::list_cis_cron_request& req,
+        transaction tr/*,
+        Executor ex*/)
+{
+    /*
+    ex.async(
+            [&cis_manager](cosnt std::string& mask)
+            {
+                return cis_manager.list_cron(mask);
+            })
+            .then(
+            [tr](const std::vector<std::string>& cron_list)
+            {
+                long_async_op(cron_list, tr);
+            })
+            .run()
+            .catch_error([tr](const std::error_code& ec){tr.send_error(ec.message())});
+            */
 }
 
 } // namespace handlers

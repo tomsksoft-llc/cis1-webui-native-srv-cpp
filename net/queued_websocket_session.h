@@ -3,35 +3,10 @@
 #include <deque>
 
 #include "basic_websocket_session.h"
+#include "websocket_queue.h"
 
 namespace net
 {
-
-class queued_websocket_session;
-
-class websocket_queue
-{
-public:
-    websocket_queue(queued_websocket_session& self);
-    void send_binary(boost::asio::const_buffer buffer, std::function<void()> on_write);
-    void send_text(boost::asio::const_buffer buffer, std::function<void()> on_write);
-    bool is_full();
-    bool on_write();
-private:
-    enum
-    {
-        limit = 64
-    };
-    struct message
-    {
-        bool text;
-        boost::asio::const_buffer buffer;
-        std::function<void()> on_write;
-    };
-    queued_websocket_session& self_;
-    std::deque<message> messages_;
-    void send();
-};
 
 class queued_websocket_session
     : public basic_websocket_session

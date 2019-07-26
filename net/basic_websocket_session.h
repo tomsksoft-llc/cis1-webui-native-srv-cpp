@@ -53,7 +53,10 @@ protected:
 };
 
 template<class Body, class Allocator>
-void basic_websocket_session::do_accept(boost::beast::http::request<Body, boost::beast::http::basic_fields<Allocator>> req)
+void basic_websocket_session::do_accept(
+        boost::beast::http::request<
+                Body,
+                boost::beast::http::basic_fields<Allocator>> req)
 {
     // Set the control callback. This will be called
     // on every incoming ping, pong, and close frame.

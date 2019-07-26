@@ -4,7 +4,6 @@
 #include <optional>
 
 #include "request_context.h"
-#include "net/queued_websocket_session.h"
 #include "auth_manager.h"
 #include "rights_manager.h"
 #include "cis/cis_manager.h"
@@ -47,76 +46,76 @@ namespace handlers
 void authenticate(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::auth_login_pass_request& reg,
+        const dto::auth_login_pass_request& req,
         transaction tr);
 
 void token(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::auth_token_request& reg,
+        const dto::auth_token_request& req,
         transaction tr);
 
 void logout(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::logout_request& reg,
+        const dto::logout_request& req,
         transaction tr);
 
 void change_pass(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::change_pass_request& reg,
+        const dto::change_pass_request& req,
         transaction tr);
 
 void list_users(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_user_list_request& reg,
+        const dto::get_user_list_request& req,
         transaction tr);
 
 void get_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_user_permissions_request& reg,
+        const dto::get_user_permissions_request& req,
         transaction tr);
 
 void set_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const dto::set_user_permissions_request& reg,
+        const dto::set_user_permissions_request& req,
         transaction tr);
 
 void change_group(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const dto::change_group_request& reg,
+        const dto::change_group_request& req,
         transaction tr);
 
 void disable_user(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const dto::disable_user_request& reg,
+        const dto::disable_user_request& req,
         transaction tr);
 
 void generate_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::generate_api_key_request& reg,
+        const dto::generate_api_key_request& req,
         transaction tr);
 
 void get_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::get_api_key_request& reg,
+        const dto::get_api_key_request& req,
         transaction tr);
 
 void remove_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::remove_api_key_request& reg,
+        const dto::remove_api_key_request& req,
         transaction tr);
 
 //cis
@@ -125,21 +124,21 @@ void list_projects(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_project_list_request& reg,
+        const dto::get_project_list_request& req,
         transaction tr);
 
 void get_project_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_project_info_request& reg,
+        const dto::get_project_info_request& req,
         transaction tr);
 
 void get_job_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_job_info_request& reg,
+        const dto::get_job_info_request& req,
         transaction tr);
 
 void run_job(
@@ -147,63 +146,70 @@ void run_job(
         rights_manager& rights,
         boost::asio::io_context& io_ctx,
         request_context& ctx,
-        const dto::run_job_request& reg,
+        const dto::run_job_request& req,
         transaction tr);
 
 void get_build_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_build_info_request& reg,
+        const dto::get_build_info_request& req,
         transaction tr);
 
 void refresh_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::refresh_fs_entry_request& reg,
+        const dto::refresh_fs_entry_request& req,
         transaction tr);
 
 void remove_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::remove_fs_entry_request& reg,
+        const dto::remove_fs_entry_request& req,
         transaction tr);
 
 void move_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::move_fs_entry_request& reg,
+        const dto::move_fs_entry_request& req,
         transaction tr);
 
 void new_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::new_directory_request& reg,
+        const dto::new_directory_request& req,
         transaction tr);
 
 void list_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::list_directory_request& reg,
+        const dto::list_directory_request& req,
         transaction tr);
 
 void add_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::add_cis_cron_request& reg,
+        const dto::add_cis_cron_request& req,
         transaction tr);
 
 void remove_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::remove_cis_cron_request& reg,
+        const dto::remove_cis_cron_request& req,
+        transaction tr);
+
+void list_cis_cron(
+        cis::cis_manager& cis_manager,
+        rights_manager& rights,
+        request_context& ctx,
+        const dto::list_cis_cron_request& req,
         transaction tr);
 
 } // namespace handlers

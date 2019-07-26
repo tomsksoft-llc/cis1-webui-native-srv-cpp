@@ -29,6 +29,7 @@ enum class request_id
     list_directory      = 85,
     add_cis_cron        = 87,
     remove_cis_cron     = 89,
+    list_cis_cron       = 91,
 };
 
 enum class response_id
@@ -59,6 +60,7 @@ enum class response_id
     list_directory      = 86,
     add_cis_cron        = 88,
     remove_cis_cron     = 90,
+    list_cis_cron       = 92,
 };
 
 } // namespace websocket

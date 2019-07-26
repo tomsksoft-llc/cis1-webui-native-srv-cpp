@@ -13,11 +13,11 @@ set(${PROJECT_NAME}_SRC
     net/http_session.cpp
     net/socket_util.cpp
     net/queued_websocket_session.cpp
+    net/websocket_queue.cpp
     net/listener.cpp
     net/fail.cpp
 
     websocket/event_dispatcher.cpp
-    websocket/base_event_handler.cpp
     websocket/event_handlers.cpp
     websocket/transaction.cpp
     websocket/dto/dto_to_event_id.cpp

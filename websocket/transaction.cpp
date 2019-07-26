@@ -8,7 +8,7 @@ namespace websocket
 {
 
 transaction::transaction(
-        const std::shared_ptr<net::websocket_queue>& queue,
+        const std::shared_ptr<queue_interface>& queue,
         uint64_t transaction_id,
         int32_t default_error_id)
     : transaction_id_(transaction_id)
@@ -44,6 +44,16 @@ void transaction::send_error(const std::string& err)
     }
 }
 
+std::optional<boost::asio::executor> transaction::get_executor()
+{
+    if(auto queue = queue_.lock(); queue)
+    {
+        return queue->get_executor();
+    }
+
+    return std::nullopt;
+}
+
 void transaction::prepare_response(rapidjson::Document& doc, int32_t id)
 {
     doc.SetObject();
@@ -56,7 +66,7 @@ void transaction::prepare_response(rapidjson::Document& doc, int32_t id)
 }
 
 void transaction::send(
-        const std::shared_ptr<net::websocket_queue> queue,
+        const std::shared_ptr<queue_interface>& queue,
         const rapidjson::Value& v)
 {
     auto buffer = std::make_shared<rapidjson::StringBuffer>();

@@ -54,12 +54,12 @@ void event_dispatcher::dispatch(
         bool text,
         boost::beast::flat_buffer& buffer,
         size_t bytes_transferred,
-        const std::shared_ptr<net::websocket_queue>& queue)
+        const std::shared_ptr<queue_interface>& queue)
 {
     if(text)
     {
 #ifndef NDEBUG
-        std::cout << "[" << ctx.username << "]: " 
+        std::cout << "[" << ctx.username << "]: "
                   << boost::beast::buffers_to_string(buffer.data()) << std::endl;
 #endif
         auto msg = parse_protocol_message(buffer);
@@ -78,7 +78,6 @@ void event_dispatcher::dispatch(
                             it != event_handlers_.end())
                     {
                         (it->second)(
-                                queue,
                                 ctx,
                                 msg.data,
                                 std::move(tr));

@@ -2,7 +2,9 @@
 
 #include <memory>
 
-#include "net/queued_websocket_session.h"
+#include <boost/asio/executor.hpp>
+
+#include "queue_interface.h"
 
 #include "tpl_reflect/meta_converter.h"
 #include "tpl_reflect/json_engine.h"
@@ -16,7 +18,7 @@ class transaction
 {
 public:
     transaction(
-            const std::shared_ptr<net::websocket_queue>& queue,
+            const std::shared_ptr<queue_interface>& queue,
             uint64_t transaction_id,
             int32_t default_error_id = -1);
 
@@ -45,15 +47,17 @@ public:
     }
 
     void send_error(const std::string& err);
+
+    std::optional<boost::asio::executor> get_executor();
 private:
     const uint64_t transaction_id_;
-    const std::weak_ptr<net::websocket_queue> queue_;
+    const std::weak_ptr<queue_interface> queue_;
     const int32_t default_error_id_;
 
     void prepare_response(rapidjson::Document& doc, int32_t id);
 
     void send(
-            const std::shared_ptr<net::websocket_queue> queue,
+            const std::shared_ptr<queue_interface>& queue,
             const rapidjson::Value& v);
 };
 

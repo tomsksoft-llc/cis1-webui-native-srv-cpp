@@ -1,6 +1,6 @@
 #pragma once
 
-#include <boost/asio.hpp>
+#include <boost/asio/buffer.hpp>
 
 template <class T>
 class const_stream_adapter

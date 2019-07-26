@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include "net/queued_websocket_session.h"
 #include "http/error_handler.h"
 #include "http/cookie_parser.h"
 #include "http/common_handlers.h"
@@ -293,6 +294,12 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::list_cis_cron_request>(
+            ws::request_id::list_cis_cron,
+            std::bind(&wsh::list_cis_cron,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
 
     std::function <http::handle_result(
         beast::http::request<beast::http::empty_body>& req,
@@ -310,8 +317,10 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                                 dispatcher,
                                 ctx,
                                 _1, _2, _3, _4));
+
                     return http::handle_result::done;
                 };
+
     router->add_route(url::make() / CT_STRING("ws"), cb);
 
     return router;
