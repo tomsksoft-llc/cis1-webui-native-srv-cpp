@@ -16,7 +16,7 @@ transaction::transaction(
     , default_error_id_(default_error_id)
 {}
 
-void transaction::send_error(const std::string& err)
+void transaction::send_error(const std::string& err) const
 {
     if(auto queue = queue_.lock(); queue)
     {
@@ -44,7 +44,7 @@ void transaction::send_error(const std::string& err)
     }
 }
 
-std::optional<boost::asio::executor> transaction::get_executor()
+std::optional<boost::asio::executor> transaction::get_executor() const
 {
     if(auto queue = queue_.lock(); queue)
     {
@@ -54,7 +54,7 @@ std::optional<boost::asio::executor> transaction::get_executor()
     return std::nullopt;
 }
 
-void transaction::prepare_response(rapidjson::Document& doc, int32_t id)
+void transaction::prepare_response(rapidjson::Document& doc, int32_t id) const
 {
     doc.SetObject();
 
@@ -67,7 +67,7 @@ void transaction::prepare_response(rapidjson::Document& doc, int32_t id)
 
 void transaction::send(
         const std::shared_ptr<queue_interface>& queue,
-        const rapidjson::Value& v)
+        const rapidjson::Value& v) const
 {
     auto buffer = std::make_shared<rapidjson::StringBuffer>();
     rapidjson::Writer<rapidjson::StringBuffer> writer(*buffer);

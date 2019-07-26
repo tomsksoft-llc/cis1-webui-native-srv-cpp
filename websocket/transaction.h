@@ -23,7 +23,7 @@ public:
             int32_t default_error_id = -1);
 
     template <class Payload>
-    void send(const Payload& p)
+    void send(const Payload& p) const
     {
         if(auto queue = queue_.lock(); queue)
         {
@@ -46,19 +46,19 @@ public:
         }
     }
 
-    void send_error(const std::string& err);
+    void send_error(const std::string& err) const;
 
-    std::optional<boost::asio::executor> get_executor();
+    std::optional<boost::asio::executor> get_executor() const;
 private:
     const uint64_t transaction_id_;
     const std::weak_ptr<queue_interface> queue_;
     const int32_t default_error_id_;
 
-    void prepare_response(rapidjson::Document& doc, int32_t id);
+    void prepare_response(rapidjson::Document& doc, int32_t id) const;
 
     void send(
             const std::shared_ptr<queue_interface>& queue,
-            const rapidjson::Value& v);
+            const rapidjson::Value& v) const;
 };
 
 } // namespace websocket
