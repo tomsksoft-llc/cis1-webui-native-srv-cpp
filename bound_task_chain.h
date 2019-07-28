@@ -7,11 +7,53 @@
 
 #include "tpl_helpers/detect_idiom.h"
 
+namespace thennable
+{
+
+struct callback_arg_t{};
+
+constexpr const callback_arg_t callback;
+
+} // namespace thennable
+
 template <typename T>
 using get_executor_t = decltype(std::declval<T>().get_executor());
 
 template <typename T>
 constexpr bool has_bound_executor = meta::is_detected<get_executor_t, T>::value;
+
+template <typename T>
+using is_async_t = decltype(std::declval<T>().is_async_task());
+
+template <typename T>
+constexpr bool is_wrapped_async = meta::is_detected<is_async_t, T>::value;
+
+template <class T>
+struct async_task_wrapper
+{
+    constexpr async_task_wrapper(T&& t, boost::asio::executor ex)
+        : t_(std::move(t))
+        , ex_(ex)
+    {}
+
+    auto& get()
+    {
+        return t_;
+    }
+
+    auto get_executor() const
+    {
+        return ex_;
+    }
+
+    constexpr bool is_async_task() const
+    {
+        return true;
+    }
+private:
+    T t_;
+    boost::asio::executor ex_;
+};
 
 template <class... Args>
 class bound_task_chain_impl
@@ -47,10 +89,44 @@ void bound_task_chain_impl<Args...>::call(ContinuationArgs&&... args)
             packed_args = std::make_tuple(std::forward<ContinuationArgs>(args)...)
             ]() mutable
             {
-                auto& bound_fn = std::get<N>(fn_chain_).get();
+                auto& wrapped_fn = std::get<N>(fn_chain_);
+                auto& bound_fn = wrapped_fn.get();
                 try
                 {
-                    if constexpr(!std::is_same<
+                    if constexpr(is_wrapped_async<decltype(wrapped_fn)>)
+                    {
+                        if constexpr(N > 0)
+                        {
+                            std::apply(
+                                    [&](auto&&... args1)
+                                    {
+                                        bound_fn(std::forward<decltype(args1)>(
+                                                args1)...,
+                                                [&, self = this->shared_from_this()]
+                                                (auto&&... args2)
+                                                {
+                                                    this->template call<N-1>(
+                                                            std::forward<decltype(args2)>(
+                                                                    args2)...);
+                                                });
+                                    },
+                                    std::move(packed_args));
+                        }
+                        else
+                        {
+                            std::apply(
+                                    [&](auto&&... args1)
+                                    {
+                                        bound_fn(std::forward<decltype(args1)>(
+                                                args1)...,
+                                                [&, self = this->shared_from_this()]
+                                                (auto&&... args2){});
+                                    },
+                                    std::move(packed_args));
+                        }
+                        return;
+                    }
+                    else if constexpr(!std::is_same<
                             decltype(std::apply(bound_fn, std::move(packed_args))),
                             void>::value)
                     {
@@ -90,6 +166,27 @@ public:
     {}
 
     bound_task_chain(const bound_task_chain&) = delete;
+
+    template <class F, typename Indices = std::make_index_sequence<sizeof...(Args)>>
+    [[nodiscard]] auto then(F&& f, thennable::callback_arg_t)
+    {
+        if constexpr(has_bound_executor<F>)
+        {
+            return then_impl(
+                    async_task_wrapper{
+                            std::move(f.get()),
+                            f.get_executor()},
+                    Indices{});
+        }
+        else
+        {
+            return then_impl(
+                    async_task_wrapper{
+                            std::move(f),
+                            ex_},
+                    Indices{});
+        }
+    }
 
     template <class F, typename Indices = std::make_index_sequence<sizeof...(Args)>>
     [[nodiscard]] auto then(F&& f)
