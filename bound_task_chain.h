@@ -231,7 +231,4 @@ private:
     }
 };
 
-auto make_async_chain(boost::asio::executor ex)
-{
-    return bound_task_chain{ex};
-}
+bound_task_chain<> make_async_chain(boost::asio::executor ex);
