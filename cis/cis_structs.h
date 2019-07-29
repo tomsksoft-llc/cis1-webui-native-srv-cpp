@@ -98,7 +98,7 @@ private:
 struct project_list
     : public cis_entry_interface
 {
-    project_list(database::database& db);
+    project_list(database::database_wrapper& db);
     virtual void set_fs_node(
             fs_cache_node<fs_mapper>* fs_node) override;
     virtual std::pair<cis_entry_interface*, std::any> make_child(
@@ -109,7 +109,7 @@ struct project_list
     immutable_container_proxy<fs_cache_node<fs_mapper>::tree_t> get_files();
     const fs_cache_node<fs_mapper>::tree_t& get_files() const;
 private:
-    database::database& db_;
+    database::database_wrapper& db_;
     std::map<std::string, project> projects_;
     fs_cache_node<fs_mapper>* fs_node_ = nullptr;
 };

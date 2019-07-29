@@ -28,7 +28,7 @@ bool engine::get(
         const obj_type& protocol_obj,
         const char* str)
 {
-    return protocol_obj[str].IsObject() ? true : false;
+    return protocol_obj[str].IsObject();
 }
 
 template <>

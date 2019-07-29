@@ -266,7 +266,6 @@ void get_job_info(
 void run_job(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
-        boost::asio::io_context& io_ctx,
         request_context& ctx,
         const dto::run_job_request& req,
         transaction tr)
@@ -825,10 +824,8 @@ void list_directory(
 
         return tr.send(res);
     }
-    else
-    {
-        tr.send_error("Directory not found.");
-    }
+
+    tr.send_error("Directory not found.");
 }
 
 void add_cis_cron(

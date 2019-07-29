@@ -18,7 +18,7 @@
 using namespace sqlite_orm;
 using namespace database;
 
-auth_manager::auth_manager(database::database& db)
+auth_manager::auth_manager(database::database_wrapper& db)
     : db_(db)
 {}
 

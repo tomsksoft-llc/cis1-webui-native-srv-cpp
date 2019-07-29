@@ -34,7 +34,7 @@ public:
     cis_manager(
             boost::asio::io_context& ioc,
             std::filesystem::path cis_root,
-            database::database& db);
+            database::database_wrapper& db);
     cis_manager(const cis_manager&) = delete;
 
     bool refresh(const std::filesystem::path& path);

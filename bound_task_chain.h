@@ -33,7 +33,7 @@ constexpr bool is_wrapped_async = meta::is_detected<is_async_t, T>::value;
 template <class T>
 struct async_task_wrapper
 {
-    constexpr async_task_wrapper(T&& t, boost::asio::executor ex)
+    async_task_wrapper(T&& t, boost::asio::executor ex)
         : t_(std::move(t))
         , ex_(ex)
     {}

@@ -21,5 +21,5 @@ private:
     std::string_view pattern_sv_; //prevent copy on substr
     std::vector<int> table_;
 
-	void build_table(std::string pattern_sv_);
+	void build_table(const std::string& pattern_sv_);
 };

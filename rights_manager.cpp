@@ -12,7 +12,7 @@
 using namespace database;
 using namespace sqlite_orm;
 
-rights_manager::rights_manager(database::database& db)
+rights_manager::rights_manager(database::database_wrapper& db)
     : db_(db)
 {}
 

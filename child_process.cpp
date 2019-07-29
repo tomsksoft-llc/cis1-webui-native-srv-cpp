@@ -51,7 +51,7 @@ void child_process::run(
                 bp::on_exit =
                         [&, self = shared_from_this()](
                                 int exit_code,
-                                const std::error_code& ec)
+                                const std::error_code& ec) mutable
                         {
                             exit_code_ = exit_code;
                             do_read(ec, std::move(self));
@@ -75,7 +75,7 @@ void child_process::do_read(
             boost::asio::buffer(buffer_.data(), buffer_.size()),
             [&, self = std::move(self)](
                 const std::error_code& ec,
-                size_t transferred)
+                size_t transferred) mutable
             {
                 if(transferred < read_size)
                 {

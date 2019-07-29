@@ -34,7 +34,7 @@ void hmac::set_secret_key(
             key_data,
             key_size,
             EVP_sha1(),
-            NULL);
+            nullptr);
 }
 
 std::vector<unsigned char> hmac::calc_digest(
@@ -53,12 +53,7 @@ bool rand(unsigned char* data, size_t size)
 {
     int rc = RAND_bytes(data, size);
 
-    if(rc != 1)
-    {
-        return false;
-    }
-
-    return true;
+    return rc == 1;
 }
 
 } // namespace openssl

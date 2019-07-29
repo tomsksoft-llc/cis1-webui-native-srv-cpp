@@ -110,10 +110,10 @@ private:
     T& db_;
 };
 
-class database
+class database_wrapper
 {
 public:
-    database(const std::filesystem::path& path, std::optional<admin_user> admin);
+    database_wrapper(const std::filesystem::path& path, std::optional<admin_user> admin);
 
     void init(
             const std::string& username,

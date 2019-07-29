@@ -75,11 +75,8 @@ char message_stream_parser::tr_get_char()
 bool message_stream_parser::tr_next()
 {
     ++transition_it;
-    if(transition_it == tr_end())
-    {
-        return true;
-    }
-    return false;
+
+    return transition_it == tr_end();
 }
 
 message_stream_parser::event message_stream_parser::handle_message_char(

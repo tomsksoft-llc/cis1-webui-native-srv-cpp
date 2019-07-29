@@ -5,9 +5,9 @@
 namespace http
 {
 
-const std::regex query_begin_regex("^\\??([^=]+)\\=([^&]+)");
-const std::regex query_entry_regex("\\&([^=]+)\\=([^&]+)");
-const std::regex cookies_regex("(.*?)=(.*?)($|;|,(?! ))");
+const std::regex query_begin_regex(R"rx(^\\??([^=]+)\\=([^&]+))rx");
+const std::regex query_entry_regex(R"rx(\\&([^=]+)\\=([^&]+))rx");
+const std::regex cookies_regex(R"rx((.*?)=(.*?)($|;|,(?! )))rx");
 
 unsigned char to_hex(unsigned char ch)
 {

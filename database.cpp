@@ -5,7 +5,9 @@ using namespace sqlite_orm;
 namespace database
 {
 
-database::database(const std::filesystem::path& path, std::optional<admin_user> admin)
+database_wrapper::database_wrapper(
+        const std::filesystem::path& path,
+        std::optional<admin_user> admin)
     : db_(detail::make_database(path.c_str()))
 {
     sync();
@@ -16,23 +18,23 @@ database::database(const std::filesystem::path& path, std::optional<admin_user> 
     }
 }
 
-void database::sync()
+void database_wrapper::sync()
 {
     db_.sync_schema();
 }
 
-decltype(detail::make_database(""))& database::get()
+decltype(detail::make_database(""))& database_wrapper::get()
 {
     return db_;
 }
 
 database_transanction_guard<decltype(detail::make_database(""))>
-database::make_transaction()
+database_wrapper::make_transaction()
 {
     return {db_};
 }
 
-void database::init(
+void database_wrapper::init(
         const std::string& username,
         const std::string& email,
         const std::string& password)

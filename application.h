@@ -24,7 +24,7 @@ public:
     void stop();
 private:
     init_params params_;
-    database::database db_;
+    database::database_wrapper db_;
     asio::io_context ioc_;
     asio::signal_set signals_;
     cis::cis_manager cis_;

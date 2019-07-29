@@ -25,7 +25,7 @@ enum class error
 };
 
 std::variant<protocol_message, error> parse_protocol_message(
-        boost::beast::flat_buffer& buffer)
+        const boost::beast::flat_buffer& buffer)
 {
     const_stream_adapter bs(buffer.data());
     rapidjson::Document request;
@@ -53,7 +53,7 @@ void event_dispatcher::dispatch(
         request_context& ctx,
         bool text,
         boost::beast::flat_buffer& buffer,
-        size_t bytes_transferred,
+        size_t /*bytes_transferred*/,
         const std::shared_ptr<queue_interface>& queue)
 {
     if(text)
@@ -66,7 +66,7 @@ void event_dispatcher::dispatch(
 
         std::visit(
                 meta::overloaded{
-                [&](const error& err)
+                [&](const error&)
                 {
                     transaction(queue, 0, -1).send_error("Invalid json.");
                 },

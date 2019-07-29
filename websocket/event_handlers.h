@@ -144,7 +144,6 @@ void get_job_info(
 void run_job(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
-        boost::asio::io_context& io_ctx,
         request_context& ctx,
         const dto::run_job_request& req,
         transaction tr);

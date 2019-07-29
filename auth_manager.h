@@ -21,7 +21,7 @@ struct user_info
 class auth_manager
 {
 public:
-    auth_manager(database::database& db);
+    auth_manager(database::database_wrapper& db);
 
     std::optional<std::string> authenticate(
             const std::string& username,
@@ -56,5 +56,5 @@ public:
             const std::string& pass,
             const std::string& email);
 private:
-    database::database& db_;
+    database::database_wrapper& db_;
 };

@@ -22,6 +22,7 @@ void error_handler::operator()(
         case status::forbidden:
         {
             queue.send(response::forbidden(std::move(req)));
+            break;
         }
         default:
         {

@@ -16,7 +16,7 @@ namespace cis
 cis_manager::cis_manager(
         boost::asio::io_context& ioc,
         std::filesystem::path cis_root,
-        database::database& db)
+        database::database_wrapper& db)
     : ioc_(ioc)
     , cis_root_(std::move(cis_root))
     , projects_(db)
@@ -143,12 +143,7 @@ bool cis_manager::rename_job(
             project_path / new_name,
             ec);
 
-    if(!ec)
-    {
-        return true;
-    }
-
-    return false;
+    return !ec;
 }
 
 bool cis_manager::run_job(

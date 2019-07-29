@@ -225,7 +225,7 @@ const fs_cache_node<fs_mapper>::tree_t& project::get_files() const
 
 // project_list
 
-project_list::project_list(database::database& db)
+project_list::project_list(database::database_wrapper& db)
     : db_(db)
 {}
 

@@ -52,7 +52,7 @@ size_t knuth_morris_pratt_searcher::partial_search(char c)
     return i_;
 }
 
-void knuth_morris_pratt_searcher::build_table(std::string pattern_sv_)
+void knuth_morris_pratt_searcher::build_table(const std::string& pattern_sv_)
 {
     int pos = 2;
     int condition = 0;

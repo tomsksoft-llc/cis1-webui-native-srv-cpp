@@ -115,7 +115,7 @@ std::shared_ptr<http_router> application::make_public_http_router()
             {
                 return whh(
                         std::forward<decltype(args)>(args)...,
-                        whh.api::github);
+                        http::webhooks_handler::api::github);
             });
 
     router->add_route(
@@ -125,7 +125,7 @@ std::shared_ptr<http_router> application::make_public_http_router()
             {
                 return whh(
                         std::forward<decltype(args)>(args)...,
-                        whh.api::gitlab);
+                        http::webhooks_handler::api::gitlab);
             });
 
     std::function<http::handle_result(
@@ -244,7 +244,6 @@ std::shared_ptr<websocket_router> application::make_ws_router()
             std::bind(&wsh::run_job,
                     std::ref(cis_),
                     std::ref(rights_manager_),
-                    std::ref(ioc_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::get_build_info_request>(
             ws::request_id::get_build_info,
