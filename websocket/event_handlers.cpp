@@ -134,6 +134,20 @@ void list_projects(
 {
     dto::get_project_list_response res;
 
+    for(auto& file : cis_manager.fs())
+    {
+        bool is_directory = file.dir_entry().is_directory();
+        auto path = ("/" / file.relative_path()).string();
+        auto link = ("/download" / file.relative_path()).string();
+
+        res.fs_entries.push_back(dto::fs_entry{
+                file.filename(),
+                false,
+                is_directory,
+                path,
+                link});
+    }
+
     for(auto& [project_name, project] : cis_manager.get_projects())
     {
         if(auto perm = rights.check_project_right(ctx.username, project_name);

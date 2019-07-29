@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "tpl_reflect/meta_converter.h"
+#include "fs_entry.h"
 
 namespace websocket
 {
@@ -27,12 +28,16 @@ struct get_project_list_response
         }
     };
 
+    std::vector<fs_entry> fs_entries;
     std::vector<project> projects;
 
     static constexpr auto get_converter()
     {
         using namespace reflect;
         return make_meta_converter<get_project_list_response>()
+                .add_field(
+                        CT_STRING("fs_entries"),
+                        ptr_v<&get_project_list_response::fs_entries>{})
                 .add_field(
                         CT_STRING("projects"),
                         ptr_v<&get_project_list_response::projects>{})
