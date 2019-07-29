@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <boost/process.hpp>
+#include <boost/asio/system_executor.hpp>
 
 #include "exceptions/load_config_error.h"
 #include "child_process.h"
@@ -168,20 +169,13 @@ bool cis_manager::run_job(
             {path_cat(project_name, "/" + job_name)},
             [project_name, job_name](
                     int exit,
-                    std::vector<char>& buffer,
-                    const std::error_code& ec)
+                    const std::vector<char>& buffer)
             {
-                std::cout << "job " + project_name
-                        + "/" + job_name + " finished" << std::endl;
-                if(!ec)
-                {
-                    std::cout << "process exited with " << exit << std::endl;
-                }
-                else
-                {
-                    std::cout << "error" << std::endl;
-                }
-                //TODO update builds (emit cis_updated or something)
+                std::cout << "job " << project_name
+                          << "/" << job_name 
+                          << " finished" << std::endl;
+                std::cout << "process exited with " << exit << std::endl;
+                std::cout << buffer.data() << std::endl;
             });
     return true;
 }
@@ -201,10 +195,6 @@ bool cis_manager::add_cron(
     auto cp = std::make_shared<child_process>(ioc_, env);
     cp->run(executable.string(),
             {"--add", cron_expression, path_cat(project_name, "/" + job_name)},
-            [project_name, job_name](
-                    int exit,
-                    std::vector<char>& buffer,
-                    const std::error_code& ec)
             {});
     return true;
 }
@@ -224,12 +214,32 @@ bool cis_manager::remove_cron(
     auto cp = std::make_shared<child_process>(ioc_, env);
     cp->run(executable.string(),
             {"--del", cron_expression, path_cat(project_name, "/" + job_name)},
-            [project_name, job_name](
-                    int exit,
-                    std::vector<char>& buffer,
-                    const std::error_code& ec)
             {});
     return true;
+}
+
+cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
+{
+    auto executable = canonical(cis_root_ / core / execs_.cis_cron);
+    auto env = boost::this_process::environment();
+    env["cis_base_dir"] = canonical(cis_root_);
+
+    return {[&, cp = std::make_shared<child_process>(ioc_, env),
+                executable = executable.string(),
+                mask](auto&& continuation)
+            {
+                cp->run(executable,
+                        {"--list", mask},
+                        [&, continuation](
+                            int exit_code,
+                            const std::vector<char>& buf) mutable
+                        {
+                            std::vector<cron_entry> entries;
+                            parse_cron_list(buf, entries);
+                            continuation(entries);
+                        });
+            },
+            boost::asio::system_executor{}};
 }
 
 bool cis_manager::executables::set(
@@ -278,6 +288,25 @@ bool cis_manager::executables::valid()
         &&  !setvalue.empty()
         &&  !getvalue.empty()
         &&  !cis_cron.empty());
+}
+
+const std::regex cron_line_regex(R"rx(\t((?:\*|(?:[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/(?:[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (?:\*|(?:[0-9]|1[0-9]|2[0-3])|\*\/(?:[0-9]|1[0-9]|2[0-3])) (?:\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/(?:[1-9]|1[0-9]|2[0-9]|3[0-1])) (?:\*|([1-9]|1[0-2])|\*\/(?:[1-9]|1[0-2])) (?:\*|(?:[0-6])|\*\/(?:[0-6])))\t\/([^\/]+)\/([^\/\n]+)(?:\n|$))rx");
+
+void cis_manager::parse_cron_list(
+        const std::vector<char>& exe_output,
+        std::vector<cron_entry>& entries)
+{
+    auto start = exe_output.cbegin();
+    auto end = exe_output.cend();
+    std::match_results<std::vector<char>::const_iterator> what;
+    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
+
+    while(regex_search(start, end, what, cron_line_regex, flags))
+    {
+        entries.push_back({what[4], what[5], what[1]});
+        start = what[0].second;
+        flags |= std::regex_constants::match_prev_avail;
+    }
 }
 
 } // namespace cis

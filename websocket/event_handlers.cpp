@@ -4,6 +4,7 @@
 
 #include "cron_utils.h"
 #include "event_list.h"
+#include "bound_task_chain.h"
 
 #include "websocket/dto/auth_login_pass_response.h"
 #include "websocket/dto/auth_token_response.h"
@@ -884,40 +885,32 @@ void remove_cis_cron(
 
     return tr.send_error("Job doesn't exists.");
 }
-/*
-void list_cis_cron_2(transaction tr)
-{
-    tr.send_error("done!");
-}
 
-void long_async_op()
-{
-
-}
-
-template <class Executor>*/
 void list_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
         const dto::list_cis_cron_request& req,
-        transaction tr/*,
-        Executor ex*/)
+        transaction tr)
 {
-    /*
-    ex.async(
-            [&cis_manager](cosnt std::string& mask)
-            {
-                return cis_manager.list_cron(mask);
-            })
-            .then(
-            [tr](const std::vector<std::string>& cron_list)
-            {
-                long_async_op(cron_list, tr);
-            })
-            .run()
-            .catch_error([tr](const std::error_code& ec){tr.send_error(ec.message())});
-            */
+    if(auto executor = tr.get_executor(); executor)
+    {
+        make_async_chain(executor.value())
+            .then(cis_manager.list_cron(req.mask))
+            .then([tr](const std::vector<cis::cron_entry>& entries)
+                    {
+                        dto::list_cis_cron_response res;
+                        for(auto& entry : entries)
+                        {
+                            res.entries.push_back({
+                                    entry.project,
+                                    entry.job,
+                                    entry.cron_expr});
+                        }
+                        tr.send(res);
+                    })
+            .run();
+    }
 }
 
 } // namespace handlers

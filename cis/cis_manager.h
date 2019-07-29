@@ -12,13 +12,25 @@
 #include "cis_structs.h"
 #include "fs_mapper.h"
 #include "immutable_container_proxy.h"
+#include "bound_task_chain.h"
 
 namespace cis
 {
 
+struct cron_entry
+{
+    std::string project;
+    std::string job;
+    std::string cron_expr;
+};
+
 class cis_manager
 {
 public:
+    using list_cron_continuation_t = void(const std::vector<cron_entry>&);
+    using list_cron_cb_t = void(std::function<list_cron_continuation_t>&&);
+    using list_cron_task_t = async_task_wrapper<std::function<list_cron_cb_t>>;
+
     cis_manager(
             boost::asio::io_context& ioc,
             std::filesystem::path cis_root,
@@ -52,13 +64,15 @@ public:
             const std::string& job_name,
             const std::vector<std::string>& params = {});
     bool add_cron(
-        const std::string& project_name,
-        const std::string& job_name,
-        const std::string& cron_expression);
+            const std::string& project_name,
+            const std::string& job_name,
+            const std::string& cron_expression);
     bool remove_cron(
-        const std::string& project_name,
-        const std::string& job_name,
-        const std::string& cron_expression);
+            const std::string& project_name,
+            const std::string& job_name,
+            const std::string& cron_expression);
+    list_cron_task_t list_cron(
+            const std::string& mask);
 private:
     struct executables
     {
@@ -76,6 +90,10 @@ private:
     project_list projects_;
     fs_cache<fs_mapper> fs_;
     executables execs_;
+
+    void parse_cron_list(
+            const std::vector<char>& exe_output,
+            std::vector<cron_entry>& entries);
 };
 
 } // namespace cis
