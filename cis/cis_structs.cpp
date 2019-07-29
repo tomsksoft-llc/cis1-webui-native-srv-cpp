@@ -118,10 +118,10 @@ void job::add_params(
     std::ifstream params_file(fs_node->dir_entry().path());
     std::string param;
     std::string default_value;
-    std::getline(params_file, param, '=');
-    std::getline(params_file, default_value, '\n');
     while(params_file.good())
     {
+        std::getline(params_file, param, '=');
+        std::getline(params_file, default_value, '\n');
         if(!default_value.empty())
         {
             default_value = default_value.substr(
@@ -129,8 +129,6 @@ void job::add_params(
                     default_value.size() - 2);
         }
         params_.emplace_back(param, default_value);
-        std::getline(params_file, param, '=');
-        std::getline(params_file, default_value, '\n');
     }
 }
 
