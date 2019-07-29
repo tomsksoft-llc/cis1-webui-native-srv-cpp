@@ -94,5 +94,6 @@ void child_process::on_done()
     if(cb_)
     {
         cb_(exit_code_.value(), buffer_);
+        cb_ = [](auto&&...){}; // reset std::function
     }
 }

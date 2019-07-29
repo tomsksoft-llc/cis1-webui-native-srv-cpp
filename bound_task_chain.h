@@ -7,6 +7,8 @@
 
 #include "tpl_helpers/detect_idiom.h"
 
+#include <iostream>
+
 namespace thennable
 {
 
@@ -89,11 +91,10 @@ void bound_task_chain_impl<Args...>::call(ContinuationArgs&&... args)
             packed_args = std::make_tuple(std::forward<ContinuationArgs>(args)...)
             ]() mutable
             {
-                auto& wrapped_fn = std::get<N>(fn_chain_);
-                auto& bound_fn = wrapped_fn.get();
+                auto& bound_fn = std::get<N>(fn_chain_).get();
                 try
                 {
-                    if constexpr(is_wrapped_async<decltype(wrapped_fn)>)
+                    if constexpr(is_wrapped_async<decltype(std::get<N>(fn_chain_))>)
                     {
                         if constexpr(N > 0)
                         {
