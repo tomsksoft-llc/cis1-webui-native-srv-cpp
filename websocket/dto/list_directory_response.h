@@ -20,7 +20,7 @@ struct list_directory_response
         using namespace reflect;
         return make_meta_converter<list_directory_response>()
                 .add_field(
-                        CT_STRING("entries"),
+                        CT_STRING("fs_entries"),
                         ptr_v<&list_directory_response::entries>{})
                 .done();
     }
