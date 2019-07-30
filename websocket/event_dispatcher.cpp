@@ -28,19 +28,9 @@ std::variant<protocol_message, error> parse_protocol_message(
         const boost::beast::flat_buffer& buffer,
         size_t bytes_transferred)
 {
-    std::string str;
-    str.resize(bytes_transferred);
-    boost::asio::buffer_copy(
-            boost::asio::buffer(str.data(), bytes_transferred),
-            buffer.data(),
-            bytes_transferred);
-    rapidjson::Document request;
-    request.Parse(str.c_str());
-    /* FIXME
-    const_stream_adapter bs(buffer.data());
+    const_stream_adapter bs(buffer.data(), bytes_transferred);
     rapidjson::Document request;
     request.ParseStream(bs);
-    */
 
     if(request.HasParseError())
     {

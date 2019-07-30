@@ -6,9 +6,9 @@ template <class T>
 class const_stream_adapter
 {
 public:
-    const_stream_adapter(const T& buffer)
-        : it_pos(boost::asio::buffer_sequence_begin(buffer))
-        , it_end(boost::asio::buffer_sequence_end(buffer))
+    const_stream_adapter(const T& buffer, size_t bytes_transferred)
+        : it_pos((const char*)buffer.data())
+        , it_end(it_pos + bytes_transferred)
     {}
     using Ch = char;
     Ch Peek() const
@@ -17,7 +17,7 @@ public:
         {
             return '\0';
         }
-        return *((const char*)it_pos->data() + pos);
+        return *it_pos;
     }
     Ch Take()
     {
@@ -25,14 +25,8 @@ public:
         {
             return '\0';
         }
-        auto ch = *((const char*)it_pos->data() + pos);
-        ++pos;
-        ++read;
-        if(pos == it_pos->size())
-        {
-            pos = 0;
-            ++it_pos;
-        }
+        auto ch = *it_pos;
+        ++it_pos;
         return ch;
     }
     size_t Tell() const
@@ -61,6 +55,6 @@ public:
 private:
     size_t read = 0;
     size_t pos = 0;
-    decltype(boost::asio::buffer_sequence_begin(std::declval<T>())) it_pos;
-    decltype(boost::asio::buffer_sequence_end(std::declval<T>())) it_end;
+    const char* it_pos;
+    const char* it_end;
 };
