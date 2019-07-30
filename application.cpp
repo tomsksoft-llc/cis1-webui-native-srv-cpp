@@ -306,14 +306,14 @@ std::shared_ptr<websocket_router> application::make_ws_router()
         tcp::socket& socket)> cb = [dispatcher](
                 beast::http::request<beast::http::empty_body>& req,
                 request_context& ctx,
-                tcp::socket& socket)
+                tcp::socket& socket) mutable
                 {
                     net::queued_websocket_session::accept_handler(
                             std::move(socket),
                             std::move(req),
                             std::bind(
                                 &ws::event_dispatcher::dispatch,
-                                dispatcher,
+                                std::ref(dispatcher),
                                 ctx,
                                 _1, _2, _3, _4));
 

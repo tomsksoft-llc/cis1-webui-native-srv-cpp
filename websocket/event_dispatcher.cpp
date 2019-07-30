@@ -25,11 +25,22 @@ enum class error
 };
 
 std::variant<protocol_message, error> parse_protocol_message(
-        const boost::beast::flat_buffer& buffer)
+        const boost::beast::flat_buffer& buffer,
+        size_t bytes_transferred)
 {
+    std::string str;
+    str.resize(bytes_transferred);
+    boost::asio::buffer_copy(
+            boost::asio::buffer(str.data(), bytes_transferred),
+            buffer.data(),
+            bytes_transferred);
+    rapidjson::Document request;
+    request.Parse(str.c_str());
+    /* FIXME
     const_stream_adapter bs(buffer.data());
     rapidjson::Document request;
     request.ParseStream(bs);
+    */
 
     if(request.HasParseError())
     {
@@ -53,7 +64,7 @@ void event_dispatcher::dispatch(
         request_context& ctx,
         bool text,
         boost::beast::flat_buffer& buffer,
-        size_t /*bytes_transferred*/,
+        size_t bytes_transferred,
         const std::shared_ptr<queue_interface>& queue)
 {
     if(text)
@@ -62,7 +73,7 @@ void event_dispatcher::dispatch(
         std::cout << "[" << ctx.username << "]: "
                   << boost::beast::buffers_to_string(buffer.data()) << std::endl;
 #endif
-        auto msg = parse_protocol_message(buffer);
+        auto msg = parse_protocol_message(buffer, bytes_transferred);
 
         std::visit(
                 meta::overloaded{
