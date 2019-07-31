@@ -61,7 +61,8 @@ void event_dispatcher::dispatch(
     {
 #ifndef NDEBUG
         std::cout << "[" << ctx.username << "]: "
-                  << boost::beast::buffers_to_string(buffer.data()) << std::endl;
+                  << boost::beast::buffers_to_string(buffer.data())
+                  << std::endl;
 #endif
         auto msg = parse_protocol_message(buffer, bytes_transferred);
 
@@ -73,7 +74,10 @@ void event_dispatcher::dispatch(
                 },
                 [&](const protocol_message& msg)
                 {
-                    transaction tr(queue, msg.transaction_id, msg.event_id + 1);
+                    transaction tr(
+                            queue,
+                            msg.transaction_id,
+                            msg.event_id + 1);
 
                     if(auto it = event_handlers_.find(msg.event_id);
                             it != event_handlers_.end())

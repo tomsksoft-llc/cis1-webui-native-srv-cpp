@@ -32,7 +32,9 @@ beast::http::response<beast::http::string_body> not_found(
     res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
     res.set(beast::http::field::content_type, "text/html");
     res.keep_alive(req.keep_alive());
-    res.body() = "The resource '" + std::string(req.target()) + "' was not found.";
+    res.body() = "The resource '"
+            + std::string(req.target())
+            + "' was not found.";
     res.prepare_payload();
 
     return res;

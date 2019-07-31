@@ -21,7 +21,8 @@ init_params parse_args(int argc, char* argv[])
     {
         pt::ptree pt;
         pt::ini_parser::read_ini(argv[1], pt);
-        auto opt_working_dir = pt.get_optional<std::string>("global.working_dir");
+        auto opt_working_dir = pt.get_optional<std::string>(
+                "global.working_dir");
 
         if(opt_working_dir)
         {
@@ -43,7 +44,8 @@ init_params parse_args(int argc, char* argv[])
             result.cis_root = std::getenv("cis_base_dir");
         }
 
-        result.cis_address = net::ip::make_address(pt.get<std::string>("cis.ip"));
+        result.cis_address = net::ip::make_address(
+                pt.get<std::string>("cis.ip"));
         result.cis_port = pt.get<unsigned short>("cis.port");
         result.db_root = pt.get<std::string>("db.db_root");
     }

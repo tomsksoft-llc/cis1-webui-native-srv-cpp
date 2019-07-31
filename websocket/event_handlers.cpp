@@ -1,5 +1,8 @@
 #include "event_handlers.h"
 
+#include <map>
+#include <vector>
+
 #include <rapidjson/writer.h>
 
 #include "cron_utils.h"

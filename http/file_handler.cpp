@@ -61,7 +61,8 @@ handle_result file_handler::single_file(
         }
         else
         {
-            res.set(beast::http::field::content_type, "application/octet-stream");
+            res.set(beast::http::field::content_type,
+                    "application/octet-stream");
         }
 
         res.content_length(size);

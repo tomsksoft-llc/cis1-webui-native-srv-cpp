@@ -212,7 +212,8 @@ void webhooks_handler::handle_github_signature(
     std::stringstream hex_hmac_ss;
     for(auto val : result)
     {
-        hex_hmac_ss << std::setfill('0') << std::setw(2) << std::hex << (int)val;
+        hex_hmac_ss << std::setfill('0') << std::setw(2) << std::hex
+                    << static_cast<int>(val);
     }
 
     auto hex_hmac = hex_hmac_ss.str();
@@ -245,7 +246,12 @@ void webhooks_handler::finish(
     {
         auto file_path = save_body(req.body());
 
-        auto params = prepare_params(project, job, query_string, file_path, ev);
+        auto params = prepare_params(
+                project,
+                job,
+                query_string,
+                file_path,
+                ev);
 
         cis_.run_job(project, job, params);
     }

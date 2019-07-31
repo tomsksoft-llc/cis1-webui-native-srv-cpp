@@ -294,7 +294,7 @@ void cis_manager::parse_cron_list(
     auto start = exe_output.cbegin();
     auto end = exe_output.cend();
     std::match_results<std::vector<char>::const_iterator> what;
-    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
+    auto flags = std::regex_constants::match_default;
 
     while(regex_search(start, end, what, cron_line_regex, flags))
     {

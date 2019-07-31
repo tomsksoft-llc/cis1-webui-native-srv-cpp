@@ -61,7 +61,8 @@ std::optional<std::string> auth_manager::authenticate(
     return std::nullopt;
 }
 
-std::optional<std::string> auth_manager::authenticate(const std::string& token_value)
+std::optional<std::string> auth_manager::authenticate(
+        const std::string& token_value)
 {
     auto db = db_.make_transaction();
 
@@ -71,7 +72,8 @@ std::optional<std::string> auth_manager::authenticate(const std::string& token_v
 
     if(ids.size() == 1)
     {
-        if(std::get<1>(ids[0]) < std::chrono::seconds(std::time(nullptr)).count())
+        auto current_time = std::chrono::seconds(std::time(nullptr)).count();
+        if(std::get<1>(ids[0]) < current_time)
         {
             db->remove_all<token>(where(c(&token::value) == token_value));
 
@@ -150,7 +152,8 @@ std::optional<std::string> auth_manager::get_group(
     return std::nullopt;
 }
 
-std::optional<std::string> auth_manager::generate_api_key(const std::string& username)
+std::optional<std::string> auth_manager::generate_api_key(
+        const std::string& username)
 {
     auto db = db_.make_transaction();
     auto ids = db->select(

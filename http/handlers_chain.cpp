@@ -21,7 +21,9 @@ void handlers_chain::set_error_handler(const error_handler_t& handler)
     error_handler_ = handler;
 }
 
-void handlers_chain::listen(boost::asio::io_context& ioc, const tcp::endpoint& endpoint)
+void handlers_chain::listen(
+        boost::asio::io_context& ioc,
+        const tcp::endpoint& endpoint)
 {
     auto accept_handler = [self = shared_from_this()](tcp::socket&& socket)
     {

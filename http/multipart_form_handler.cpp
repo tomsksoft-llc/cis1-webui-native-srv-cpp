@@ -21,7 +21,8 @@ handle_result multipart_form_handler::operator()(
         const std::string& dir)
 {
     if(req.method() == beast::http::verb::post
-            && req[beast::http::field::content_type].find("multipart/form-data") == 0)
+        && req[beast::http::field::content_type].find(
+                "multipart/form-data") == 0)
     {
         if(auto project_rights
                 = rights_.check_project_right(ctx.username, project);

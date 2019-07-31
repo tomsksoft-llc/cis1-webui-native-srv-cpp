@@ -95,7 +95,7 @@ std::map<std::string, std::string> parse_request_query(const std::string& body)
     auto start = body.cbegin();
     auto end = body.cend();
     std::match_results<std::string::const_iterator> what;
-    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
+    auto flags = std::regex_constants::match_default;
 
     regex_search(start, end, what, query_begin_regex, flags);
 
@@ -125,7 +125,7 @@ std::map<std::string, std::string> parse_cookies(const std::string& cookies)
     auto start = cookies.cbegin();
     auto end = cookies.cend();
     std::match_results<std::string::const_iterator> what;
-    std::regex_constants::match_flag_type flags = std::regex_constants::match_default;
+    auto flags = std::regex_constants::match_default;
 
     while(regex_search(start, end, what, cookies_regex, flags))
     {
