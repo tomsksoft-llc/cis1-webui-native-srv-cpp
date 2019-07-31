@@ -24,7 +24,8 @@ public:
     void run(
             const std::string& programm,
             std::vector<std::string> args,
-            const on_exit_cb_t& cb);
+            const on_exit_cb_t& cb,
+            bool ignore_output = false);
 
 private:
     boost::asio::io_context& ctx_;
@@ -39,7 +40,6 @@ private:
     std::optional<int> exit_code_;
 
     void do_read(
-            const std::error_code& ec,
             std::shared_ptr<child_process> self,
             size_t offset = 0);
 

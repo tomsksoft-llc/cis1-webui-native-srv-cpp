@@ -164,14 +164,14 @@ bool cis_manager::run_job(
             {path_cat(project_name, "/" + job_name)},
             [project_name, job_name](
                     int exit,
-                    const std::vector<char>& buffer)
+                    const std::vector<char>&)
             {
                 std::cout << "job " << project_name
                           << "/" << job_name 
                           << " finished" << std::endl;
                 std::cout << "process exited with " << exit << std::endl;
-                std::cout << buffer.data() << std::endl;
-            });
+            },
+            true);
     return true;
 }
 
