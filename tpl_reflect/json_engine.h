@@ -1,5 +1,7 @@
 #pragma once
 
+#include <map>
+
 #include <rapidjson/document.h>
 
 #include "meta_converter.h"

@@ -69,4 +69,20 @@ struct string_cat<>
     using value = ct_string<>;
 };
 
+namespace string_detail
+{
+	template <typename S, std::size_t ...N>
+	constexpr meta::ct_string<S::get()[N]...>
+		prepare_impl(S, std::index_sequence<N...>)
+	{
+		return {};
+	}
+
+	template <typename S>
+	constexpr decltype(auto) prepare(S s) {
+		return prepare_impl(s,
+			std::make_index_sequence<sizeof(S::get()) - 1>{});
+	}
+}
+
 } // namespace meta
