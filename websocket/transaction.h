@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <string>
+#include <optional>
 
 #include <boost/asio/executor.hpp>
 

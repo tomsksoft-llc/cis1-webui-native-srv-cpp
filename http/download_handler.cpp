@@ -7,7 +7,7 @@ download_handler::download_handler(
         std::filesystem::path files_root,
         rights_manager& rights)
     : rights_(rights)
-    , files_(std::move(files_root), true)
+    , files_(std::move(files_root).string(), true)
 {}
 
 handle_result download_handler::operator()(

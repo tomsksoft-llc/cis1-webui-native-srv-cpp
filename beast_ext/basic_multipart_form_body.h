@@ -381,7 +381,7 @@ std::size_t basic_multipart_form_body<File>::reader::put(
                         std::make_tuple(filename),
                         std::make_tuple());
                 current_file_->second.open(
-                        (body_.dir_ / filename).c_str(),
+                        (body_.dir_ / filename).string().c_str(),
                         boost::beast::file_mode::write,
                         ec);
                 state_ = state::file;
@@ -497,7 +497,7 @@ std::size_t basic_multipart_form_body<File>::reader::put(
     auto consumed_size = parsed_offset < pending_buffer_.size() ?
                         parsed_offset : pending_buffer_.size();
 
-    ssize_t buf_size = nwritten + consumed_size - parsed_offset;
+    intmax_t buf_size = nwritten + consumed_size - parsed_offset;
 
     auto buf = pending_buffer_.prepare(buf_size);
     {

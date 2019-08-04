@@ -38,7 +38,7 @@ handle_result multipart_form_handler::operator()(
                 {
                     boost::beast::error_code ec;
                     req.body().set_dir(
-                            files_root_ / project / dir,
+                            (files_root_ / project / dir).string(),
                             ec);
                 },
                 [&, ctx](

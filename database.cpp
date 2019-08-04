@@ -8,7 +8,7 @@ namespace database
 database_wrapper::database_wrapper(
         const std::filesystem::path& path,
         std::optional<admin_user> admin)
-    : db_(detail::make_database(path.c_str()))
+    : db_(detail::make_database(path.string().c_str()))
 {
     sync();
 
@@ -44,7 +44,7 @@ void database_wrapper::init(
     db->insert(group{-1, "user"});
     db->insert(group{-1, "admin"});
 
-    ssize_t admin_group_id = db->last_insert_rowid();
+    intmax_t admin_group_id = db->last_insert_rowid();
 
     db->insert(
             user{
@@ -58,19 +58,19 @@ void database_wrapper::init(
     db->insert(group_permission{
             -1,
             admin_group_id,
-            (ssize_t)db->last_insert_rowid()});
+            (intmax_t)db->last_insert_rowid()});
 
     db->insert(permission{-1, "users.permissions"});
     db->insert(group_permission{
             -1,
             admin_group_id,
-            (ssize_t)db->last_insert_rowid()});
+            (intmax_t)db->last_insert_rowid()});
 
     db->insert(permission{-1, "users.change_group"});
     db->insert(group_permission{
             -1,
             admin_group_id,
-            (ssize_t)db->last_insert_rowid()});
+            (intmax_t)db->last_insert_rowid()});
 
     db.commit();
 }

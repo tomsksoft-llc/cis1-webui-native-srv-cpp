@@ -636,7 +636,7 @@ std::optional<database::project_user_right> get_path_rights(
         {
             return rights.check_project_right(
                     ctx.username,
-                    *path_it);
+                    path_it->string());
         }
     }
 

@@ -103,7 +103,7 @@ void bound_task_chain_impl<Args...>::call(ContinuationArgs&&... args)
                                     {
                                         bound_fn(std::forward<decltype(args1)>(
                                                 args1)...,
-                                                [&, self = this->shared_from_this()]
+                                                [&, self = self->shared_from_this()]
                                                 (auto&&... args2)
                                                 {
                                                     this->template call<N-1>(

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <filesystem>
 #include <boost/asio/ip/address.hpp>
 

@@ -24,7 +24,7 @@ application::application(const init_params& params)
     , cis_app_(std::make_shared<http::handlers_chain>())
     , auth_manager_(db_)
     , rights_manager_(db_)
-    , files_(params.doc_root)
+    , files_(params.doc_root.string())
     , upload_handler_(
         std::filesystem::path{params.cis_root / cis::projects},
         rights_manager_)

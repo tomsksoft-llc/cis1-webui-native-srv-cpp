@@ -229,7 +229,7 @@ const std::filesystem::directory_entry& fs_cache_node<
 template <class Notifier>
 std::string fs_cache_node<Notifier>::filename() const
 {
-    return dir_entry_.path().filename();
+    return dir_entry_.path().filename().string();
 }
 
 template <class Notifier>

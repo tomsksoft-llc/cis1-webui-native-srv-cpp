@@ -157,7 +157,7 @@ bool cis_manager::run_job(
     }
     auto executable = canonical(cis_root_ / core / execs_.startjob);
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_);
+    env["cis_base_dir"] = canonical(cis_root_).string();
     auto cp = std::make_shared<child_process>(ioc_, env);
     cp->set_interactive_params(params);
     cp->run(executable.string(),
@@ -186,7 +186,7 @@ bool cis_manager::add_cron(
     }
     auto executable = canonical(cis_root_ / core / execs_.cis_cron);
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_);
+    env["cis_base_dir"] = canonical(cis_root_).string();
     auto cp = std::make_shared<child_process>(ioc_, env);
     cp->run(executable.string(),
             {"--add", cron_expression, path_cat(project_name, "/" + job_name)},
@@ -205,7 +205,7 @@ bool cis_manager::remove_cron(
     }
     auto executable = canonical(cis_root_ / core / execs_.cis_cron);
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_);
+    env["cis_base_dir"] = canonical(cis_root_).string();
     auto cp = std::make_shared<child_process>(ioc_, env);
     cp->run(executable.string(),
             {"--del", cron_expression, path_cat(project_name, "/" + job_name)},
@@ -217,7 +217,7 @@ cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
 {
     auto executable = canonical(cis_root_ / core / execs_.cis_cron);
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_);
+    env["cis_base_dir"] = canonical(cis_root_).string();
 
     return {[&, cp = std::make_shared<child_process>(ioc_, env),
                 executable = executable.string(),

@@ -21,6 +21,7 @@ init_params parse_args(int argc, char* argv[])
     {
         pt::ptree pt;
         pt::ini_parser::read_ini(argv[1], pt);
+
         auto opt_working_dir = pt.get_optional<std::string>(
                 "global.working_dir");
 
@@ -70,7 +71,7 @@ init_params parse_args(int argc, char* argv[])
         result.db_root = ".";
     }
 
-    cis::set_root_dir(result.cis_root.c_str());
+    cis::set_root_dir(result.cis_root.string().c_str());
 
     if(!std::filesystem::exists("webhooks_temp"))
     {
