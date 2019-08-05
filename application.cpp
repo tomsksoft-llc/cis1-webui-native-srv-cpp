@@ -98,6 +98,13 @@ std::shared_ptr<http_router> application::make_public_http_router()
             });
 
     router->add_route(
+            url::make() / CT_STRING("upload") / url::bound_string(),
+            [&upload_handler = upload_handler_](auto&& ...args)
+            {
+                return upload_handler(std::forward<decltype(args)>(args)...);
+            });
+
+    router->add_route(
             url::make() / CT_STRING("download") / url::bound_string() / url::string(),
             [&download_handler = download_handler_](auto&& ...args)
             {
