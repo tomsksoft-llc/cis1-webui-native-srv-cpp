@@ -141,8 +141,8 @@ void list_projects(
     for(auto& file : cis_manager.fs())
     {
         bool is_directory = file.dir_entry().is_directory();
-        auto path = ("/" / file.relative_path()).string();
-        auto link = ("/download" / file.relative_path()).string();
+        auto path = ("/" / file.relative_path()).generic_string();
+        auto link = ("/download" / file.relative_path()).generic_string();
 
         res.fs_entries.push_back(dto::fs_entry{
                 file.filename(),
@@ -183,8 +183,8 @@ void get_project_info(
         for(auto& file : project->get_files())
         {
             bool is_directory = file.dir_entry().is_directory();
-            auto path = ("/" / file.relative_path()).string();
-            auto link = ("/download" / file.relative_path()).string();
+            auto path = ("/" / file.relative_path()).generic_string();
+            auto link = ("/download" / file.relative_path()).generic_string();
 
             res.fs_entries.push_back(dto::fs_entry{
                     file.filename(),
@@ -229,8 +229,8 @@ void get_job_info(
         for(auto& file : job->get_files())
         {
             bool is_directory = file.dir_entry().is_directory();
-            auto path = ("/" / file.relative_path()).string();
-            auto link = ("/download" / file.relative_path()).string();
+            auto path = ("/" / file.relative_path()).generic_string();
+            auto link = ("/download" / file.relative_path()).generic_string();
 
             res.fs_entries.push_back(dto::fs_entry{
                     file.filename(),
@@ -596,8 +596,8 @@ void get_build_info(
         for(auto& file : build->get_files())
         {
             bool is_directory = file.dir_entry().is_directory();
-            auto path = ("/" / file.relative_path()).string();
-            auto link = ("/download" / file.relative_path()).string();
+            auto path = ("/" / file.relative_path()).generic_string();
+            auto link = ("/download" / file.relative_path()).generic_string();
 
             res.fs_entries.push_back(dto::fs_entry{
                     file.filename(),
@@ -814,8 +814,8 @@ void list_directory(
         for(auto& file : it->childs())
         {
             bool is_directory = file.dir_entry().is_directory();
-            auto path = ("/" / file.relative_path()).string();
-            auto link = ("/download" / file.relative_path()).string();
+            auto path = ("/" / file.relative_path()).generic_string();
+            auto link = ("/download" / file.relative_path()).generic_string();
 
             res.entries.push_back(dto::fs_entry{
                     file.filename(),
