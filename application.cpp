@@ -137,15 +137,23 @@ std::shared_ptr<http_router> application::make_public_http_router()
             files_,
             _1, _2, _3, _4);
 
-    router->add_route(url::make() / CT_STRING("test_suite.html"), cb);
-    router->add_route(url::make() / CT_STRING("static") / url::ignore(), cb);
+    router->add_route(url::make() / CT_STRING("js") / url::ignore(), cb);
+    router->add_route(url::make() / CT_STRING("css") / url::ignore(), cb);
+    router->add_route(url::make() / CT_STRING("img") / url::ignore(), cb);
 
     cb = std::bind(
             &http::file_handler::single_file,
             files_,
             _1, _2, _3, _4,
             "/index.html");
-    router->add_route(url::make() / url::ignore(), cb);
+
+    router->add_route(url::root(), cb);
+
+    router->add_route(url::make() / url::ignore(),
+            [&files = files_](auto&& ...args)
+            {
+                return files.sef(std::forward<decltype(args)>(args)...);
+            });
 
     return router;
 }

@@ -84,7 +84,7 @@ public:
                     auto fn_args = std::tuple_cat(
                             std::forward_as_tuple(req, ctx, args...),
                             parsed_args.value());
-                    return std::apply(fn, fn_args);
+                    return std::apply(fn, std::move(fn_args));
                 }
                 return handle_result::error;
             }
