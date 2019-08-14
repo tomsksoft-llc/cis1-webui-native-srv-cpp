@@ -73,4 +73,14 @@ handle_result file_handler::single_file(
         return handle_result::done;
 }
 
+handle_result file_handler::sef(
+        beast::http::request<beast::http::empty_body>& req,
+        request_context& ctx,
+        net::http_session::request_reader& reader,
+        net::http_session::queue& queue)
+{
+    auto real_path = std::string(req.target()) + ".html";
+    return single_file(req, ctx, reader, queue, real_path);
+}
+
 } // namespace http

@@ -26,6 +26,12 @@ public:
             net::http_session::request_reader& reader,
             net::http_session::queue& queue,
             std::string_view path);
+
+    handle_result sef(
+            beast::http::request<beast::http::empty_body>& req,
+            request_context& ctx,
+            net::http_session::request_reader& reader,
+            net::http_session::queue& queue);
 private:
     const std::string doc_root_;
     const bool ignore_mime_;
