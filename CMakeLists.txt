@@ -20,7 +20,7 @@ set(${PROJECT_NAME}_SRC
     websocket/event_dispatcher.cpp
     websocket/event_handlers.cpp
     websocket/transaction.cpp
-    websocket/dto/dto_to_event_id.cpp
+    websocket/dto/dto_to_event_name.cpp
 
     tpl_reflect/json_engine.cpp
 

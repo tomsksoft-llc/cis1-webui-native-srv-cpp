@@ -164,144 +164,118 @@ std::shared_ptr<websocket_router> application::make_ws_router()
     auto router = std::make_shared<websocket_router>();
 
     ws::event_dispatcher dispatcher;
-    dispatcher.add_event_handler<ws::dto::auth_login_pass_request>(
-            ws::request_id::auth_login_pass,
-            std::bind(
-                    &wsh::authenticate,
+    dispatcher.add_event_handler<ws::dto::auth_login_pass>(
+            std::bind(&wsh::authenticate,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::auth_token_request>(
-            ws::request_id::auth_token,
+    dispatcher.add_event_handler<ws::dto::auth_token>(
             std::bind(&wsh::token,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::logout_request>(
-            ws::request_id::logout,
+    dispatcher.add_event_handler<ws::dto::auth_logout>(
             std::bind(&wsh::logout,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::change_pass_request>(
-            ws::request_id::change_pass,
+    dispatcher.add_event_handler<ws::dto::user_auth_change_pass>(
             std::bind(&wsh::change_pass,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::get_user_list_request>(
-            ws::request_id::list_users,
+    dispatcher.add_event_handler<ws::dto::user_list>(
             std::bind(&wsh::list_users,
                 std::ref(auth_manager_),
                 std::ref(rights_manager_),
                 _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::get_user_permissions_request>(
-            ws::request_id::get_user_permissions,
+    dispatcher.add_event_handler<ws::dto::user_permissions_get>(
             std::bind(&wsh::get_user_permissions,
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::set_user_permissions_request>(
-            ws::request_id::set_user_permissions,
+    dispatcher.add_event_handler<ws::dto::user_permissions_set>(
             std::bind(&wsh::set_user_permissions,
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::change_group_request>(
-            ws::request_id::change_group,
+    dispatcher.add_event_handler<ws::dto::user_auth_change_group>(
             std::bind(&wsh::change_group,
                     std::ref(auth_manager_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::disable_user_request>(
-            ws::request_id::disable_user,
+    dispatcher.add_event_handler<ws::dto::user_auth_ban>(
             std::bind(&wsh::disable_user,
                     std::ref(auth_manager_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::generate_api_key_request>(
-            ws::request_id::generate_api_key,
+    dispatcher.add_event_handler<ws::dto::user_api_key_generate>(
             std::bind(&wsh::generate_api_key,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::get_api_key_request>(
-            ws::request_id::get_api_key,
+    dispatcher.add_event_handler<ws::dto::user_api_key_get>(
             std::bind(&wsh::get_api_key,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::remove_api_key_request>(
-            ws::request_id::remove_api_key,
+    dispatcher.add_event_handler<ws::dto::user_api_key_remove>(
             std::bind(&wsh::remove_api_key,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::get_project_list_request>(
-            ws::request_id::list_projects,
+    dispatcher.add_event_handler<ws::dto::cis_project_list_get>(
             std::bind(&wsh::list_projects,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::get_project_info_request>(
-            ws::request_id::get_project_info,
+    dispatcher.add_event_handler<ws::dto::cis_project_info>(
             std::bind(&wsh::get_project_info,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::get_job_info_request>(
-            ws::request_id::get_job_info,
+    dispatcher.add_event_handler<ws::dto::cis_job_info>(
             std::bind(&wsh::get_job_info,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::run_job_request>(
-            ws::request_id::run_job,
+    dispatcher.add_event_handler<ws::dto::cis_job_run>(
             std::bind(&wsh::run_job,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::get_build_info_request>(
-            ws::request_id::get_build_info,
+    dispatcher.add_event_handler<ws::dto::cis_build_info>(
             std::bind(&wsh::get_build_info,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::refresh_fs_entry_request>(
-            ws::request_id::refresh_fs_entry,
+    dispatcher.add_event_handler<ws::dto::fs_entry_refresh>(
             std::bind(&wsh::refresh_fs_entry,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::remove_fs_entry_request>(
-            ws::request_id::remove_fs_entry,
+    dispatcher.add_event_handler<ws::dto::fs_entry_remove>(
             std::bind(&wsh::remove_fs_entry,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::move_fs_entry_request>(
-            ws::request_id::move_fs_entry,
+    dispatcher.add_event_handler<ws::dto::fs_entry_move>(
             std::bind(&wsh::move_fs_entry,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::new_directory_request>(
-            ws::request_id::new_directory,
+    dispatcher.add_event_handler<ws::dto::fs_entry_new_dir>(
             std::bind(&wsh::new_directory,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::list_directory_request>(
-            ws::request_id::list_directory,
+    dispatcher.add_event_handler<ws::dto::fs_entry_list>(
             std::bind(&wsh::list_directory,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::add_cis_cron_request>(
-            ws::request_id::add_cis_cron,
+    dispatcher.add_event_handler<ws::dto::cis_cron_add>(
             std::bind(&wsh::add_cis_cron,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::remove_cis_cron_request>(
-            ws::request_id::remove_cis_cron,
+    dispatcher.add_event_handler<ws::dto::cis_cron_remove>(
             std::bind(&wsh::remove_cis_cron,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::list_cis_cron_request>(
-            ws::request_id::list_cis_cron,
+    dispatcher.add_event_handler<ws::dto::cis_cron_list>(
             std::bind(&wsh::list_cis_cron,
                     std::ref(cis_),
                     std::ref(rights_manager_),

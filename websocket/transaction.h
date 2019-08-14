@@ -11,7 +11,7 @@
 #include "tpl_reflect/meta_converter.h"
 #include "tpl_reflect/json_engine.h"
 
-#include "dto/dto_to_event_id.h"
+#include "dto/dto_to_event_name.h"
 
 namespace websocket
 {
@@ -21,8 +21,7 @@ class transaction
 public:
     transaction(
             const std::shared_ptr<queue_interface>& queue,
-            uint64_t transaction_id,
-            int32_t default_error_id = -1);
+            uint64_t transaction_id);
 
     template <class Payload>
     void send(const Payload& p) const
@@ -31,12 +30,39 @@ public:
         {
             rapidjson::Document d;
 
-            auto id = json::dto_to_event_id<Payload>();
+            auto event = json::dto_to_event_name<Payload>();
 
-            prepare_response(d, id);
+            prepare_response(d, event);
             d.AddMember(
                     rapidjson::Value().SetString("errorMessage"),
                     rapidjson::Value().SetString(""),
+                d.GetAllocator());
+            const auto& conv = Payload::get_converter();
+            conv.template set<json::engine>(
+                    d["data"],
+                    p,
+                    d.GetAllocator());
+
+            send(queue, d);
+        }
+    }
+
+    template <class Payload>
+    void send_error(const Payload& p, const std::string& err) const
+    {
+        if(auto queue = queue_.lock(); queue)
+        {
+            rapidjson::Document d;
+
+            auto event = json::dto_to_event_name<Payload>();
+
+            prepare_response(d, event);
+            d.AddMember(
+                    rapidjson::Value().SetString("errorMessage"),
+                    rapidjson::Value().SetString(
+                            err.c_str(),
+                            err.length(),
+                            d.GetAllocator()),
                 d.GetAllocator());
             const auto& conv = Payload::get_converter();
             conv.template set<json::engine>(
@@ -54,9 +80,9 @@ public:
 private:
     const uint64_t transaction_id_;
     const std::weak_ptr<queue_interface> queue_;
-    const int32_t default_error_id_;
+    const std::string default_error_ = "system.error";
 
-    void prepare_response(rapidjson::Document& doc, int32_t id) const;
+    void prepare_response(rapidjson::Document& doc, std::string event) const;
 
     void send(
             const std::shared_ptr<queue_interface>& queue,

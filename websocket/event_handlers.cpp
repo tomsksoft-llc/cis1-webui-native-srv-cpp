@@ -6,34 +6,35 @@
 #include <rapidjson/writer.h>
 
 #include "cron_utils.h"
-#include "event_list.h"
 #include "bound_task_chain.h"
 
-#include "websocket/dto/auth_login_pass_response.h"
-#include "websocket/dto/auth_token_response.h"
-#include "websocket/dto/logout_response.h"
-#include "websocket/dto/change_pass_response.h"
-#include "websocket/dto/get_user_list_response.h"
-#include "websocket/dto/get_user_permissions_response.h"
-#include "websocket/dto/set_user_permissions_response.h"
-#include "websocket/dto/change_group_response.h"
-#include "websocket/dto/disable_user_response.h"
-#include "websocket/dto/generate_api_key_response.h"
-#include "websocket/dto/get_api_key_response.h"
-#include "websocket/dto/remove_api_key_response.h"
-#include "websocket/dto/get_project_list_response.h"
-#include "websocket/dto/get_project_info_response.h"
-#include "websocket/dto/get_job_info_response.h"
-#include "websocket/dto/run_job_response.h"
-#include "websocket/dto/get_build_info_response.h"
-#include "websocket/dto/refresh_fs_entry_response.h"
-#include "websocket/dto/remove_fs_entry_response.h"
-#include "websocket/dto/move_fs_entry_response.h"
-#include "websocket/dto/new_directory_response.h"
-#include "websocket/dto/list_directory_response.h"
-#include "websocket/dto/add_cis_cron_response.h"
-#include "websocket/dto/remove_cis_cron_response.h"
-#include "websocket/dto/list_cis_cron_response.h"
+#include "websocket/dto/auth_login_pass_success.h"
+#include "websocket/dto/auth_error_wrong_credentials.h"
+#include "websocket/dto/user_auth_change_pass_success.h"
+#include "websocket/dto/user_list_success.h"
+#include "websocket/dto/user_permissions_get_success.h"
+#include "websocket/dto/user_permissions_set_success.h"
+#include "websocket/dto/user_auth_change_group_success.h"
+#include "websocket/dto/user_auth_ban_success.h"
+#include "websocket/dto/user_api_key_generate_success.h"
+#include "websocket/dto/user_api_key_get_success.h"
+#include "websocket/dto/user_api_key_remove_success.h"
+#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/cis_project_list_get_success.h"
+#include "websocket/dto/cis_project_info_success.h"
+#include "websocket/dto/cis_project_error_doesnt_exist.h"
+#include "websocket/dto/cis_job_info_success.h"
+#include "websocket/dto/cis_job_run_success.h"
+#include "websocket/dto/cis_job_error_doesnt_exist.h"
+#include "websocket/dto/cis_build_info_success.h"
+#include "websocket/dto/fs_entry_refresh_success.h"
+#include "websocket/dto/fs_entry_remove_success.h"
+#include "websocket/dto/fs_entry_move_success.h"
+#include "websocket/dto/fs_entry_new_dir_success.h"
+#include "websocket/dto/fs_entry_list_success.h"
+#include "websocket/dto/cis_cron_add_success.h"
+#include "websocket/dto/cis_cron_remove_success.h"
+#include "websocket/dto/cis_cron_list_success.h"
 
 namespace websocket
 {
@@ -44,7 +45,7 @@ namespace handlers
 void authenticate(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::auth_login_pass_request& req,
+        const dto::auth_login_pass& req,
         transaction tr)
 {
     auto token = authentication_handler.authenticate(
@@ -60,7 +61,7 @@ void authenticate(
 
         if(group)
         {
-            dto::auth_login_pass_response res;
+            dto::auth_login_pass_success res;
             res.token = token.value();
             res.group = group.value();
 
@@ -70,13 +71,15 @@ void authenticate(
         return tr.send_error("Internal error.");
     }
 
-    return tr.send_error("Wrong username or password.");
+    return tr.send_error(
+            dto::auth_error_wrong_credentials{},
+            "Wrong credentials.");
 }
 
 void token(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::auth_token_request& req,
+        const dto::auth_token& req,
         transaction tr)
 {
     auto username = authentication_handler.authenticate(req.token);
@@ -90,7 +93,8 @@ void token(
 
         if(group)
         {
-            dto::auth_token_response res;
+            dto::auth_login_pass_success res;
+            res.token = req.token;
             res.group = group.value();
 
             return tr.send(res);
@@ -99,13 +103,15 @@ void token(
         return tr.send_error("Internal error.");
     }
 
-    return tr.send_error("Invalid token.");
+    return tr.send_error(
+            dto::auth_error_wrong_credentials{},
+            "Invalid token.");
 }
 
 void logout(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::logout_request& req,
+        const dto::auth_logout& req,
         transaction tr)
 {
     auto username = authentication_handler.authenticate(req.token);
@@ -121,22 +127,22 @@ void logout(
 
         authentication_handler.delete_token(req.token);
 
-        dto::logout_response res;
-
-        return tr.send(res);
+        return /*logout success*/;
     }
 
-    return tr.send_error("Invalid token.");
+    return tr.send_error(
+            dto::auth_error_wrong_credentials{},
+            "Invalid token.");
 }
 
 void list_projects(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_project_list_request& req,
+        const dto::cis_project_list_get& req,
         transaction tr)
 {
-    dto::get_project_list_response res;
+    dto::cis_project_list_get_success res;
 
     for(auto& file : cis_manager.fs())
     {
@@ -168,7 +174,7 @@ void get_project_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_project_info_request& req,
+        const dto::cis_project_info& req,
         transaction tr)
 {
     auto* project = cis_manager.get_project_info(req.project);
@@ -178,7 +184,7 @@ void get_project_info(
 
     if(project != nullptr && permitted)
     {
-        dto::get_project_info_response res;
+        dto::cis_project_info_success res;
 
         for(auto& file : project->get_files())
         {
@@ -204,17 +210,22 @@ void get_project_info(
 
     if(!permitted)
     {
-        return tr.send_error("Action not permitted.");
-    }
+        dto::user_permissions_error_access_denied err;
 
-    return tr.send_error("Project doesn't exists.");
+        return tr.send_error(err, "Action not permitted.");
+    }
+    
+    dto::cis_project_error_doesnt_exist err;
+    err.project = req.project;
+
+    return tr.send_error(err, "Project doesn't exists.");
 }
 
 void get_job_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_job_info_request& req,
+        const dto::cis_job_info& req,
         transaction tr)
 {
     auto* job = cis_manager.get_job_info(req.project, req.job);
@@ -224,7 +235,7 @@ void get_job_info(
 
     if(job != nullptr && permitted)
     {
-        dto::get_job_info_response res;
+        dto::cis_job_info_success res;
 
         for(auto& file : job->get_files())
         {
@@ -260,17 +271,23 @@ void get_job_info(
 
     if(!permitted)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
-    return tr.send_error("Job doesn't exists.");
+    dto::cis_job_error_doesnt_exist err;
+    err.project = req.project;
+    err.job = req.job;
+
+    return tr.send_error(err, "Job doesn't exists.");
 }
 
 void run_job(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::run_job_request& req,
+        const dto::cis_job_run& req,
         transaction tr)
 {
     std::map<std::string, std::string> params;
@@ -312,23 +329,29 @@ void run_job(
                 req.job,
                 param_values);
 
-        dto::run_job_response res;
+        dto::cis_job_run_success res;
 
         return tr.send(res);
     }
 
     if(!permitted)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
-    return tr.send_error("Job doesn't exists.");
+    dto::cis_job_error_doesnt_exist err;
+    err.project = req.project;
+    err.job = req.job;
+
+    return tr.send_error(err, "Job doesn't exists.");
 }
 
 void change_pass(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::change_pass_request& req,
+        const dto::user_auth_change_pass& req,
         transaction tr)
 {
     bool ok = authentication_handler.change_pass(
@@ -341,7 +364,7 @@ void change_pass(
         return tr.send_error("Invalid password");
     }
 
-    dto::change_pass_response res;
+    dto::user_auth_change_pass_success res;
 
     return tr.send(res);
 }
@@ -350,7 +373,7 @@ void list_users(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_user_list_request& req,
+        const dto::user_list& req,
         transaction tr)
 {
     auto perm = rights.check_user_permission(ctx.username, "users.list");
@@ -360,7 +383,7 @@ void list_users(
     {
         const auto users = authentication_handler.get_user_infos();
 
-        dto::get_user_list_response res;
+        dto::user_list_success res;
 
         for(auto& user : users)
         {
@@ -381,7 +404,7 @@ void list_users(
 void get_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_user_permissions_request& req,
+        const dto::user_permissions_get& req,
         transaction tr)
 {
     auto perm = rights.check_user_permission(ctx.username, "users.permissions");
@@ -391,7 +414,7 @@ void get_user_permissions(
     {
         const auto permissions = rights.get_permissions(req.username);
 
-        dto::get_user_permissions_response res;
+        dto::user_permissions_get_success res;
 
         for(auto [project_name, project_rights] : permissions)
         {
@@ -411,7 +434,7 @@ void get_user_permissions(
 void set_user_permissions(
         rights_manager& rights,
         request_context& ctx,
-        const dto::set_user_permissions_request& req,
+        const dto::user_permissions_set& req,
         transaction tr)
 {
     auto perm = rights.check_user_permission(ctx.username, "users.permissions");
@@ -427,7 +450,7 @@ void set_user_permissions(
                     {-1, -1, -1, perm.read, perm.write, perm.execute});
         }
 
-        dto::set_user_permissions_response res;
+        dto::user_permissions_set_success res;
 
         return tr.send(res);
     }
@@ -439,7 +462,7 @@ void change_group(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const dto::change_group_request& req,
+        const dto::user_auth_change_group& req,
         transaction tr)
 {
 
@@ -455,7 +478,7 @@ void change_group(
     {
         authentication_handler.change_group(req.username, req.group);
 
-        dto::change_group_response res;
+        dto::user_auth_change_group_success res;
 
         return tr.send(res);
     }
@@ -467,7 +490,7 @@ void disable_user(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
-        const dto::disable_user_request& req,
+        const dto::user_auth_ban& req,
         transaction tr)
 {
 
@@ -485,7 +508,7 @@ void disable_user(
                 req.username,
                 req.state ? "disabled" : "user");
 
-        dto::disable_user_response res;
+        dto::user_auth_ban_success res;
 
         return tr.send(res);
     }
@@ -496,7 +519,7 @@ void disable_user(
 void generate_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::generate_api_key_request& req,
+        const dto::user_api_key_generate& req,
         transaction tr)
 {
     if(ctx.username == req.username
@@ -510,7 +533,7 @@ void generate_api_key(
             return tr.send_error("Can't generate APIAccessSecretKey.");
         }
 
-        dto::generate_api_key_response res;
+        dto::user_api_key_generate_success res;
         res.api_key = api_key.value();
 
         return tr.send(res);
@@ -522,7 +545,7 @@ void generate_api_key(
 void get_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::get_api_key_request& req,
+        const dto::user_api_key_get& req,
         transaction tr)
 {
 
@@ -537,7 +560,7 @@ void get_api_key(
             return tr.send_error("Can't retrieve APIAccessSecretKey.");
         }
 
-        dto::get_api_key_response res;
+        dto::user_api_key_get_success res;
         res.api_key = api_key.value();
 
         return tr.send(res);
@@ -549,7 +572,7 @@ void get_api_key(
 void remove_api_key(
         auth_manager& authentication_handler,
         request_context& ctx,
-        const dto::remove_api_key_request& req,
+        const dto::user_api_key_remove& req,
         transaction tr)
 {
     if(ctx.username == req.username
@@ -563,7 +586,7 @@ void remove_api_key(
             return tr.send_error("Can't remove APIAccessSecretKey.");
         }
 
-        dto::remove_api_key_response res;
+        dto::user_api_key_remove_success res;
 
         return tr.send(res);
     }
@@ -575,7 +598,7 @@ void get_build_info(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::get_build_info_request& req,
+        const dto::cis_build_info& req,
         transaction tr)
 {
     auto* build = cis_manager.get_build_info(
@@ -589,7 +612,8 @@ void get_build_info(
     if(build != nullptr && permitted)
     {
         auto& info = build->get_info();
-        dto::get_build_info_response res;
+
+        dto::cis_build_info_success res;
         res.status = info.status ? info.status.value() : -1;
         res.date = info.date ? info.date.value() : "";
 
@@ -647,7 +671,7 @@ void refresh_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::refresh_fs_entry_request& req,
+        const dto::fs_entry_refresh& req,
         transaction tr)
 {
     std::filesystem::path path(req.path);
@@ -670,7 +694,7 @@ void refresh_fs_entry(
         return tr.send_error("Path does not exists.");
     }
 
-    dto::refresh_fs_entry_response res;
+    dto::fs_entry_refresh_success res;
 
     return tr.send(res);
 }
@@ -679,7 +703,7 @@ void remove_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::remove_fs_entry_request& req,
+        const dto::fs_entry_remove& req,
         transaction tr)
 {
     std::filesystem::path path(req.path);
@@ -702,7 +726,7 @@ void remove_fs_entry(
         return tr.send_error("Path does not exists.");
     }
 
-    dto::remove_fs_entry_response res;
+    dto::fs_entry_remove_success res;
 
     return tr.send(res);
 }
@@ -711,7 +735,7 @@ void move_fs_entry(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::move_fs_entry_request& req,
+        const dto::fs_entry_move& req,
         transaction tr)
 {
 
@@ -745,7 +769,7 @@ void move_fs_entry(
         return tr.send_error("Error on move.");
     }
 
-    dto::move_fs_entry_response res;
+    dto::fs_entry_move_success res;
 
     return tr.send(res);
 }
@@ -754,7 +778,7 @@ void new_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::new_directory_request& req,
+        const dto::fs_entry_new_dir& req,
         transaction tr)
 {
     std::filesystem::path path(req.path);
@@ -780,7 +804,7 @@ void new_directory(
         return tr.send_error("Error while creating directory.");
     }
 
-    dto::new_directory_response res;
+    dto::fs_entry_new_dir_success res;
 
     return tr.send(res);
 }
@@ -789,7 +813,7 @@ void list_directory(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::list_directory_request& req,
+        const dto::fs_entry_list& req,
         transaction tr)
 {
     std::filesystem::path path(req.path);
@@ -809,7 +833,7 @@ void list_directory(
 
     if(auto it = fs.find(path); it != fs.end())
     {
-        dto::list_directory_response res;
+        dto::fs_entry_list_success res;
 
         for(auto& file : it->childs())
         {
@@ -835,7 +859,7 @@ void add_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::add_cis_cron_request& req,
+        const dto::cis_cron_add& req,
         transaction tr)
 {
 
@@ -856,7 +880,7 @@ void add_cis_cron(
                 req.job,
                 req.cron_expr);
 
-        dto::add_cis_cron_response res;
+        dto::cis_cron_add_success res;
 
         return tr.send(res);
     }
@@ -873,7 +897,7 @@ void remove_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::remove_cis_cron_request& req,
+        const dto::cis_cron_remove& req,
         transaction tr)
 {
 
@@ -894,7 +918,7 @@ void remove_cis_cron(
                 req.job,
                 req.cron_expr);
 
-        dto::remove_cis_cron_response res;
+        dto::cis_cron_remove_success res;
 
         return tr.send(res);
     }
@@ -911,7 +935,7 @@ void list_cis_cron(
         cis::cis_manager& cis_manager,
         rights_manager& rights,
         request_context& ctx,
-        const dto::list_cis_cron_request& req,
+        const dto::cis_cron_list& req,
         transaction tr)
 {
     if(auto executor = tr.get_executor(); executor)
@@ -920,7 +944,7 @@ void list_cis_cron(
             .then(cis_manager.list_cron(req.mask))
             .then([tr](const std::vector<cis::cron_entry>& entries)
                     {
-                        dto::list_cis_cron_response res;
+                        dto::cis_cron_list_success res;
                         for(auto& entry : entries)
                         {
                             res.entries.push_back({

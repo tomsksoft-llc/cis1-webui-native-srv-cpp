@@ -9,11 +9,9 @@ namespace websocket
 
 transaction::transaction(
         const std::shared_ptr<queue_interface>& queue,
-        uint64_t transaction_id,
-        int32_t default_error_id)
+        uint64_t transaction_id)
     : transaction_id_(transaction_id)
     , queue_(queue)
-    , default_error_id_(default_error_id)
 {}
 
 void transaction::send_error(const std::string& err) const
@@ -22,7 +20,7 @@ void transaction::send_error(const std::string& err) const
     {
         rapidjson::Document d;
 
-        prepare_response(d, default_error_id_);
+        prepare_response(d, default_error_);
 
         d.AddMember(
                 rapidjson::Value().SetString("errorMessage"),
@@ -54,12 +52,12 @@ std::optional<boost::asio::executor> transaction::get_executor() const
     return std::nullopt;
 }
 
-void transaction::prepare_response(rapidjson::Document& doc, int32_t id) const
+void transaction::prepare_response(rapidjson::Document& doc, std::string event) const
 {
     doc.SetObject();
 
     protocol_message msg;
-    msg.event_id = id;
+    msg.event = event;
     msg.transaction_id = transaction_id_;
 
     msg.get_converter().set<json::engine>(doc, msg, doc.GetAllocator());

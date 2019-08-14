@@ -11,7 +11,6 @@
 
 #include "queue_interface.h"
 #include "request_context.h"
-#include "event_list.h"
 #include "transaction.h"
 
 #include "tpl_reflect/json_engine.h"
@@ -28,6 +27,17 @@ public:
             const ReqType&,
             transaction);
 
+    template <class ReqType>
+    struct FnWrapper
+    {
+        template <class Fn>
+        FnWrapper(Fn&& fn)
+            : fn_(fn)
+        {}
+
+        std::function<default_event_handler_t<ReqType>> fn_;
+    };
+
     void dispatch(
             request_context& ctx,
             bool text,
@@ -37,12 +47,11 @@ public:
 
     template <class ReqType>
     void add_event_handler(
-            request_id event_id,
             const std::function<default_event_handler_t<ReqType>>& cb)
     {
         event_handlers_.insert({
-                (int)event_id,
-                [cb, event_id](
+                json::dto_to_event_name<ReqType>(),
+                [cb](
                      request_context& ctx,
                      const rapidjson::Value& json,
                      transaction tr)
@@ -70,7 +79,7 @@ private:
             const rapidjson::Value& json,
             transaction tr);
 
-    std::map<int, std::function<event_handler_t>> event_handlers_;
+    std::map<std::string, std::function<event_handler_t>> event_handlers_;
 };
 
 } // namespace websocket
