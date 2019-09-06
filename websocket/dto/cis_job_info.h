@@ -19,6 +19,10 @@ struct cis_job_info
     {
         using namespace reflect;
         return make_meta_converter<cis_job_info>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("job"),
+                        CT_STRING("info"))
                 .add_field(
                         CT_STRING("project"),
                         ptr_v<&cis_job_info::project>{})

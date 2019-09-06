@@ -20,6 +20,10 @@ struct cis_cron_add
     {
         using namespace reflect;
         return make_meta_converter<cis_cron_add>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("cron"),
+                        CT_STRING("add"))
                 .add_field(
                         CT_STRING("project"),
                         ptr_v<&cis_cron_add::project>{})

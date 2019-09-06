@@ -3,6 +3,7 @@
 #include "websocket/dto/cis_job_run_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
+#include "websocket/dto/cis_job_error_invalid_params.h"
 
 namespace websocket
 {

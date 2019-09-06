@@ -19,6 +19,9 @@ struct auth_login_pass
     {
         using namespace reflect;
         return make_meta_converter<auth_login_pass>()
+                .set_name(
+                        CT_STRING("auth"),
+                        CT_STRING("login_pass"))
                 .add_field(
                         CT_STRING("username"),
                         ptr_v<&auth_login_pass::username>{})

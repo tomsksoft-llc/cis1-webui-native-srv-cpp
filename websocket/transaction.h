@@ -11,8 +11,6 @@
 #include "tpl_reflect/meta_converter.h"
 #include "tpl_reflect/json_engine.h"
 
-#include "dto/dto_to_event_name.h"
-
 namespace websocket
 {
 
@@ -30,14 +28,15 @@ public:
         {
             rapidjson::Document d;
 
-            auto event = json::dto_to_event_name<Payload>();
+            const auto& conv = Payload::get_converter();
+
+            auto event = conv.template name<json::engine>();
 
             prepare_response(d, event);
             d.AddMember(
                     rapidjson::Value().SetString("errorMessage"),
                     rapidjson::Value().SetString(""),
                 d.GetAllocator());
-            const auto& conv = Payload::get_converter();
             conv.template set<json::engine>(
                     d["data"],
                     p,
@@ -54,7 +53,9 @@ public:
         {
             rapidjson::Document d;
 
-            auto event = json::dto_to_event_name<Payload>();
+            const auto& conv = Payload::get_converter();
+
+            auto event = conv.template name<json::engine>();
 
             prepare_response(d, event);
             d.AddMember(
@@ -64,7 +65,6 @@ public:
                             err.length(),
                             d.GetAllocator()),
                 d.GetAllocator());
-            const auto& conv = Payload::get_converter();
             conv.template set<json::engine>(
                     d["data"],
                     p,

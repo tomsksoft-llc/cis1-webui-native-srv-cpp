@@ -19,6 +19,10 @@ struct fs_entry_refresh
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_refresh>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("refresh"))
                 .add_field(
                         CT_STRING("path"),
                         ptr_v<&fs_entry_refresh::path>{})

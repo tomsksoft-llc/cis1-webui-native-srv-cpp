@@ -1,6 +1,7 @@
 #include "ban_user.h"
 
 #include "websocket/dto/user_auth_ban_success.h"
+#include "websocket/dto/user_auth_error_user_not_found.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 
 namespace websocket

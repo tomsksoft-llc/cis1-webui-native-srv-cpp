@@ -18,6 +18,9 @@ struct auth_logout
     {
         using namespace reflect;
         return make_meta_converter<auth_logout>()
+                .set_name(
+                        CT_STRING("auth"),
+                        CT_STRING("logout"))
                 .add_field(
                         CT_STRING("token"),
                         ptr_v<&auth_logout::token>{})

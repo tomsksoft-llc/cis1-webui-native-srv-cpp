@@ -50,6 +50,10 @@ struct user_list_success
     {
         using namespace reflect;
         return make_meta_converter<user_list_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("list"),
+                        CT_STRING("success"))
                 .add_field(
                         CT_STRING("users"),
                         ptr_v<&user_list_success::users>{})

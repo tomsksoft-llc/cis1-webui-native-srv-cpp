@@ -20,6 +20,11 @@ struct cis_build_error_doesnt_exist
     {
         using namespace reflect;
         return make_meta_converter<cis_build_error_doesnt_exist>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("build"),
+                        CT_STRING("error"),
+                        CT_STRING("doesnt_exist"))
                 .add_field(
                         CT_STRING("project"),
                         ptr_v<&cis_build_error_doesnt_exist::project>{})

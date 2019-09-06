@@ -14,6 +14,11 @@ struct user_auth_change_group_success
     {
         using namespace reflect;
         return make_meta_converter<user_auth_change_group_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("auth"),
+                        CT_STRING("change_group"),
+                        CT_STRING("success"))
                 .done();
     }
 };

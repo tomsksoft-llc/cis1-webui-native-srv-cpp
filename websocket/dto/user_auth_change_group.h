@@ -19,6 +19,10 @@ struct user_auth_change_group
     {
         using namespace reflect;
         return make_meta_converter<user_auth_change_group>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("auth"),
+                        CT_STRING("change_group"))
                 .add_field(
                         CT_STRING("username"),
                         ptr_v<&user_auth_change_group::username>{})

@@ -22,6 +22,11 @@ struct cis_build_info_success
     {
         using namespace reflect;
         return make_meta_converter<cis_build_info_success>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("build"),
+                        CT_STRING("info"),
+                        CT_STRING("success"))
                 .add_field(
                         CT_STRING("status"),
                         ptr_v<&cis_build_info_success::status>{})

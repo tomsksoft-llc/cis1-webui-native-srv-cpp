@@ -19,6 +19,9 @@ struct engine
 
     using set_context = rapidjson::Document::AllocatorType&;
 
+    template <class... CTStrings>
+    static std::string name(reflect::name_parts<CTStrings...>);
+
     static bool has(
             const obj_type& protocol_obj,
             const char* str);
@@ -131,6 +134,20 @@ void set(
                     ctx),
             v.Move(),
             ctx);
+}
+
+template <class... CTStrings>
+std::string engine::name(reflect::name_parts<CTStrings...>)
+{
+    std::string str;
+
+    str.reserve((CTStrings::size + ...) + sizeof...(CTStrings));
+
+    ((str.append(CTStrings::value), str.append(".")), ...);
+
+    str.pop_back();
+
+    return str;
 }
 
 template <class FieldType>

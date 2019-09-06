@@ -18,6 +18,9 @@ struct auth_token
     {
         using namespace reflect;
         return make_meta_converter<auth_token>()
+                .set_name(
+                        CT_STRING("auth"),
+                        CT_STRING("token"))
                 .add_field(
                         CT_STRING("token"),
                         ptr_v<&auth_token::token>{})

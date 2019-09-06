@@ -20,6 +20,10 @@ struct cis_cron_remove
     {
         using namespace reflect;
         return make_meta_converter<cis_cron_remove>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("cron"),
+                        CT_STRING("remove"))
                 .add_field(
                         CT_STRING("project"),
                         ptr_v<&cis_cron_remove::project>{})

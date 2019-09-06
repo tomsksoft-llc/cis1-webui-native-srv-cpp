@@ -17,6 +17,10 @@ struct auth_login_pass_success
     {
         using namespace reflect;
         return make_meta_converter<auth_login_pass_success>()
+                .set_name(
+                        CT_STRING("auth"),
+                        CT_STRING("login_pass"),
+                        CT_STRING("success"))
                 .add_field(
                         CT_STRING("group"),
                         ptr_v<&auth_login_pass_success::group>{})

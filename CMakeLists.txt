@@ -19,7 +19,6 @@ set(${PROJECT_NAME}_SRC
 
     websocket/event_dispatcher.cpp
     websocket/transaction.cpp
-    websocket/dto/dto_to_event_name.cpp
 
     websocket/handlers/add_cis_cron.cpp
     websocket/handlers/authenticate.cpp

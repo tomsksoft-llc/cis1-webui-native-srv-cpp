@@ -18,6 +18,10 @@ struct user_auth_ban
     {
         using namespace reflect;
         return make_meta_converter<user_auth_ban>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("auth"),
+                        CT_STRING("ban"))
                 .add_field(
                         CT_STRING("username"),
                         ptr_v<&user_auth_ban::username>{})

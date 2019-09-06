@@ -16,6 +16,10 @@ struct auth_logout_success
     {
         using namespace reflect;
         return make_meta_converter<auth_logout_success>()
+                .set_name(
+                        CT_STRING("auth"),
+                        CT_STRING("logout"),
+                        CT_STRING("success"))
                 .done();
     }
 };

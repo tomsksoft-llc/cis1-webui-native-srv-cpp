@@ -14,6 +14,11 @@ struct user_auth_error_user_not_found
     {
         using namespace reflect;
         return make_meta_converter<user_auth_error_user_not_found>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("auth"),
+                        CT_STRING("error"),
+                        CT_STRING("user_not_found"))
                 .done();
     }
 };

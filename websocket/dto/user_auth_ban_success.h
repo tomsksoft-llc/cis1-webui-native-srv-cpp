@@ -14,6 +14,11 @@ struct user_auth_ban_success
     {
         using namespace reflect;
         return make_meta_converter<user_auth_ban_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("auth"),
+                        CT_STRING("ban"),
+                        CT_STRING("success"))
                 .done();
     }
 };

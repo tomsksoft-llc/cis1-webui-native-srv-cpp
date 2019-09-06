@@ -14,6 +14,11 @@ struct fs_entry_remove_success
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_remove_success>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("remove"),
+                        CT_STRING("success"))
                 .done();
     }
 };

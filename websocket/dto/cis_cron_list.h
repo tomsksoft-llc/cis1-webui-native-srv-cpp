@@ -18,6 +18,10 @@ struct cis_cron_list
     {
         using namespace reflect;
         return make_meta_converter<cis_cron_list>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("cron"),
+                        CT_STRING("list"))
                 .add_field(
                         CT_STRING("mask"),
                         ptr_v<&cis_cron_list::mask>{})

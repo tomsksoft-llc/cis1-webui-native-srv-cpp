@@ -17,6 +17,10 @@ struct fs_entry_new_dir
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_new_dir>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("new_dir"))
                 .add_field(
                         CT_STRING("path"),
                         ptr_v<&fs_entry_new_dir::path>{})

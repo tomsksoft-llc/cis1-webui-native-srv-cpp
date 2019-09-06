@@ -42,6 +42,11 @@ struct cis_cron_list_success
     {
         using namespace reflect;
         return make_meta_converter<cis_cron_list_success>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("cron"),
+                        CT_STRING("list"),
+                        CT_STRING("success"))
                 .add_field(
                         CT_STRING("entries"),
                         ptr_v<&cis_cron_list_success::entries>{})

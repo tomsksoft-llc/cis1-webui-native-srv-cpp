@@ -16,6 +16,10 @@ struct auth_error_wrong_credentials
     {
         using namespace reflect;
         return make_meta_converter<auth_error_wrong_credentials>()
+                .set_name(
+                        CT_STRING("auth"),
+                        CT_STRING("error"),
+                        CT_STRING("wrong_credentials"))
                 .done();
     }
 };

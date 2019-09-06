@@ -18,6 +18,10 @@ struct fs_entry_list
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_list>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("list"))
                 .add_field(
                         CT_STRING("path"),
                         ptr_v<&fs_entry_list::path>{})

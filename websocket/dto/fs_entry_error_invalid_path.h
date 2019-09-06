@@ -14,6 +14,11 @@ struct fs_entry_error_invalid_path
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_error_invalid_path>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("error"),
+                        CT_STRING("invalid_path"))
                 .done();
     }
 };

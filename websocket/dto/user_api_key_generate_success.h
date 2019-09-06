@@ -18,6 +18,11 @@ struct user_api_key_generate_success
     {
         using namespace reflect;
         return make_meta_converter<user_api_key_generate_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("api_key"),
+                        CT_STRING("generate"),
+                        CT_STRING("success"))
                 .add_field(
                         CT_STRING("APIAccessSecretKey"),
                         ptr_v<&user_api_key_generate_success::api_key>{})

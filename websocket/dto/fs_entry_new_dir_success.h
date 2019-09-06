@@ -14,6 +14,11 @@ struct fs_entry_new_dir_success
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_new_dir_success>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("new_dir"),
+                        CT_STRING("success"))
                 .done();
     }
 };

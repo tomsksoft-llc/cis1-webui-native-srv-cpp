@@ -20,6 +20,11 @@ struct cis_project_list_get_success
     {
         using namespace reflect;
         return make_meta_converter<cis_project_list_get_success>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("project_list"),
+                        CT_STRING("get"),
+                        CT_STRING("success"))
                 .add_field(
                         CT_STRING("fs_entries"),
                         ptr_v<&cis_project_list_get_success::fs_entries>{})

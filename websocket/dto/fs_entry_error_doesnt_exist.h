@@ -14,6 +14,11 @@ struct fs_entry_error_doesnt_exist
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_error_doesnt_exist>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("error"),
+                        CT_STRING("doesnt_exist"))
                 .done();
     }
 };

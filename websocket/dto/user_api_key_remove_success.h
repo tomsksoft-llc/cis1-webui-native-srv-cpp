@@ -14,6 +14,11 @@ struct user_api_key_remove_success
     {
         using namespace reflect;
         return make_meta_converter<user_api_key_remove_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("api_key"),
+                        CT_STRING("remove"),
+                        CT_STRING("success"))
                 .done();
     }
 };

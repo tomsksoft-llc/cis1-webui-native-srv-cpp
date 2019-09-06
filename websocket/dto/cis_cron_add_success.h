@@ -14,6 +14,11 @@ struct cis_cron_add_success
     {
         using namespace reflect;
         return make_meta_converter<cis_cron_add_success>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("cron"),
+                        CT_STRING("add"),
+                        CT_STRING("success"))
                 .done();
     }
 };

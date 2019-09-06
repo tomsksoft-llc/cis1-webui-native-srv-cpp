@@ -46,6 +46,11 @@ struct user_permissions_get_success
     {
         using namespace reflect;
         return make_meta_converter<user_permissions_get_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("permissions"),
+                        CT_STRING("get"),
+                        CT_STRING("success"))
                 .add_field(
                         CT_STRING("permissions"),
                         ptr_v<&user_permissions_get_success::permissions>{})

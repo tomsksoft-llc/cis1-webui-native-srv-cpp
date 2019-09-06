@@ -14,6 +14,11 @@ struct fs_entry_error_cant_create_dir
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_error_cant_create_dir>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("error"),
+                        CT_STRING("cant_create_dir"))
                 .done();
     }
 };

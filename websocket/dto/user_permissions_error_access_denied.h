@@ -16,6 +16,11 @@ struct user_permissions_error_access_denied
     {
         using namespace reflect;
         return make_meta_converter<user_permissions_error_access_denied>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("permissions"),
+                        CT_STRING("error"),
+                        CT_STRING("access_denied"))
                 .done();
     }
 };

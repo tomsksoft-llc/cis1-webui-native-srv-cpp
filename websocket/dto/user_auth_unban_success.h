@@ -14,6 +14,11 @@ struct user_auth_unban_success
     {
         using namespace reflect;
         return make_meta_converter<user_auth_unban_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("auth"),
+                        CT_STRING("unban"),
+                        CT_STRING("success"))
                 .done();
     }
 };

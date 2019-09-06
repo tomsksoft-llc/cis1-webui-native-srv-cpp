@@ -14,6 +14,9 @@ struct user_list
     {
         using namespace reflect;
         return make_meta_converter<user_list>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("list"))
                 .done();
     }
 };

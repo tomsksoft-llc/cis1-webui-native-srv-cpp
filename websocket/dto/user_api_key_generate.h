@@ -18,6 +18,10 @@ struct user_api_key_generate
     {
         using namespace reflect;
         return make_meta_converter<user_api_key_generate>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("api_key"),
+                        CT_STRING("generate"))
                 .add_field(
                         CT_STRING("username"),
                         ptr_v<&user_api_key_generate::username>{})

@@ -14,6 +14,11 @@ struct fs_entry_error_cant_move
     {
         using namespace reflect;
         return make_meta_converter<fs_entry_error_cant_move>()
+                .set_name(
+                        CT_STRING("fs"),
+                        CT_STRING("entry"),
+                        CT_STRING("error"),
+                        CT_STRING("cant_move"))
                 .done();
     }
 };

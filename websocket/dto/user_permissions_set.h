@@ -47,6 +47,10 @@ struct user_permissions_set
     {
         using namespace reflect;
         return make_meta_converter<user_permissions_set>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("permissions"),
+                        CT_STRING("set"))
                 .add_field(
                         CT_STRING("username"),
                         ptr_v<&user_permissions_set::username>{})

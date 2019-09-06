@@ -14,6 +14,11 @@ struct user_permissions_set_success
     {
         using namespace reflect;
         return make_meta_converter<user_permissions_set_success>()
+                .set_name(
+                        CT_STRING("user"),
+                        CT_STRING("permissions"),
+                        CT_STRING("set"),
+                        CT_STRING("success"))
                 .done();
     }
 };

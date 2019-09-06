@@ -14,6 +14,10 @@ struct cis_project_list_get
     {
         using namespace reflect;
         return make_meta_converter<cis_project_list_get>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("project_list"),
+                        CT_STRING("get"))
                 .done();
     }
 };

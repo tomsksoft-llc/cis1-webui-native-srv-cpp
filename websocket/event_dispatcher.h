@@ -49,8 +49,10 @@ public:
     void add_event_handler(
             const std::function<default_event_handler_t<ReqType>>& cb)
     {
+        const auto& conv = ReqType::get_converter();
+        
         event_handlers_.insert({
-                json::dto_to_event_name<ReqType>(),
+                conv.template name<json::engine>(),
                 [cb](
                      request_context& ctx,
                      const rapidjson::Value& json,

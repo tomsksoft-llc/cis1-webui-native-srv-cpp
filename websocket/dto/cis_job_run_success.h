@@ -14,6 +14,11 @@ struct cis_job_run_success
     {
         using namespace reflect;
         return make_meta_converter<cis_job_run_success>()
+                .set_name(
+                        CT_STRING("cis"),
+                        CT_STRING("job"),
+                        CT_STRING("run"),
+                        CT_STRING("success"))
                 .done();
     }
 };
