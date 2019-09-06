@@ -134,21 +134,12 @@ std::shared_ptr<http_router> application::make_public_http_router()
                         std::forward<decltype(args)>(args)...,
                         http::webhooks_handler::api::gitlab);
             });
-
+    
     std::function<http::handle_result(
             beast::http::request<beast::http::empty_body>&,
             request_context&,
             net::http_session::request_reader&,
             net::http_session::queue&)> cb = std::bind(
-            &http::file_handler::operator(),
-            files_,
-            _1, _2, _3, _4);
-
-    router->add_route(url::make() / CT_STRING("js") / url::ignore(), cb);
-    router->add_route(url::make() / CT_STRING("css") / url::ignore(), cb);
-    router->add_route(url::make() / CT_STRING("img") / url::ignore(), cb);
-
-    cb = std::bind(
             &http::file_handler::single_file,
             files_,
             _1, _2, _3, _4,
@@ -159,7 +150,7 @@ std::shared_ptr<http_router> application::make_public_http_router()
     router->add_route(url::make() / url::ignore(),
             [&files = files_](auto&& ...args)
             {
-                return files.sef(std::forward<decltype(args)>(args)...);
+                return files(std::forward<decltype(args)>(args)...);
             });
 
     return router;
