@@ -9,8 +9,11 @@
 #include "bound_task_chain.h"
 
 #include "websocket/dto/auth_login_pass_success.h"
+#include "websocket/dto/auth_logout_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"
 #include "websocket/dto/user_auth_change_pass_success.h"
+#include "websocket/dto/user_auth_error_pass_doesnt_match.h"
+#include "websocket/dto/user_auth_error_user_not_found.h"
 #include "websocket/dto/user_list_success.h"
 #include "websocket/dto/user_permissions_get_success.h"
 #include "websocket/dto/user_permissions_set_success.h"
@@ -26,12 +29,18 @@
 #include "websocket/dto/cis_job_info_success.h"
 #include "websocket/dto/cis_job_run_success.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
+#include "websocket/dto/cis_job_error_invalid_params.h"
 #include "websocket/dto/cis_build_info_success.h"
+#include "websocket/dto/cis_build_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_refresh_success.h"
 #include "websocket/dto/fs_entry_remove_success.h"
 #include "websocket/dto/fs_entry_move_success.h"
 #include "websocket/dto/fs_entry_new_dir_success.h"
 #include "websocket/dto/fs_entry_list_success.h"
+#include "websocket/dto/fs_entry_error_invalid_path.h"
+#include "websocket/dto/fs_entry_error_doesnt_exist.h"
+#include "websocket/dto/fs_entry_error_cant_move.h"
+#include "websocket/dto/fs_entry_error_cant_create_dir.h"
 #include "websocket/dto/cis_cron_add_success.h"
 #include "websocket/dto/cis_cron_remove_success.h"
 #include "websocket/dto/cis_cron_list_success.h"
@@ -71,9 +80,9 @@ void authenticate(
         return tr.send_error("Internal error.");
     }
 
-    return tr.send_error(
-            dto::auth_error_wrong_credentials{},
-            "Wrong credentials.");
+    dto::auth_error_wrong_credentials err;
+
+    return tr.send_error(err, "Wrong credentials.");
 }
 
 void token(
@@ -103,9 +112,9 @@ void token(
         return tr.send_error("Internal error.");
     }
 
-    return tr.send_error(
-            dto::auth_error_wrong_credentials{},
-            "Invalid token.");
+    dto::auth_error_wrong_credentials err;
+
+    return tr.send_error(err, "Invalid token.");
 }
 
 void logout(
@@ -121,18 +130,18 @@ void logout(
         if(req.token == ctx.active_token)
         {
             //TODO clean subs?
-            ctx.active_token = "";
-            ctx.username = "";
+            ctx.active_token.clear();
+            ctx.username.clear();
         }
 
         authentication_handler.delete_token(req.token);
 
-        return /*logout success*/;
+        return tr.send(dto::auth_logout_success{});
     }
 
-    return tr.send_error(
-            dto::auth_error_wrong_credentials{},
-            "Invalid token.");
+    dto::auth_error_wrong_credentials err;
+    
+    return tr.send_error(err, "Invalid token.");
 }
 
 void list_projects(
@@ -160,11 +169,23 @@ void list_projects(
 
     for(auto& [project_name, project] : cis_manager.get_projects())
     {
+        auto it = std::find_if(
+                res.fs_entries.begin(),
+                res.fs_entries.end(),
+                [&project_name](auto& entry)
+                {
+                    return entry.name == project_name;
+                });
+
+        bool permitted = false;
+
         if(auto perm = rights.check_project_right(ctx.username, project_name);
                 (perm.has_value() && perm.value().read) || !perm.has_value())
         {
-            res.projects.push_back({project_name});
+            permitted = true;
         }
+
+        it->metainfo = dto::fs_entry::project_info{true};
     }
 
     return tr.send(res);
@@ -202,7 +223,15 @@ void get_project_info(
 
         for(auto& [job_name, job] : project->get_jobs())
         {
-            res.jobs.push_back({job_name});
+            auto it = std::find_if(
+                    res.fs_entries.begin(),
+                    res.fs_entries.end(),
+                    [&job_name](auto& entry)
+                    {
+                        return entry.name == job_name;
+                    });
+
+            it->metainfo = dto::fs_entry::job_info{};
         }
 
         return tr.send(res);
@@ -214,7 +243,7 @@ void get_project_info(
 
         return tr.send_error(err, "Action not permitted.");
     }
-    
+
     dto::cis_project_error_doesnt_exist err;
     err.project = req.project;
 
@@ -260,10 +289,17 @@ void get_job_info(
         {
             auto& info = build.get_info();
 
-            res.builds.push_back({
-                    build_name,
-                    info.status ? info.status.value() : -1,
-                    info.date ? info.date.value() : ""});
+            auto it = std::find_if(
+                    res.fs_entries.begin(),
+                    res.fs_entries.end(),
+                    [&build_name](auto& entry)
+                    {
+                        return entry.name == build_name;
+                    });
+
+            it->metainfo = dto::fs_entry::build_info{
+                    info.status,
+                    info.date};
         }
 
         return tr.send(res);
@@ -314,7 +350,9 @@ void run_job(
             {
                 if(param.default_value.empty())
                 {
-                    return tr.send_error("Invalid params.");
+                    dto::cis_job_error_invalid_params err;
+                    
+                    return tr.send_error(err, "Invalid params.");
                 }
                 param_values.push_back(param.default_value);
             }
@@ -361,7 +399,9 @@ void change_pass(
 
     if(!ok)
     {
-        return tr.send_error("Invalid password");
+        dto::user_auth_error_pass_doesnt_match err;
+
+        return tr.send_error(err, "Invalid password");
     }
 
     dto::user_auth_change_pass_success res;
@@ -397,8 +437,10 @@ void list_users(
 
         return tr.send(res);
     }
+    
+    dto::user_permissions_error_access_denied err;
 
-    return tr.send_error("Action not permitted");
+    return tr.send_error(err, "Action not permitted");
 }
 
 void get_user_permissions(
@@ -428,7 +470,9 @@ void get_user_permissions(
         return tr.send(res);
     }
 
-    return tr.send_error("Action not permitted");
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted");
 }
 
 void set_user_permissions(
@@ -455,7 +499,9 @@ void set_user_permissions(
         return tr.send(res);
     }
 
-    return tr.send_error("Action not permitted");
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted");
 }
 
 void change_group(
@@ -468,7 +514,9 @@ void change_group(
 
     if(!authentication_handler.has_user(req.username))
     {
-        return tr.send_error("Invalid username.");
+        dto::user_auth_error_user_not_found err;
+
+        return tr.send_error(err, "Invalid username.");
     }
 
     auto perm = rights.check_user_permission(ctx.username, "users.change_group");
@@ -483,10 +531,12 @@ void change_group(
         return tr.send(res);
     }
 
-    return tr.send_error("Action not permitted.");
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted.");
 }
 
-void disable_user(
+void ban_user(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
@@ -496,7 +546,9 @@ void disable_user(
 
     if(!authentication_handler.has_user(req.username))
     {
-        return tr.send_error("Invalid username.");
+        dto::user_auth_error_user_not_found err;
+
+        return tr.send_error(err, "Invalid username.");
     }
 
     auto perm = rights.check_user_permission(ctx.username, "users.change_group");
@@ -506,14 +558,50 @@ void disable_user(
     {
         authentication_handler.change_group(
                 req.username,
-                req.state ? "disabled" : "user");
+                "disabled");
 
         dto::user_auth_ban_success res;
 
         return tr.send(res);
     }
 
-    return tr.send_error("Action not permitted.");
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted.");
+}
+
+void unban_user(
+        auth_manager& authentication_handler,
+        rights_manager& rights,
+        request_context& ctx,
+        const dto::user_auth_unban& req,
+        transaction tr)
+{
+
+    if(!authentication_handler.has_user(req.username))
+    {
+        dto::user_auth_error_user_not_found err;
+
+        return tr.send_error(err, "Invalid username.");
+    }
+
+    auto perm = rights.check_user_permission(ctx.username, "users.change_group");
+    auto permitted = perm.has_value() ? perm.value() : false;
+
+    if(permitted)
+    {
+        authentication_handler.change_group(
+                req.username,
+                "user");
+
+        dto::user_auth_unban_success res;
+
+        return tr.send(res);
+    }
+
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted.");
 }
 
 void generate_api_key(
@@ -539,7 +627,9 @@ void generate_api_key(
         return tr.send(res);
     }
 
-    return tr.send_error("Action not permitted.");
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted.");
 }
 
 void get_api_key(
@@ -566,7 +656,9 @@ void get_api_key(
         return tr.send(res);
     }
 
-    return tr.send_error("Action not permitted.");
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted.");
 }
 
 void remove_api_key(
@@ -591,7 +683,9 @@ void remove_api_key(
         return tr.send(res);
     }
 
-    return tr.send_error("Action not permitted.");
+    dto::user_permissions_error_access_denied err;
+
+    return tr.send_error(err, "Action not permitted.");
 }
 
 void get_build_info(
@@ -636,10 +730,17 @@ void get_build_info(
 
     if(!permitted)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
-    return tr.send_error("Build doesn't exists.");
+    dto::cis_build_error_doesnt_exist err;
+    err.project = req.project;
+    err.job = req.job;
+    err.build = req.build;
+
+    return tr.send_error(err, "Build doesn't exists.");
 }
 
 bool validate_path(const std::filesystem::path& path)
@@ -678,20 +779,26 @@ void refresh_fs_entry(
 
     if(!validate_path(path))
     {
-        return tr.send_error("Invalid path.");
+        dto::fs_entry_error_invalid_path err;
+
+        return tr.send_error(err, "Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().read)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
     auto refresh_result = cis_manager.refresh(path);
 
     if(!refresh_result)
     {
-        return tr.send_error("Path does not exists.");
+        dto::fs_entry_error_doesnt_exist err;
+
+        return tr.send_error(err, "Path does not exists.");
     }
 
     dto::fs_entry_refresh_success res;
@@ -710,20 +817,26 @@ void remove_fs_entry(
 
     if(!validate_path(path))
     {
-        return tr.send_error("Invalid path.");
+        dto::fs_entry_error_invalid_path err;
+
+        return tr.send_error(err, "Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().write)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
     auto remove_result = cis_manager.remove(path);
 
     if(!remove_result)
     {
-        return tr.send_error("Path does not exists.");
+        dto::fs_entry_error_doesnt_exist err;
+
+        return tr.send_error(err, "Path does not exists.");
     }
 
     dto::fs_entry_remove_success res;
@@ -744,19 +857,25 @@ void move_fs_entry(
 
     if(!validate_path(old_path) || !validate_path(new_path))
     {
-        return tr.send_error("Invalid path.");
+        dto::fs_entry_error_invalid_path err;
+
+        return tr.send_error(err, "Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, old_path);
             path_rights && !path_rights.value().write)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, new_path);
             path_rights && !path_rights.value().write)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -766,7 +885,9 @@ void move_fs_entry(
 
     if(ec)
     {
-        return tr.send_error("Error on move.");
+        dto::fs_entry_error_cant_move err;
+
+        return tr.send_error(err, "Error on move.");
     }
 
     dto::fs_entry_move_success res;
@@ -785,13 +906,17 @@ void new_directory(
 
     if(!validate_path(path))
     {
-        return tr.send_error("Invalid path.");
+        dto::fs_entry_error_invalid_path err;
+
+        return tr.send_error(err, "Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().write)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -801,7 +926,9 @@ void new_directory(
 
     if(ec)
     {
-        return tr.send_error("Error while creating directory.");
+        dto::fs_entry_error_cant_create_dir err;
+
+        return tr.send_error(err, "Error while creating directory.");
     }
 
     dto::fs_entry_new_dir_success res;
@@ -820,13 +947,17 @@ void list_directory(
 
     if(!validate_path(path))
     {
-        return tr.send_error("Invalid path.");
+        dto::fs_entry_error_invalid_path err;
+
+        return tr.send_error(err, "Invalid path.");
     }
 
     if(auto path_rights = get_path_rights(ctx, rights, path);
             path_rights && !path_rights.value().read)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -852,7 +983,9 @@ void list_directory(
         return tr.send(res);
     }
 
-    tr.send_error("Directory not found.");
+    dto::fs_entry_error_doesnt_exist err;
+
+    tr.send_error(err, "Path does not exists.");
 }
 
 void add_cis_cron(
@@ -887,10 +1020,17 @@ void add_cis_cron(
 
     if(!permitted)
     {
-        return tr.send_error("Action not permitted.");
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
     }
 
-    return tr.send_error("Job doesn't exists.");
+    dto::cis_job_error_doesnt_exist err;
+    
+    err.project = req.project;
+    err.job = req.job;
+
+    return tr.send_error(err, "Job doesn't exists.");
 }
 
 void remove_cis_cron(
@@ -900,12 +1040,6 @@ void remove_cis_cron(
         const dto::cis_cron_remove& req,
         transaction tr)
 {
-
-    if(!cron::validate_expr(req.cron_expr))
-    {
-        return tr.send_error("Invalid cron expression.");
-    }
-
     auto* job = cis_manager.get_job_info(req.project, req.job);
     auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted =
@@ -925,10 +1059,17 @@ void remove_cis_cron(
 
     if(!permitted)
     {
-        return tr.send_error("Action not permitted.");
-    }
+        dto::user_permissions_error_access_denied err;
 
-    return tr.send_error("Job doesn't exists.");
+        return tr.send_error(err, "Action not permitted.");
+    }
+    
+    dto::cis_job_error_doesnt_exist err;
+    
+    err.project = req.project;
+    err.job = req.job;
+
+    return tr.send_error(err, "Job doesn't exists.");
 }
 
 void list_cis_cron(

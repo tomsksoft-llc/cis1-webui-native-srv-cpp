@@ -10,7 +10,7 @@ namespace websocket
 namespace dto
 {
 
-struct auth_error_wrong_credentials 
+struct auth_error_wrong_credentials
 {
     static constexpr auto get_converter()
     {

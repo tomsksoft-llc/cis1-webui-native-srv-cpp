@@ -36,6 +36,11 @@ std::variant<protocol_message, error> parse_protocol_message(
         return error::parse;
     }
 
+    if(!request.IsObject())
+    {
+        return error::invalid_json;
+    }
+
     auto c = protocol_message::get_converter();
     protocol_message result;
 

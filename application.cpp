@@ -207,7 +207,12 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(rights_manager_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::user_auth_ban>(
-            std::bind(&wsh::disable_user,
+            std::bind(&wsh::ban_user,
+                    std::ref(auth_manager_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::user_auth_unban>(
+            std::bind(&wsh::unban_user,
                     std::ref(auth_manager_),
                     std::ref(rights_manager_),
                     _1, _2, _3));

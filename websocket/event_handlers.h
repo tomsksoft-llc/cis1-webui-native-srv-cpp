@@ -18,6 +18,7 @@
 #include "websocket/dto/user_permissions_set.h"
 #include "websocket/dto/user_auth_change_group.h"
 #include "websocket/dto/user_auth_ban.h"
+#include "websocket/dto/user_auth_unban.h"
 #include "websocket/dto/user_api_key_generate.h"
 #include "websocket/dto/user_api_key_get.h"
 #include "websocket/dto/user_api_key_remove.h"
@@ -93,11 +94,18 @@ void change_group(
         const dto::user_auth_change_group& req,
         transaction tr);
 
-void disable_user(
+void ban_user(
         auth_manager& authentication_handler,
         rights_manager& rights,
         request_context& ctx,
         const dto::user_auth_ban& req,
+        transaction tr);
+
+void unban_user(
+        auth_manager& authentication_handler,
+        rights_manager& rights,
+        request_context& ctx,
+        const dto::user_auth_unban& req,
         transaction tr);
 
 void generate_api_key(

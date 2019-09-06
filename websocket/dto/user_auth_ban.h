@@ -13,7 +13,6 @@ namespace dto
 struct user_auth_ban
 {
     std::string username;
-    bool state;
 
     static constexpr auto get_converter()
     {
@@ -22,9 +21,6 @@ struct user_auth_ban
                 .add_field(
                         CT_STRING("username"),
                         ptr_v<&user_auth_ban::username>{})
-                .add_field(
-                        CT_STRING("state"),
-                        ptr_v<&user_auth_ban::state>{})
                 .done();
     }
 };

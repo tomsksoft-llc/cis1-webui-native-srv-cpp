@@ -34,6 +34,12 @@ std::string dto_to_event_name<ws::dto::auth_logout>()
 }
 
 template <>
+std::string dto_to_event_name<ws::dto::auth_logout_success>()
+{
+    return "auth.logout_success";
+}
+
+template <>
 std::string dto_to_event_name<ws::dto::user_auth_change_pass>()
 {
     return "user.auth.change_pass";
@@ -43,6 +49,18 @@ template <>
 std::string dto_to_event_name<ws::dto::user_auth_change_pass_success>()
 {
     return "user.auth.change_pass.success";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::user_auth_error_pass_doesnt_match>()
+{
+    return "user.auth.error.pass_doesnt_match";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::user_auth_error_user_not_found>()
+{
+    return "user.auth.error.user_not_found";
 }
 
 template <>
@@ -106,9 +124,21 @@ std::string dto_to_event_name<ws::dto::user_auth_ban>()
 }
 
 template <>
+std::string dto_to_event_name<ws::dto::user_auth_unban>()
+{
+    return "user.auth.unban";
+}
+
+template <>
 std::string dto_to_event_name<ws::dto::user_auth_ban_success>()
 {
     return "user.auth.ban.success";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::user_auth_unban_success>()
+{
+    return "user.auth.unban.success";
 }
 
 template <>
@@ -196,6 +226,12 @@ std::string dto_to_event_name<ws::dto::cis_job_error_doesnt_exist>()
 }
 
 template <>
+std::string dto_to_event_name<ws::dto::cis_job_error_invalid_params>()
+{
+    return "cis.job.error.invalid_params";
+}
+
+template <>
 std::string dto_to_event_name<ws::dto::cis_job_run>()
 {
     return "cis.job.run";
@@ -217,6 +253,12 @@ template <>
 std::string dto_to_event_name<ws::dto::cis_build_info_success>()
 {
     return "cis.build.info.success";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::cis_build_error_doesnt_exist>()
+{
+    return "cis.build.error.doesnt_exist";
 }
 
 template <>
@@ -277,6 +319,30 @@ template <>
 std::string dto_to_event_name<ws::dto::fs_entry_list_success>()
 {
     return "fs.entry.list.success";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::fs_entry_error_invalid_path>()
+{
+    return "fs.entry.error.invalid_path";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::fs_entry_error_doesnt_exist>()
+{
+    return "fs.entry.error.doesnt_exist";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::fs_entry_error_cant_move>()
+{
+    return "fs.entry.error.cant_move";
+}
+
+template <>
+std::string dto_to_event_name<ws::dto::fs_entry_error_cant_create_dir>()
+{
+    return "fs.entry.error.cant_create_dir";
 }
 
 template <>
