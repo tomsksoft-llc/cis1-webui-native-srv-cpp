@@ -8,7 +8,7 @@ namespace websocket
 
 struct protocol_message
 {
-    int32_t event_id;
+    std::string event;
     uint64_t transaction_id;
     rapidjson::Document data;
 
@@ -17,8 +17,8 @@ struct protocol_message
         using namespace reflect;
         return make_meta_converter<protocol_message>()
                 .add_field(
-                        CT_STRING("eventId"),
-                        ptr_v<&protocol_message::event_id>{})
+                        CT_STRING("event"),
+                        ptr_v<&protocol_message::event>{})
                 .add_field(
                         CT_STRING("transactionId"),
                         ptr_v<&protocol_message::transaction_id>{})

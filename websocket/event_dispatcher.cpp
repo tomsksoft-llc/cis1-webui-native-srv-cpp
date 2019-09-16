@@ -6,7 +6,6 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
-#include "event_list.h"
 #include "const_stream_adapter.h"
 #include "protocol_message.h"
 #include "tpl_helpers/overloaded.h"
@@ -35,6 +34,11 @@ std::variant<protocol_message, error> parse_protocol_message(
     if(request.HasParseError())
     {
         return error::parse;
+    }
+
+    if(!request.IsObject())
+    {
+        return error::invalid_json;
     }
 
     auto c = protocol_message::get_converter();
@@ -70,16 +74,15 @@ void event_dispatcher::dispatch(
                 meta::overloaded{
                 [&](const error&)
                 {
-                    transaction(queue, 0, -1).send_error("Invalid json.");
+                    transaction(queue, 0).send_error("Invalid json.");
                 },
                 [&](const protocol_message& msg)
                 {
                     transaction tr(
                             queue,
-                            msg.transaction_id,
-                            msg.event_id + 1);
+                            msg.transaction_id);
 
-                    if(auto it = event_handlers_.find(msg.event_id);
+                    if(auto it = event_handlers_.find(msg.event);
                             it != event_handlers_.end())
                     {
                         (it->second)(

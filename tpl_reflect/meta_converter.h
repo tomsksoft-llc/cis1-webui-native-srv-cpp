@@ -12,6 +12,12 @@ class fields_pack{};
 template <class... T>
 class validators_pack{};
 
+template <class... CTStrings>
+struct name_parts
+{
+    size_t size = sizeof...(CTStrings);
+};
+
 template <class... Args>
 struct meta_converter;
 
@@ -154,13 +160,15 @@ struct validator
     }
 };
 
-template <class Type, class... Fields, class... Validators>
+template <class Type, class... Fields, class... Validators, class NameParts>
 struct meta_converter<
         Type,
         fields_pack<Fields...>,
-        validators_pack<Validators...>>
+        validators_pack<Validators...>,
+        NameParts>
         : private Fields...
         , private Validators...
+        , private NameParts
 {
     constexpr meta_converter(
             Fields&&... field_args,
@@ -192,6 +200,12 @@ struct meta_converter<
 		: Fields(std::get<Is>(fields_args))...
         , Validators(validator_args)...
     {}
+
+    template <class ProtocolEngine>
+    static auto name()
+    {
+        return ProtocolEngine::name(NameParts{});
+    }
 
     template <class ProtocolEngine>
     bool has(
@@ -239,11 +253,12 @@ struct ptr_v{};
 template <class... Args>
 struct meta_converter_impl;
 
-template <class Type, class... Fields, class... Validators>
+template <class Type, class... Fields, class... Validators, class NameParts>
 struct meta_converter_impl<
         Type,
         fields_pack<Fields...>,
-        validators_pack<Validators...>>
+        validators_pack<Validators...>,
+        NameParts>
         : public Fields...
         , public Validators...
 {
@@ -254,12 +269,34 @@ struct meta_converter_impl<
             meta_converter_impl<
                     Type,
                     fields_pack<PrevFields...>,
-                    validators_pack<PrevValidators...>>&& prev,
+                    validators_pack<PrevValidators...>,
+                    NameParts>&& prev,
             Entry&& entry)
         : PrevFields(std::move(static_cast<PrevFields&>(prev)))...
         , PrevValidators(std::move(static_cast<PrevValidators&>(prev)))...
         , Entry(std::move(entry))
     {}
+
+    template <class PrevNameParts>
+    constexpr meta_converter_impl(
+            meta_converter_impl<
+                    Type,
+                    fields_pack<Fields...>,
+                    validators_pack<Validators...>,
+                    PrevNameParts>&& prev)
+        : Fields(std::move(static_cast<Fields&>(prev)))...
+        , Validators(std::move(static_cast<Validators&>(prev)))...
+    {}
+
+    template <class... CTStrings>
+    constexpr meta_converter_impl<
+            Type,
+            fields_pack<Fields...>,
+            validators_pack<Validators...>,
+            name_parts<CTStrings...>> set_name(CTStrings...)
+    {
+        return {std::move(*this)};
+    }
 
     template <
             class CTString,
@@ -270,7 +307,8 @@ struct meta_converter_impl<
             Type,
             fields_pack<Fields...,
                     field<Type, FieldType, Ptr, CTString, FieldValidators...>>,
-            validators_pack<Validators...>> add_field(
+            validators_pack<Validators...>,
+            NameParts> add_field(
             CTString ct_string,
             ptr_v<Ptr> ptr,
             FieldValidators... field_validators)
@@ -285,7 +323,8 @@ struct meta_converter_impl<
             Type,
             fields_pack<Fields...,
                     ignored_field<Type, CTString>>,
-            validators_pack<Validators...>> add_field(
+            validators_pack<Validators...>,
+            NameParts> add_field(
             CTString ct_string)
     {
         return {std::move(*this), ignored_field<Type, CTString>{}};
@@ -299,7 +338,8 @@ struct meta_converter_impl<
             fields_pack<Fields...>,
             validators_pack<Validators...,
                     validator<Type, Validator, Ptrs...>
-                    >> add_validator(
+                    >,
+            NameParts> add_validator(
             Validator fn,
             ptr_v<Ptrs>... ptrs)
     {
@@ -316,7 +356,8 @@ struct meta_converter_impl<
     constexpr meta_converter<
             Type,
             fields_pack<Fields...>,
-            validators_pack<Validators...>> done()
+            validators_pack<Validators...>,
+            NameParts> done()
     {
         return {std::move(static_cast<Fields&>(*this))...,
                 std::move(static_cast<Validators&>(*this))...};
@@ -331,7 +372,11 @@ using ptr_v = detail::ptr_v<c>;
 template <class T>
 constexpr auto make_meta_converter()
 {
-    return detail::meta_converter_impl<T, fields_pack<>, validators_pack<>>{};
+    return detail::meta_converter_impl<
+            T,
+            fields_pack<>,
+            validators_pack<>,
+            name_parts<>>{};
 }
 
 } // namespace reflect

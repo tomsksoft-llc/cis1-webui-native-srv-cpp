@@ -32,7 +32,7 @@ public:
             net::http_session::request_reader& reader,
             net::http_session::queue& queue,
             const std::string& project,
-            const std::string& dir);
+            const std::string& dir = "");
 };
 
 } // namespace http

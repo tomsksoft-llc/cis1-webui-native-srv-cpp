@@ -18,9 +18,34 @@ set(${PROJECT_NAME}_SRC
     net/fail.cpp
 
     websocket/event_dispatcher.cpp
-    websocket/event_handlers.cpp
     websocket/transaction.cpp
-    websocket/dto/dto_to_event_id.cpp
+
+    websocket/handlers/add_cis_cron.cpp
+    websocket/handlers/authenticate.cpp
+    websocket/handlers/ban_user.cpp
+    websocket/handlers/change_group.cpp
+    websocket/handlers/change_pass.cpp
+    websocket/handlers/generate_api_key.cpp
+    websocket/handlers/get_api_key.cpp
+    websocket/handlers/get_build_info.cpp
+    websocket/handlers/get_job_info.cpp
+    websocket/handlers/get_project_info.cpp
+    websocket/handlers/get_user_permissions.cpp
+    websocket/handlers/list_cis_cron.cpp
+    websocket/handlers/list_directory.cpp
+    websocket/handlers/list_projects.cpp
+    websocket/handlers/list_users.cpp
+    websocket/handlers/logout.cpp
+    websocket/handlers/move_fs_entry.cpp
+    websocket/handlers/new_directory.cpp
+    websocket/handlers/refresh_fs_entry.cpp
+    websocket/handlers/remove_api_key.cpp
+    websocket/handlers/remove_cis_cron.cpp
+    websocket/handlers/remove_fs_entry.cpp
+    websocket/handlers/run_job.cpp
+    websocket/handlers/set_user_permissions.cpp
+    websocket/handlers/token.cpp
+    websocket/handlers/unban_user.cpp
 
     tpl_reflect/json_engine.cpp
 
@@ -51,6 +76,7 @@ set(${PROJECT_NAME}_SRC
     application.cpp
     bound_task_chain.cpp
     base64.cpp
+    path_utils.cpp
     cron_utils.cpp
     random_generator.cpp
     init.cpp
