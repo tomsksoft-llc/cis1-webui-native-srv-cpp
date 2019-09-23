@@ -1,4 +1,4 @@
-#include "knuth_morris_pratt_searcher.h"
+#include "beast_ext/knuth_morris_pratt_searcher.h"
 
 void knuth_morris_pratt_searcher::init(const std::string& pattern)
 {

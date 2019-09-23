@@ -1,4 +1,4 @@
-#include "get_build_info.h"
+#include "websocket/handlers/get_build_info.h"
 
 #include "websocket/dto/cis_build_info_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"

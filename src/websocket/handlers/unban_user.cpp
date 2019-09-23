@@ -1,4 +1,4 @@
-#include "unban_user.h"
+#include "websocket/handlers/unban_user.h"
 
 #include "websocket/dto/user_auth_error_user_not_found.h"
 #include "websocket/dto/user_auth_unban_success.h"

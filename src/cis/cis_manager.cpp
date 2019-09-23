@@ -1,4 +1,4 @@
-#include "cis_manager.h"
+#include "cis/cis_manager.h"
 
 #include <iostream>
 
@@ -7,7 +7,7 @@
 
 #include "exceptions/load_config_error.h"
 #include "child_process.h"
-#include "dirs.h"
+#include "cis/dirs.h"
 #include "file_util.h"
 
 namespace cis

@@ -1,6 +1,6 @@
-#include "queued_websocket_session.h"
+#include "net/queued_websocket_session.h"
 
-#include "fail.h"
+#include "net/fail.h"
 
 #ifndef NDEBUG
 #include <iostream>

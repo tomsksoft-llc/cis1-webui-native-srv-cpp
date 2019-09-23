@@ -1,4 +1,4 @@
-#include "list_directory.h"
+#include "websocket/handlers/list_directory.h"
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"

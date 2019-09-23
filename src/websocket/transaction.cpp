@@ -1,8 +1,8 @@
-#include "transaction.h"
+#include "websocket/transaction.h"
 
 #include <rapidjson/writer.h>
 
-#include "protocol_message.h"
+#include "websocket/protocol_message.h"
 
 namespace websocket
 {

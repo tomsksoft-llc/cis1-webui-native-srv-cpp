@@ -1,4 +1,4 @@
-#include "logout.h"
+#include "websocket/handlers/logout.h"
 
 #include "websocket/dto/auth_logout_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"

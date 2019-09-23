@@ -1,4 +1,4 @@
-#include "webhooks_handler.h"
+#include "http/webhooks_handler.h"
 
 #include <sstream>
 #include <iomanip>
@@ -9,7 +9,7 @@
 #include <rapidjson/stringbuffer.h>
 
 #include "openssl_wrapper/openssl_wrapper.h"
-#include "request_util.h"
+#include "http/request_util.h"
 #include "random_generator.h"
 
 namespace http

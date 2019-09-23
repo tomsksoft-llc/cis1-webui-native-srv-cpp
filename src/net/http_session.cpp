@@ -1,9 +1,9 @@
-#include "http_session.h"
+#include "net/http_session.h"
 
 #include <chrono>
 
-#include "fail.h"
-#include "http_handler_interface.h"
+#include "net/fail.h"
+#include "net/http_handler_interface.h"
 
 namespace net
 {

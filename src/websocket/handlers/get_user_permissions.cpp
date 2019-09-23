@@ -1,4 +1,4 @@
-#include "get_user_permissions.h"
+#include "websocket/handlers/get_user_permissions.h"
 
 #include "websocket/dto/user_permissions_get_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"

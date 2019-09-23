@@ -1,6 +1,6 @@
-#include "websocket_queue.h"
+#include "net/websocket_queue.h"
 
-#include "queued_websocket_session.h"
+#include "net/queued_websocket_session.h"
 
 namespace net
 {

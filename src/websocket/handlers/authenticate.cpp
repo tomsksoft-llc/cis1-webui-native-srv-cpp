@@ -1,4 +1,4 @@
-#include "authenticate.h"
+#include "websocket/handlers/authenticate.h"
 
 #include "websocket/dto/auth_login_pass_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"

@@ -1,4 +1,4 @@
-#include "list_users.h"
+#include "websocket/handlers/list_users.h"
 
 #include "websocket/dto/user_list_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"

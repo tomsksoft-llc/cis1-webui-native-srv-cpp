@@ -1,4 +1,4 @@
-#include "get_job_info.h"
+#include "websocket/handlers/get_job_info.h"
 
 #include "websocket/dto/cis_job_info_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"

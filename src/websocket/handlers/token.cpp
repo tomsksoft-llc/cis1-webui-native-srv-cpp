@@ -1,4 +1,4 @@
-#include "token.h"
+#include "websocket/handlers/token.h"
 
 #include "websocket/dto/auth_login_pass_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"

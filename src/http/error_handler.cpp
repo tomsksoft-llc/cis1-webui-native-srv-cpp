@@ -1,6 +1,6 @@
-#include "error_handler.h"
+#include "http/error_handler.h"
 
-#include "response.h"
+#include "http/response.h"
 
 namespace http
 {

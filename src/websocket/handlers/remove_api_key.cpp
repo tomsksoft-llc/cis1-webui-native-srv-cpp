@@ -1,4 +1,4 @@
-#include "remove_api_key.h"
+#include "websocket/handlers/remove_api_key.h"
 
 #include "websocket/dto/user_api_key_remove_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"

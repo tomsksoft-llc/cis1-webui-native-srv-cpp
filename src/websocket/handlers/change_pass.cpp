@@ -1,4 +1,4 @@
-#include "change_pass.h"
+#include "websocket/handlers/change_pass.h"
 
 #include "websocket/dto/user_auth_error_pass_doesnt_match.h"
 #include "websocket/dto/user_auth_change_pass_success.h"

@@ -1,4 +1,4 @@
-#include "remove_cis_cron.h"
+#include "websocket/handlers/remove_cis_cron.h"
 
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"

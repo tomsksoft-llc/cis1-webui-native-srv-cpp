@@ -1,4 +1,4 @@
-#include "event_dispatcher.h"
+#include "websocket/event_dispatcher.h"
 
 #include <string>
 #include <variant>
@@ -6,8 +6,8 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
 
-#include "const_stream_adapter.h"
-#include "protocol_message.h"
+#include "websocket/const_stream_adapter.h"
+#include "websocket/protocol_message.h"
 #include "tpl_helpers/overloaded.h"
 
 #ifndef NDEBUG

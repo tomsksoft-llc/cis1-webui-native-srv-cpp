@@ -1,4 +1,4 @@
-#include "base_cis_srv_exception.h"
+#include "exceptions/base_cis_srv_exception.h"
 
 base_cis_srv_exception::base_cis_srv_exception(std::string what_arg)
     : what_(std::move(what_arg))

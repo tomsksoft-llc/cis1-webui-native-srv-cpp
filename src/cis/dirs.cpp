@@ -1,4 +1,4 @@
-#include "dirs.h"
+#include "cis/dirs.h"
 
 namespace cis
 {

@@ -1,4 +1,4 @@
-#include "cis_structs.h"
+#include "cis/cis_structs.h"
 
 #include <utility>
 #include <fstream>
