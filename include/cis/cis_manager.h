@@ -7,6 +7,7 @@
 
 #include <boost/asio.hpp>
 
+#include "cis_manager_interface.h"
 #include "database.h"
 #include "fs_cache.h"
 #include "cis_structs.h"
@@ -17,20 +18,10 @@
 namespace cis
 {
 
-struct cron_entry
-{
-    std::string project;
-    std::string job;
-    std::string cron_expr;
-};
-
 class cis_manager
+    : public cis_manager_interface
 {
 public:
-    using list_cron_continuation_t = void(const std::vector<cron_entry>&);
-    using list_cron_cb_t = void(std::function<list_cron_continuation_t>&&);
-    using list_cron_task_t = async_task_wrapper<std::function<list_cron_cb_t>>;
-
     cis_manager(
             boost::asio::io_context& ioc,
             std::filesystem::path cis_root,
@@ -62,7 +53,7 @@ public:
     bool run_job(
             const std::string& project_name,
             const std::string& job_name,
-            const std::vector<std::string>& params = {});
+            const std::vector<std::string>& params);
     bool add_cron(
             const std::string& project_name,
             const std::string& job_name,

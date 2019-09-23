@@ -10,7 +10,7 @@ namespace handlers
 {
 
 void get_user_permissions(
-        rights_manager& rights,
+        rights_manager_interface& rights,
         request_context& ctx,
         const dto::user_permissions_get& req,
         transaction tr)

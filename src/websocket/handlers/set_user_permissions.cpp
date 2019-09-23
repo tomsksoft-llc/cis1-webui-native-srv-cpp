@@ -10,7 +10,7 @@ namespace handlers
 {
 
 void set_user_permissions(
-        rights_manager& rights,
+        rights_manager_interface& rights,
         request_context& ctx,
         const dto::user_permissions_set& req,
         transaction tr)

@@ -10,7 +10,7 @@ namespace handlers
 {
 
 void change_pass(
-        auth_manager& authentication_handler,
+        auth_manager_interface& authentication_handler,
         request_context& ctx,
         const dto::user_auth_change_pass& req,
         transaction tr)

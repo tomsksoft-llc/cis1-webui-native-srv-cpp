@@ -5,20 +5,14 @@
 #include <vector>
 #include <optional>
 
+#include "auth_manager_interface.h"
 #include "net/http_session.h"
 #include "http/handle_result.h"
 #include "request_context.h"
 #include "database.h"
 
-struct user_info
-{
-    std::string name;
-    std::string email;
-    std::string group;
-    std::optional<std::string> api_access_key;
-};
-
 class auth_manager
+    : public auth_manager_interface
 {
 public:
     auth_manager(database::database_wrapper& db);

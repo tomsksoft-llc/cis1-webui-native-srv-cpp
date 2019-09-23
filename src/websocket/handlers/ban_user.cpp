@@ -11,8 +11,8 @@ namespace handlers
 {
 
 void ban_user(
-        auth_manager& authentication_handler,
-        rights_manager& rights,
+        auth_manager_interface& authentication_handler,
+        rights_manager_interface& rights,
         request_context& ctx,
         const dto::user_auth_ban& req,
         transaction tr)

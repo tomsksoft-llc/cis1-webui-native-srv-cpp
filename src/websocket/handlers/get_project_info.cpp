@@ -10,8 +10,8 @@ namespace handlers
 {
 
 void get_project_info(
-        cis::cis_manager& cis_manager,
-        rights_manager& rights,
+        cis::cis_manager_interface& cis_manager,
+        rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_project_info& req,
         transaction tr)

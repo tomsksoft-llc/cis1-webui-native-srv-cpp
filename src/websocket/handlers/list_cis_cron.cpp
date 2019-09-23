@@ -9,8 +9,8 @@ namespace handlers
 {
 
 void list_cis_cron(
-        cis::cis_manager& cis_manager,
-        rights_manager& rights,
+        cis::cis_manager_interface& cis_manager,
+        rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_cron_list& req,
         transaction tr)

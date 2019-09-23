@@ -10,7 +10,7 @@ namespace handlers
 {
 
 void remove_api_key(
-        auth_manager& authentication_handler,
+        auth_manager_interface& authentication_handler,
         request_context& ctx,
         const dto::user_api_key_remove& req,
         transaction tr)

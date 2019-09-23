@@ -5,16 +5,11 @@
 #include <optional>
 #include <filesystem>
 
+#include "rights_manager_interface.h"
 #include "database.h"
 
-struct project_rights
-{
-    bool read;
-    bool write;
-    bool execute;
-};
-
 class rights_manager
+    : public rights_manager_interface
 {
 public:
     rights_manager(database::database_wrapper& db);
