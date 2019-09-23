@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 
-project(ts_ws)
+project(cis1_srv)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
@@ -104,3 +104,6 @@ target_link_libraries(
     std::filesystem
     ${CONAN_LIBS})
 
+if(BUILD_TESTING)
+    add_subdirectory(test_package)
+endif(BUILD_TESTING)
