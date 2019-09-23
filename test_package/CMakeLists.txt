@@ -7,6 +7,7 @@ conan_basic_setup()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
+find_package(Threads REQUIRED)
 find_package(Filesystem REQUIRED Final)
 
 if(BUILD_TESTING)
@@ -19,7 +20,13 @@ add_executable(
     tests
     src/main.cpp)
 
-target_link_libraries(tests ${CONAN_LIBS} std::filesystem)
+target_link_libraries(
+    tests
+    cis1_srv_lib
+    std::filesystem
+    Threads::Threads
+    std::filesystem
+    ${CONAN_LIBS})
 
 enable_testing()
 add_test(NAME tests

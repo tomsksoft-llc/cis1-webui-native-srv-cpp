@@ -17,4 +17,6 @@ class Cis1CoreNativeTests(ConanFile):
         self.cmake.build(target=target_test)
 
     def imports(self):
+        self.copy("libcis1_srv_lib.a", dst="lib", src="lib")
+        self.copy("libcis1_srv_lib.lib", dst="lib", src="lib")
         self.copy("FindFilesystem.cmake", dst="cmake/modules", src="cmake/modules")

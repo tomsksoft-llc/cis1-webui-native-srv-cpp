@@ -31,7 +31,10 @@ class Cis1CoreNative(ConanFile):
     def package(self):
         self.copy("*.h", dst="include", src="include")
         self.copy("cis1-srv", dst="bin", src="bin")
+        self.copy("libcis1_srv_lib.a", dst="lib", src="lib")
+        self.copy("libcis1_srv_lib.lib", dst="lib", src="lib")
         self.copy("FindFilesystem.cmake", dst="cmake/modules", src="cmake/modules")
 
     def package_info(self):
         self.cpp_info.builddirs = ["", "cmake/modules"]
+        self.cpp_info.libs = ["cis1_srv_lib"]

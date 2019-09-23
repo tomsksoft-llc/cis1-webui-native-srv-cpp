@@ -84,22 +84,25 @@ set(${PROJECT_NAME}_SRC
     src/database.cpp
     src/file_util.cpp
     src/rights_manager.cpp
-    src/child_process.cpp
-    src/main.cpp)
+    src/child_process.cpp)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 
-add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SRC})
+add_library(${PROJECT_NAME}_lib STATIC ${${PROJECT_NAME}_SRC})
 
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+set_property(TARGET ${PROJECT_NAME}_lib PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
-target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 target_link_libraries(
     ${PROJECT_NAME}
+    ${PROJECT_NAME}_lib
     Threads::Threads
     std::filesystem
     ${CONAN_LIBS})
