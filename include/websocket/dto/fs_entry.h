@@ -67,7 +67,7 @@ struct fs_entry
                             CT_STRING("status"),
                             ptr_v<&build_info::status>{})
                     .add_field(
-                            CT_STRING("name"),
+                            CT_STRING("date"),
                             ptr_v<&build_info::date>{})
                     .done();
         }
