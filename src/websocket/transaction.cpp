@@ -7,6 +7,8 @@
 namespace websocket
 {
 
+const std::string transaction::default_error_ = "system.error";
+
 transaction::transaction(
         const std::shared_ptr<queue_interface>& queue,
         uint64_t transaction_id)

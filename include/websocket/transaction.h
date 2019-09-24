@@ -6,6 +6,7 @@
 
 #include <boost/asio/executor.hpp>
 
+#include "transaction_handle.h"
 #include "queue_interface.h"
 
 #include "tpl_reflect/meta_converter.h"
@@ -33,10 +34,12 @@ public:
             auto event = conv.template name<json::engine>();
 
             prepare_response(d, event);
+
             d.AddMember(
                     rapidjson::Value().SetString("errorMessage"),
                     rapidjson::Value().SetString(""),
-                d.GetAllocator());
+                    d.GetAllocator());
+
             conv.template set<json::engine>(
                     d["data"],
                     p,
@@ -58,13 +61,15 @@ public:
             auto event = conv.template name<json::engine>();
 
             prepare_response(d, event);
+
             d.AddMember(
                     rapidjson::Value().SetString("errorMessage"),
                     rapidjson::Value().SetString(
                             err.c_str(),
                             err.length(),
                             d.GetAllocator()),
-                d.GetAllocator());
+                    d.GetAllocator());
+
             conv.template set<json::engine>(
                     d["data"],
                     p,
@@ -80,7 +85,7 @@ public:
 private:
     const uint64_t transaction_id_;
     const std::weak_ptr<queue_interface> queue_;
-    const std::string default_error_ = "system.error";
+    static const std::string default_error_;
 
     void prepare_response(rapidjson::Document& doc, std::string event) const;
 
@@ -90,3 +95,8 @@ private:
 };
 
 } // namespace websocket
+
+template <>
+class is_transaction<websocket::transaction>
+    : public std::true_type
+{};
