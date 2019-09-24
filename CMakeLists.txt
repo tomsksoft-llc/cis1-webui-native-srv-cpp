@@ -20,7 +20,6 @@ set(${PROJECT_NAME}_SRC
     src/websocket/event_dispatcher.cpp
     src/websocket/transaction.cpp
 
-    src/websocket/handlers/add_cis_cron.cpp
     src/websocket/handlers/authenticate.cpp
     src/websocket/handlers/ban_user.cpp
     src/websocket/handlers/change_group.cpp
