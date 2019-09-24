@@ -22,7 +22,7 @@ void remove_fs_entry(
 {
     std::filesystem::path path(req.path);
 
-    if(!validate_path(path))
+    if(!validate_path(path) || path == "/")
     {
         dto::fs_entry_error_invalid_path err;
 

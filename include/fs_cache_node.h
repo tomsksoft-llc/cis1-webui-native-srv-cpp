@@ -208,9 +208,12 @@ void fs_cache_node<Notifier>::update()
 template <class Notifier>
 void fs_cache_node<Notifier>::remove()
 {
-    //TODO fail if parent_ == nullptr?
     std::filesystem::remove_all(dir_entry_.path());
-    parent_->update();
+
+    if(parent_ != nullptr)
+    {
+        parent_->update();
+    }
 }
 
 template <class Notifier>
