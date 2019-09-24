@@ -1,0 +1,34 @@
+cmake_minimum_required(VERSION 3.9)
+
+project(tests)
+
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
+
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+
+find_package(Threads REQUIRED)
+find_package(Filesystem REQUIRED Final)
+
+if(BUILD_TESTING)
+include_directories(${CMAKE_SOURCE_DIR}/test_package/include)
+else()
+include_directories(${CMAKE_SOURCE_DIR}/include)
+endif()
+
+add_executable(
+    tests
+    src/main.cpp)
+
+target_link_libraries(
+    tests
+    cis1_srv_lib
+    std::filesystem
+    Threads::Threads
+    std::filesystem
+    ${CONAN_LIBS})
+
+enable_testing()
+add_test(NAME tests
+         WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin
+         COMMAND ${PROJECT_NAME})

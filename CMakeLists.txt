@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.9)
 
-project(ts_ws)
+project(cis1_srv)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
 
@@ -9,98 +9,103 @@ find_package(Filesystem REQUIRED Final)
 
 set(${PROJECT_NAME}_SRC
 
-    net/basic_websocket_session.cpp
-    net/http_session.cpp
-    net/socket_util.cpp
-    net/queued_websocket_session.cpp
-    net/websocket_queue.cpp
-    net/listener.cpp
-    net/fail.cpp
+    src/net/basic_websocket_session.cpp
+    src/net/http_session.cpp
+    src/net/socket_util.cpp
+    src/net/queued_websocket_session.cpp
+    src/net/websocket_queue.cpp
+    src/net/listener.cpp
+    src/net/fail.cpp
 
-    websocket/event_dispatcher.cpp
-    websocket/transaction.cpp
+    src/websocket/event_dispatcher.cpp
+    src/websocket/transaction.cpp
 
-    websocket/handlers/add_cis_cron.cpp
-    websocket/handlers/authenticate.cpp
-    websocket/handlers/ban_user.cpp
-    websocket/handlers/change_group.cpp
-    websocket/handlers/change_pass.cpp
-    websocket/handlers/generate_api_key.cpp
-    websocket/handlers/get_api_key.cpp
-    websocket/handlers/get_build_info.cpp
-    websocket/handlers/get_job_info.cpp
-    websocket/handlers/get_project_info.cpp
-    websocket/handlers/get_user_permissions.cpp
-    websocket/handlers/list_cis_cron.cpp
-    websocket/handlers/list_directory.cpp
-    websocket/handlers/list_projects.cpp
-    websocket/handlers/list_users.cpp
-    websocket/handlers/logout.cpp
-    websocket/handlers/move_fs_entry.cpp
-    websocket/handlers/new_directory.cpp
-    websocket/handlers/refresh_fs_entry.cpp
-    websocket/handlers/remove_api_key.cpp
-    websocket/handlers/remove_cis_cron.cpp
-    websocket/handlers/remove_fs_entry.cpp
-    websocket/handlers/run_job.cpp
-    websocket/handlers/set_user_permissions.cpp
-    websocket/handlers/token.cpp
-    websocket/handlers/unban_user.cpp
+    src/websocket/handlers/authenticate.cpp
+    src/websocket/handlers/ban_user.cpp
+    src/websocket/handlers/change_group.cpp
+    src/websocket/handlers/change_pass.cpp
+    src/websocket/handlers/generate_api_key.cpp
+    src/websocket/handlers/get_api_key.cpp
+    src/websocket/handlers/get_build_info.cpp
+    src/websocket/handlers/get_job_info.cpp
+    src/websocket/handlers/get_project_info.cpp
+    src/websocket/handlers/get_user_permissions.cpp
+    src/websocket/handlers/list_cis_cron.cpp
+    src/websocket/handlers/list_directory.cpp
+    src/websocket/handlers/list_projects.cpp
+    src/websocket/handlers/list_users.cpp
+    src/websocket/handlers/logout.cpp
+    src/websocket/handlers/move_fs_entry.cpp
+    src/websocket/handlers/new_directory.cpp
+    src/websocket/handlers/refresh_fs_entry.cpp
+    src/websocket/handlers/remove_api_key.cpp
+    src/websocket/handlers/remove_cis_cron.cpp
+    src/websocket/handlers/remove_fs_entry.cpp
+    src/websocket/handlers/run_job.cpp
+    src/websocket/handlers/set_user_permissions.cpp
+    src/websocket/handlers/token.cpp
+    src/websocket/handlers/unban_user.cpp
 
-    tpl_reflect/json_engine.cpp
+    src/tpl_reflect/json_engine.cpp
 
-    openssl_wrapper/openssl_wrapper.cpp
+    src/openssl_wrapper/openssl_wrapper.cpp
 
-    beast_ext/knuth_morris_pratt_searcher.cpp
-    beast_ext/message_stream_parser.cpp
-    beast_ext/multipart_stream_parser.cpp
+    src/beast_ext/knuth_morris_pratt_searcher.cpp
+    src/beast_ext/message_stream_parser.cpp
+    src/beast_ext/multipart_stream_parser.cpp
 
-    cis/dirs.cpp
-    cis/cis_structs.cpp
-    cis/fs_mapper.cpp
-    cis/cis_manager.cpp
+    src/cis/dirs.cpp
+    src/cis/cis_structs.cpp
+    src/cis/fs_mapper.cpp
+    src/cis/cis_manager.cpp
 
-    exceptions/base_cis_srv_exception.cpp
+    src/exceptions/base_cis_srv_exception.cpp
 
-    http/request_util.cpp
-    http/response.cpp
-    http/file_handler.cpp
-    http/common_handlers.cpp
-    http/cookie_parser.cpp
-    http/multipart_form_handler.cpp
-    http/download_handler.cpp
-    http/webhooks_handler.cpp
-    http/handlers_chain.cpp
-    http/error_handler.cpp
+    src/http/request_util.cpp
+    src/http/response.cpp
+    src/http/file_handler.cpp
+    src/http/common_handlers.cpp
+    src/http/cookie_parser.cpp
+    src/http/multipart_form_handler.cpp
+    src/http/download_handler.cpp
+    src/http/webhooks_handler.cpp
+    src/http/handlers_chain.cpp
+    src/http/error_handler.cpp
 
-    application.cpp
-    bound_task_chain.cpp
-    base64.cpp
-    path_utils.cpp
-    cron_utils.cpp
-    random_generator.cpp
-    init.cpp
-    auth_manager.cpp
-    database.cpp
-    file_util.cpp
-    rights_manager.cpp
-    child_process.cpp
-    main.cpp)
+    src/application.cpp
+    src/bound_task_chain.cpp
+    src/base64.cpp
+    src/path_utils.cpp
+    src/cron_utils.cpp
+    src/random_generator.cpp
+    src/init.cpp
+    src/auth_manager.cpp
+    src/database.cpp
+    src/file_util.cpp
+    src/rights_manager.cpp
+    src/child_process.cpp)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 
-add_executable(${PROJECT_NAME} ${${PROJECT_NAME}_SRC})
+add_library(${PROJECT_NAME}_lib STATIC ${${PROJECT_NAME}_SRC})
 
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+set_property(TARGET ${PROJECT_NAME}_lib PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
-target_include_directories(${PROJECT_NAME} PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
 target_link_libraries(
     ${PROJECT_NAME}
+    ${PROJECT_NAME}_lib
     Threads::Threads
     std::filesystem
     ${CONAN_LIBS})
 
+if(BUILD_TESTING)
+    add_subdirectory(test_package)
+endif(BUILD_TESTING)
