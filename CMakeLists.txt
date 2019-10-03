@@ -17,9 +17,6 @@ set(${PROJECT_NAME}_SRC
     src/net/listener.cpp
     src/net/fail.cpp
 
-    src/websocket/event_dispatcher.cpp
-    src/websocket/transaction.cpp
-
     src/websocket/handlers/authenticate.cpp
     src/websocket/handlers/ban_user.cpp
     src/websocket/handlers/change_group.cpp
@@ -45,8 +42,6 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/set_user_permissions.cpp
     src/websocket/handlers/token.cpp
     src/websocket/handlers/unban_user.cpp
-
-    src/tpl_reflect/json_engine.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 

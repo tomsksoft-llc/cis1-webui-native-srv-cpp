@@ -21,7 +21,10 @@ class Cis1CoreNative(ConanFile):
                 "boost_assert/1.69.0@bincrafters/stable",
                 "sqlite_orm/1.3@demo/testing",
                 "rapidjson/1.1.0@bincrafters/stable",
-                "OpenSSL/1.1.1a@conan/stable")
+                "OpenSSL/1.1.1a@conan/stable",
+                "ccwu_transport/0.0.0@demo/testing",
+                "ccwu_protocol/0.0.0@demo/testing",
+                "cis1_proto_utils/0.0.0@demo/testing")
 
     def build(self):
         cmake = CMake(self)

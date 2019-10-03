@@ -6,7 +6,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/executor.hpp>
 
-#include "websocket/queue_interface.h"
+#include <queue_interface.h>
 
 namespace net
 {
@@ -14,7 +14,7 @@ namespace net
 class queued_websocket_session;
 
 class websocket_queue
-    : public websocket::queue_interface
+    : public queue_interface
 {
 public:
     friend class queued_websocket_session;
@@ -24,7 +24,7 @@ public:
 
     void send_binary(
             boost::asio::const_buffer buffer,
-            std::function<void()> on_write) override;
+            std::function<void()> on_write);
     void send_text(
             boost::asio::const_buffer buffer,
             std::function<void()> on_write) override;

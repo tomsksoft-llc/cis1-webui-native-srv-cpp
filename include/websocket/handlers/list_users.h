@@ -3,7 +3,7 @@
 #include "request_context.h"
 #include "rights_manager_interface.h"
 #include "auth_manager_interface.h"
-#include "websocket/transaction.h"
+#include "transaction.h"
 
 #include "websocket/dto/user_list.h"
 

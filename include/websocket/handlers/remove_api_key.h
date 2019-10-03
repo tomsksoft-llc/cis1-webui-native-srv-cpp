@@ -2,7 +2,7 @@
 
 #include "request_context.h"
 #include "auth_manager_interface.h"
-#include "websocket/transaction.h"
+#include "transaction.h"
 
 #include "websocket/dto/user_api_key_remove.h"
 

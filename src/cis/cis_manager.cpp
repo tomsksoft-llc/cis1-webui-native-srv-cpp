@@ -16,9 +16,13 @@ namespace cis
 cis_manager::cis_manager(
         boost::asio::io_context& ioc,
         std::filesystem::path cis_root,
+        boost::asio::ip::address webui_address,
+        unsigned short webui_port,
         database::database_wrapper& db)
     : ioc_(ioc)
     , cis_root_(std::move(cis_root))
+    , webui_address_(webui_address)
+    , webui_port_(webui_port)
     , projects_(db)
     , fs_(cis_root_ / cis::projects, &projects_)
 {
@@ -158,6 +162,8 @@ bool cis_manager::run_job(
     auto executable = canonical(cis_root_ / core / execs_.startjob);
     auto env = boost::this_process::environment();
     env["cis_base_dir"] = canonical(cis_root_).string();
+    env["webui_address"] = webui_address_.to_string();
+    env["webui_port"] = std::to_string(webui_port_);
     auto cp = std::make_shared<child_process>(ioc_, env);
     cp->set_interactive_params(params);
     cp->run(executable.string(),
@@ -167,7 +173,7 @@ bool cis_manager::run_job(
                     const std::vector<char>&)
             {
                 std::cout << "job " << project_name
-                          << "/" << job_name 
+                          << "/" << job_name
                           << " finished" << std::endl;
                 std::cout << "process exited with " << exit << std::endl;
             },

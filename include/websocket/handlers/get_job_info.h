@@ -3,7 +3,7 @@
 #include "request_context.h"
 #include "rights_manager_interface.h"
 #include "cis/cis_manager.h"
-#include "websocket/transaction.h"
+#include "transaction.h"
 
 #include "websocket/dto/cis_job_info.h"
 

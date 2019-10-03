@@ -2,6 +2,8 @@
 
 #include <deque>
 
+#include <queue_interface.h>
+
 #include "basic_websocket_session.h"
 #include "websocket_queue.h"
 
@@ -13,18 +15,23 @@ class queued_websocket_session
 {
 public:
     using request_handler_t = std::function<void(
-            bool, boost::beast::flat_buffer&, size_t, std::shared_ptr<websocket_queue>)>;
+            bool, boost::asio::const_buffer, size_t, std::shared_ptr<queue_interface>)>;
+
     static void accept_handler(
             boost::asio::ip::tcp::socket&& socket,
             boost::beast::http::request<boost::beast::http::empty_body>&& req,
             request_handler_t handler);
+
     explicit queued_websocket_session(
             boost::asio::ip::tcp::socket socket,
             request_handler_t handler);
+
 #ifndef NDEBUG
     ~queued_websocket_session();
 #endif
+
     void on_accept_success() override;
+
     std::shared_ptr<queued_websocket_session> shared_from_this();
 
     void do_read();
@@ -38,6 +45,7 @@ public:
         std::size_t bytes_transferred);
 
     std::shared_ptr<websocket_queue> get_queue();
+
 private:
     request_handler_t handler_;
     websocket_queue queue_;
