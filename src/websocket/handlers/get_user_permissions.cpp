@@ -13,7 +13,7 @@ void get_user_permissions(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::user_permissions_get& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     auto perm = rights.check_user_permission(ctx.username, "users.permissions");
     auto permitted = perm.has_value() ? perm.value() : false;

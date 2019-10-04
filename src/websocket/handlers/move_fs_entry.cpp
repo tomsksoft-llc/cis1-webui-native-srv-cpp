@@ -18,7 +18,7 @@ void move_fs_entry(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::fs_entry_move& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
 
     std::filesystem::path old_path(req.old_path);

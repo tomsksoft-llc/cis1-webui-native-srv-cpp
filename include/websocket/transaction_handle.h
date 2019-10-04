@@ -3,7 +3,7 @@
 #include <memory>
 #include <type_traits>
 
-#include <transaction.h>
+#include <cis1_proto_utils/transaction.h>
 
 template <class T>
 class is_smart_ptr
@@ -26,7 +26,7 @@ class is_transaction
 {};
 
 template <>
-class is_transaction<transaction>
+class is_transaction<cis1::proto_utils::transaction>
     : public std::true_type
 {};
 

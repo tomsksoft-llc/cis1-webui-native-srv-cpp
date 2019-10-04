@@ -13,7 +13,7 @@ void get_api_key(
         auth_manager_interface& authentication_handler,
         request_context& ctx,
         const dto::user_api_key_get& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
 
     if(ctx.username == req.username

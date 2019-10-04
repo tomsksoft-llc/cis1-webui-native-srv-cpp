@@ -15,7 +15,7 @@ void get_build_info(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_build_info& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     auto* build = cis_manager.get_build_info(
             req.project,

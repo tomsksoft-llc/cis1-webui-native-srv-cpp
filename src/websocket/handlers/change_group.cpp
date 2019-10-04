@@ -15,7 +15,7 @@ void change_group(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::user_auth_change_group& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
 
     if(!authentication_handler.has_user(req.username))

@@ -15,7 +15,7 @@ void ban_user(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::user_auth_ban& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
 
     if(!authentication_handler.has_user(req.username))

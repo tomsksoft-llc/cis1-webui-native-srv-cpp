@@ -85,18 +85,18 @@ conan_basic_setup()
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 
-add_library(${PROJECT_NAME}_lib STATIC ${${PROJECT_NAME}_SRC})
+add_library(${PROJECT_NAME}_impl STATIC ${${PROJECT_NAME}_SRC})
 
 add_executable(${PROJECT_NAME} src/main.cpp)
 
-set_property(TARGET ${PROJECT_NAME}_lib PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME}_impl PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 target_link_libraries(
     ${PROJECT_NAME}
-    ${PROJECT_NAME}_lib
+    ${PROJECT_NAME}_impl
     Threads::Threads
     std::filesystem
     ${CONAN_LIBS})

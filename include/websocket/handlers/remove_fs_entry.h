@@ -1,9 +1,10 @@
 #pragma once
 
+#include <cis1_proto_utils/transaction.h>
+
 #include "request_context.h"
 #include "rights_manager_interface.h"
 #include "cis/cis_manager.h"
-#include "transaction.h"
 
 #include "websocket/dto/fs_entry_remove.h"
 
@@ -18,7 +19,7 @@ void remove_fs_entry(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::fs_entry_remove& req,
-        transaction tr);
+        cis1::proto_utils::transaction tr);
 
 } // namespace handlers
 

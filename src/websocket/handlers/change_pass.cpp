@@ -13,7 +13,7 @@ void change_pass(
         auth_manager_interface& authentication_handler,
         request_context& ctx,
         const dto::user_auth_change_pass& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     bool ok = authentication_handler.change_pass(
             ctx.username,

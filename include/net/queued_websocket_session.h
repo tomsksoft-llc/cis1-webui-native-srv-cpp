@@ -2,7 +2,7 @@
 
 #include <deque>
 
-#include <queue_interface.h>
+#include <cis1_proto_utils/queue_interface.h>
 
 #include "basic_websocket_session.h"
 #include "websocket_queue.h"
@@ -15,7 +15,10 @@ class queued_websocket_session
 {
 public:
     using request_handler_t = std::function<void(
-            bool, boost::asio::const_buffer, size_t, std::shared_ptr<queue_interface>)>;
+            bool,
+            boost::asio::const_buffer, 
+            size_t, 
+            std::shared_ptr<cis1::proto_utils::queue_interface>)>;
 
     static void accept_handler(
             boost::asio::ip::tcp::socket&& socket,

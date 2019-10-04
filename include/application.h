@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ccwu_tcp_server.h>
+#include <cis1_cwu_transport/ccwu_tcp_server.h>
 
 #include "init.h"
 #include "auth_manager.h"
@@ -31,7 +31,7 @@ private:
     asio::signal_set signals_;
     cis::cis_manager cis_;
     std::shared_ptr<http::handlers_chain> app_;
-    ccwu::tcp_server cis_app_;
+    cis1::cwu::tcp_server cis_app_;
     auth_manager auth_manager_;
     rights_manager rights_manager_;
     http::file_handler files_;

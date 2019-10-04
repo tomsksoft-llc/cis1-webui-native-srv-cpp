@@ -15,7 +15,7 @@ void get_job_info(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_job_info& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     auto* job = cis_manager.get_job_info(req.project, req.job);
 

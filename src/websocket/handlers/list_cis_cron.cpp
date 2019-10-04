@@ -13,7 +13,7 @@ void list_cis_cron(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_cron_list& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     if(auto executor = tr.get_executor(); executor)
     {

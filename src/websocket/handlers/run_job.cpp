@@ -16,7 +16,7 @@ void run_job(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_job_run& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     std::map<std::string, std::string> params;
 

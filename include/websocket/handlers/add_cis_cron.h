@@ -1,9 +1,10 @@
 #pragma once
 
+#include <cis1_proto_utils/transaction.h>
+
 #include "request_context.h"
 #include "rights_manager_interface.h"
 #include "cis/cis_manager.h"
-#include "transaction.h"
 
 #include "websocket/dto/cis_cron_add.h"
 

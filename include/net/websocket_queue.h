@@ -6,7 +6,7 @@
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/executor.hpp>
 
-#include <queue_interface.h>
+#include <cis1_proto_utils/queue_interface.h>
 
 namespace net
 {
@@ -14,7 +14,7 @@ namespace net
 class queued_websocket_session;
 
 class websocket_queue
-    : public queue_interface
+    : public cis1::proto_utils::queue_interface
 {
 public:
     friend class queued_websocket_session;
