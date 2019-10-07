@@ -30,42 +30,52 @@ public:
             database::database_wrapper& db);
     cis_manager(const cis_manager&) = delete;
 
-    bool refresh(const std::filesystem::path& path);
-    bool remove(const std::filesystem::path& path);
-    std::filesystem::path get_projects_path() const;
+    bool refresh(const std::filesystem::path& path) override;
 
-    fs_cache<fs_mapper>& fs();
+    bool remove(const std::filesystem::path& path) override;
+
+    std::filesystem::path get_projects_path() const override;
+
+    fs_cache<fs_mapper>& fs() override;
 
     immutable_container_proxy<
-            std::map<std::string, project>> get_projects();
+            std::map<std::string, project>> get_projects() override;
+
     const project* get_project_info(
-            const std::string& project_name) const;
+            const std::string& project_name) const override;
+
     const job* get_job_info(
             const std::string& project_name,
-            const std::string& job_name) const;
+            const std::string& job_name) const override;
+
     const build* get_build_info(
             const std::string& project_name,
             const std::string& job_name,
-            const std::string& build_name) const;
+            const std::string& build_name) const override;
 
     bool rename_job(
             const std::string& project_name,
             const std::string& job_name,
-            const std::string& new_name);
-    bool run_job(
+            const std::string& new_name) override;
+
+    run_job_task_t run_job(
             const std::string& project_name,
             const std::string& job_name,
-            const std::vector<std::string>& params);
+            const std::vector<std::string>& params) override;
+
     bool add_cron(
             const std::string& project_name,
             const std::string& job_name,
-            const std::string& cron_expression);
+            const std::string& cron_expression) override;
+
     bool remove_cron(
             const std::string& project_name,
             const std::string& job_name,
-            const std::string& cron_expression);
+            const std::string& cron_expression) override;
+
     list_cron_task_t list_cron(
-            const std::string& mask);
+            const std::string& mask) override;
+
 private:
     struct executables
     {
@@ -78,6 +88,7 @@ private:
         bool set(const std::string& name, const std::string& value);
         bool valid();
     };
+
     boost::asio::io_context& ioc_;
     std::filesystem::path cis_root_;
     boost::asio::ip::address webui_address_;

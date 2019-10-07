@@ -233,3 +233,11 @@ private:
 };
 
 bound_task_chain<> make_async_chain(boost::asio::executor ex);
+
+template <class Continuation>
+struct make_async_task_t
+{
+    using continuation = Continuation;
+    using cb = void(std::function<continuation>&&);
+    using task = async_task_wrapper<std::function<cb>>;
+};

@@ -253,7 +253,9 @@ void webhooks_handler::finish(
                 file_path,
                 ev);
 
-        cis_.run_job(project, job, params);
+        make_async_chain(boost::asio::system_executor{})
+            .then(cis_.run_job(project, job, params))
+            .run();
     }
 
     beast::http::response<beast::http::empty_body> res{
@@ -262,6 +264,7 @@ void webhooks_handler::finish(
         res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
         res.set(beast::http::field::content_type, "text/html");
         res.keep_alive(req.keep_alive());
+
     queue.send(std::move(res));
 }
 

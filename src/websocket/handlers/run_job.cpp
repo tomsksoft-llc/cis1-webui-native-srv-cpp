@@ -1,6 +1,7 @@
 #include "websocket/handlers/run_job.h"
 
 #include "websocket/dto/cis_job_run_success.h"
+#include "websocket/dto/cis_job_finished.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 #include "websocket/dto/cis_job_error_invalid_params.h"
@@ -54,10 +55,24 @@ void run_job(
             }
         }
 
-        cis_manager.run_job(
-                req.project,
-                req.job,
-                param_values);
+        if(auto executor = tr.get_executor(); executor)
+        {
+            make_async_chain(executor.value())
+                .then(cis_manager.run_job(
+                        req.project,
+                        req.job,
+                        param_values))
+                .then([tr](const cis::execution_info& info)
+                        {
+                            dto::cis_job_finished res;
+                            res.success = info.success;
+                            res.exit_code = info.exit_code;
+                            res.session_id = info.session_id;
+
+                            tr.send(res);
+                        })
+                .run();
+        }
 
         dto::cis_job_run_success res;
 

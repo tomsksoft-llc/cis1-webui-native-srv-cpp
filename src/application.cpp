@@ -83,7 +83,7 @@ void application::init_cis_app()
 #ifndef NDEBUG
                 auto time = std::chrono::system_clock::to_time_t(dto.time);
                 std::cout << "[" << std::put_time(std::localtime(&time), "%Y-%m-%d-%H-%M-%S")
-                          << "|" << (dto.session_id ? *dto.session_id : "unknown") << "]:"
+                          << "|" << (dto.session_id ? *dto.session_id : "unknown") << "] "
                           << dto.message << std::endl;
 #endif
             });
@@ -95,6 +95,7 @@ void application::init_cis_app()
                     {
                         dispatcher.dispatch(true, buffer, buffer.size(), queue);
                     });
+
     cis_app_.listen({params_.cis_address, params_.cis_port});
 }
 

@@ -25,11 +25,20 @@ struct cron_entry
     std::string cron_expr;
 };
 
+struct execution_info
+{
+    bool success;
+    int exit_code;
+    std::string session_id;
+};
+
 struct cis_manager_interface
 {
-    using list_cron_continuation_t = void(const std::vector<cron_entry>&);
-    using list_cron_cb_t = void(std::function<list_cron_continuation_t>&&);
-    using list_cron_task_t = async_task_wrapper<std::function<list_cron_cb_t>>;
+    using list_cron_task_t = typename make_async_task_t<
+            void(const std::vector<cron_entry>&)>::task;
+
+    using run_job_task_t = typename make_async_task_t<
+            void(const execution_info&)>::task;
 
     virtual ~cis_manager_interface() = default;
 
@@ -61,7 +70,7 @@ struct cis_manager_interface
             const std::string& job_name,
             const std::string& new_name) = 0;
 
-    virtual bool run_job(
+    virtual run_job_task_t run_job(
             const std::string& project_name,
             const std::string& job_name,
             const std::vector<std::string>& params = {}) = 0;
