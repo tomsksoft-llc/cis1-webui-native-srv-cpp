@@ -142,6 +142,11 @@ void job::erase()
     fs_node_->remove();
 }
 
+void job::refresh() const
+{
+    fs_node_->update();
+}
+
 immutable_container_proxy<std::map<std::string, build>> job::get_builds()
 {
     return {builds_};

@@ -62,8 +62,10 @@ void run_job(
                         req.project,
                         req.job,
                         param_values))
-                .then([tr](const cis::execution_info& info)
+                .then([tr, job](const cis::execution_info& info)
                         {
+                            job->refresh();
+
                             dto::cis_job_finished res;
                             res.success = info.success;
                             res.exit_code = info.exit_code;

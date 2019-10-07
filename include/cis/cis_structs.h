@@ -64,6 +64,7 @@ struct job
             fs_cache_node<fs_mapper>* fs_node) override;
     virtual void remove_params() override;
     void erase();
+    void refresh() const;
     immutable_container_proxy<std::map<std::string, build>> get_builds();
     const std::map<std::string, build>& get_builds() const;
     const std::vector<param>& get_params() const;
