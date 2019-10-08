@@ -14,7 +14,7 @@ void get_project_info(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_project_info& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     auto* project = cis_manager.get_project_info(req.project);
 

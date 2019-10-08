@@ -13,7 +13,7 @@ void list_projects(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::cis_project_list_get& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     dto::cis_project_list_get_success res;
 

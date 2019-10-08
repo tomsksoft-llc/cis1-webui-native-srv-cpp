@@ -22,7 +22,7 @@ add_executable(
 
 target_link_libraries(
     tests
-    cis1_srv_lib
+    cis1_srv_impl
     std::filesystem
     Threads::Threads
     std::filesystem

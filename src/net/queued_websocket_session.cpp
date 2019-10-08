@@ -83,7 +83,7 @@ void queued_websocket_session::on_read(
     // Note that there is activity
     activity();
 
-    handler_(ws_.got_text(), in_buffer_, bytes_transferred, get_queue());
+    handler_(ws_.got_text(), in_buffer_.data(), bytes_transferred, get_queue());
 
     in_buffer_.consume(in_buffer_.size());
 

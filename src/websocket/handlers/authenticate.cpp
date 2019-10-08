@@ -13,7 +13,7 @@ void authenticate(
         auth_manager_interface& authentication_handler,
         request_context& ctx,
         const dto::auth_login_pass& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     auto token = authentication_handler.authenticate(
             req.username,

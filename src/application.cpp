@@ -1,13 +1,16 @@
 #include "application.h"
 
 #include <functional>
+#include <iomanip>
+
+#include <cis1_proto_utils/event_dispatcher.h>
+#include <cis1_cwu_protocol/protocol.h>
 
 #include "net/queued_websocket_session.h"
 #include "http/error_handler.h"
 #include "http/cookie_parser.h"
 #include "http/common_handlers.h"
 #include "http/url.h"
-#include "websocket/event_dispatcher.h"
 #include "websocket/event_handlers.h"
 #include "cis/dirs.h"
 #include "openssl_wrapper/openssl_wrapper.h"
@@ -19,9 +22,9 @@ application::application(const init_params& params)
     , db_(params.db_root / "db.sqlite", params.admin)
     , ioc_{}
     , signals_(ioc_, SIGINT, SIGTERM)
-    , cis_(ioc_, params_.cis_root, db_)
+    , cis_(ioc_, params_.cis_root, params_.cis_address, params_.cis_port, db_)
     , app_(std::make_shared<http::handlers_chain>())
-    , cis_app_(std::make_shared<http::handlers_chain>())
+    , cis_app_(ioc_)
     , auth_manager_(db_)
     , rights_manager_(db_)
     , files_(params.doc_root.string())
@@ -59,7 +62,7 @@ void application::init_app()
     app_->append_handler(
             std::bind(
                     &http_router::operator(),
-                    make_public_http_router(),
+                    make_http_router(),
                     _1, _2, _3, _4));
     app_->append_ws_handler(
             std::bind(
@@ -72,21 +75,30 @@ void application::init_app()
 
 void application::init_cis_app()
 {
-    cis_app_->set_error_handler(
-            std::bind(
-                    &http::error_handler::operator(),
-                    std::make_shared<http::error_handler>(),
-                    _1, _2, _3));
-    cis_app_->append_handler(
-            std::bind(
-                    &http_router::operator(),
-                    make_cis_http_router(),
-                    _1, _2,_3, _4));
+    cis1::proto_utils::event_dispatcher<> dispatcher;
 
-    cis_app_->listen(ioc_, tcp::endpoint{params_.cis_address, params_.cis_port});
+    dispatcher.add_event_handler<cis1::cwu::log_entry>(
+            [](const cis1::cwu::log_entry& dto, cis1::proto_utils::transaction tr)
+            {
+#ifndef NDEBUG
+                auto time = std::chrono::system_clock::to_time_t(dto.time);
+                std::cout << "[" << std::put_time(std::localtime(&time), "%Y-%m-%d-%H-%M-%S")
+                          << "|" << (dto.session_id ? *dto.session_id : "unknown") << "]:"
+                          << dto.message << std::endl;
+#endif
+            });
+
+    cis_app_.set_message_handler(
+                    [dispatcher](
+                        boost::asio::const_buffer buffer,
+                        std::shared_ptr<cis1::proto_utils::queue_interface> queue) mutable
+                    {
+                        dispatcher.dispatch(true, buffer, buffer.size(), queue);
+                    });
+    cis_app_.listen({params_.cis_address, params_.cis_port});
 }
 
-std::shared_ptr<http_router> application::make_public_http_router()
+std::shared_ptr<http_router> application::make_http_router()
 {
     auto router = std::make_shared<http_router>();
 
@@ -134,7 +146,7 @@ std::shared_ptr<http_router> application::make_public_http_router()
                         std::forward<decltype(args)>(args)...,
                         http::webhooks_handler::api::gitlab);
             });
-    
+
     std::function<http::handle_result(
             beast::http::request<beast::http::empty_body>&,
             request_context&,
@@ -162,7 +174,7 @@ std::shared_ptr<websocket_router> application::make_ws_router()
     namespace wsh = ws::handlers;
     auto router = std::make_shared<websocket_router>();
 
-    ws::event_dispatcher dispatcher;
+    cis1::proto_utils::event_dispatcher<request_context&> dispatcher;
     dispatcher.add_event_handler<ws::dto::auth_login_pass>(
             std::bind(&wsh::authenticate,
                     std::ref(auth_manager_),
@@ -299,7 +311,7 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                             std::move(socket),
                             std::move(req),
                             std::bind(
-                                &ws::event_dispatcher::dispatch,
+                                &cis1::proto_utils::event_dispatcher<request_context&>::dispatch,
                                 std::ref(dispatcher),
                                 ctx,
                                 _1, _2, _3, _4));
@@ -308,13 +320,6 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                 };
 
     router->add_route(url::make() / CT_STRING("ws"), cb);
-
-    return router;
-}
-
-std::shared_ptr<http_router> application::make_cis_http_router()
-{
-    auto router = std::make_shared<http_router>();
 
     return router;
 }

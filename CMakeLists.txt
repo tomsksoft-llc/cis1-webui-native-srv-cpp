@@ -17,9 +17,6 @@ set(${PROJECT_NAME}_SRC
     src/net/listener.cpp
     src/net/fail.cpp
 
-    src/websocket/event_dispatcher.cpp
-    src/websocket/transaction.cpp
-
     src/websocket/handlers/authenticate.cpp
     src/websocket/handlers/ban_user.cpp
     src/websocket/handlers/change_group.cpp
@@ -45,8 +42,6 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/set_user_permissions.cpp
     src/websocket/handlers/token.cpp
     src/websocket/handlers/unban_user.cpp
-
-    src/tpl_reflect/json_engine.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 
@@ -90,18 +85,18 @@ conan_basic_setup()
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 
-add_library(${PROJECT_NAME}_lib STATIC ${${PROJECT_NAME}_SRC})
+add_library(${PROJECT_NAME}_impl STATIC ${${PROJECT_NAME}_SRC})
 
 add_executable(${PROJECT_NAME} src/main.cpp)
 
-set_property(TARGET ${PROJECT_NAME}_lib PROPERTY CXX_STANDARD 17)
+set_property(TARGET ${PROJECT_NAME}_impl PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)
 
 include_directories(${CMAKE_SOURCE_DIR}/include)
 
 target_link_libraries(
     ${PROJECT_NAME}
-    ${PROJECT_NAME}_lib
+    ${PROJECT_NAME}_impl
     Threads::Threads
     std::filesystem
     ${CONAN_LIBS})

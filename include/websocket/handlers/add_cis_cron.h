@@ -1,9 +1,10 @@
 #pragma once
 
+#include <cis1_proto_utils/transaction.h>
+
 #include "request_context.h"
 #include "rights_manager_interface.h"
 #include "cis/cis_manager.h"
-#include "websocket/transaction.h"
 
 #include "websocket/dto/cis_cron_add.h"
 
@@ -11,6 +12,7 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 
+#include "websocket/transaction_handle.h"
 #include "cron_utils.h"
 
 namespace websocket

@@ -25,6 +25,8 @@ public:
     cis_manager(
             boost::asio::io_context& ioc,
             std::filesystem::path cis_root,
+            boost::asio::ip::address webui_address,
+            unsigned short webui_port,
             database::database_wrapper& db);
     cis_manager(const cis_manager&) = delete;
 
@@ -78,6 +80,8 @@ private:
     };
     boost::asio::io_context& ioc_;
     std::filesystem::path cis_root_;
+    boost::asio::ip::address webui_address_;
+    short unsigned webui_port_;
     project_list projects_;
     fs_cache<fs_mapper> fs_;
     executables execs_;

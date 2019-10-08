@@ -3,6 +3,8 @@
 #include <memory>
 #include <type_traits>
 
+#include <cis1_proto_utils/transaction.h>
+
 template <class T>
 class is_smart_ptr
     : public std::false_type
@@ -21,6 +23,11 @@ class is_smart_ptr<std::shared_ptr<T>>
 template <class T>
 class is_transaction
     : public std::false_type
+{};
+
+template <>
+class is_transaction<cis1::proto_utils::transaction>
+    : public std::true_type
 {};
 
 namespace websocket
@@ -47,7 +54,7 @@ public:
     {
         handle_->send(p);
     }
-    
+
     template <class Payload>
     void send_error(const Payload& p, const std::string& err) const
     {

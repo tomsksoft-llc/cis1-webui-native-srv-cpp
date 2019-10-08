@@ -14,7 +14,7 @@ void list_users(
         rights_manager_interface& rights,
         request_context& ctx,
         const dto::user_list& req,
-        transaction tr)
+        cis1::proto_utils::transaction tr)
 {
     auto perm = rights.check_user_permission(ctx.username, "users.list");
     auto permitted = perm.has_value() ? perm.value() : false;

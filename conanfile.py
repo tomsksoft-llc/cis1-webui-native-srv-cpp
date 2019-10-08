@@ -2,12 +2,20 @@ from conans import ConanFile
 from conans import CMake
 
 
-class Cis1CoreNative(ConanFile):
+class Cis1WebUINativeSrvCpp(ConanFile):
     name = "cis1-webui-native-srv-cpp"
-    version = "0.0.0"
-    settings = "os", "arch", "compiler", "build_type"
+    version = "0.0.1"
+    description = "CIS1 webui server implementation."
+    author = "MokinIA <mia@tomsksoft.com>"
     generators = "cmake"
-    exports = "*"
+    settings = "os", "arch", "compiler", "build_type"
+    exports = []
+    exports_sources = [
+        "CMakeLists.txt",
+        "include/*",
+        "src/*",
+        "example_config.ini",
+        "cmake/*"]
     requires = ("gtest/1.8.1@bincrafters/stable",
                 "boost_beast/1.69.0@bincrafters/stable",
                 "boost_process/1.69.0@bincrafters/stable",
@@ -19,9 +27,13 @@ class Cis1CoreNative(ConanFile):
                 "boost_property_tree/1.69.0@bincrafters/stable",
                 "boost_optional/1.69.0@bincrafters/stable",
                 "boost_assert/1.69.0@bincrafters/stable",
-                "sqlite_orm/1.3@demo/testing",
                 "rapidjson/1.1.0@bincrafters/stable",
-                "OpenSSL/1.1.1a@conan/stable")
+                "OpenSSL/1.1.1a@conan/stable",
+                "sqlite_orm/1.3@tomsksoft/cis1",
+                "cis1_tpl/0.0.1@tomsksoft/cis1",
+                "cis1_cwu_transport/0.0.1@tomsksoft/cis1",
+                "cis1_cwu_protocol/0.0.1@tomsksoft/cis1",
+                "cis1_proto_utils/0.0.1@tomsksoft/cis1")
 
     def build(self):
         cmake = CMake(self)
@@ -30,11 +42,11 @@ class Cis1CoreNative(ConanFile):
 
     def package(self):
         self.copy("*.h", dst="include", src="include")
+        self.copy("*.cmake", dst="cmake/modules", src="cmake/modules")
         self.copy("cis1-srv", dst="bin", src="bin")
-        self.copy("libcis1_srv_lib.a", dst="lib", src="lib")
-        self.copy("libcis1_srv_lib.lib", dst="lib", src="lib")
-        self.copy("FindFilesystem.cmake", dst="cmake/modules", src="cmake/modules")
+        self.copy("libcis1_srv_impl.a", dst="lib", src="lib")
+        self.copy("libcis1_srv_impl.lib", dst="lib", src="lib")
 
     def package_info(self):
         self.cpp_info.builddirs = ["", "cmake/modules"]
-        self.cpp_info.libs = ["cis1_srv_lib"]
+        self.cpp_info.libs = ["cis1_srv_impl"]
