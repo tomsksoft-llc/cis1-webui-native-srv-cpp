@@ -47,6 +47,7 @@ void run_job(
 
                     return tr.send_error(err, "Invalid params.");
                 }
+
                 param_values.push_back(param.default_value);
             }
             else
@@ -61,24 +62,27 @@ void run_job(
                 .then(cis_manager.run_job(
                         req.project,
                         req.job,
-                        param_values))
-                .then([tr, job](const cis::execution_info& info)
+                        param_values,
+                        [tr](const std::string& session_id)
                         {
-                            job->refresh();
+                            dto::cis_job_run_success res;
+                            res.session_id = session_id;
 
+                            tr.send(res);
+                        },
+                        [](const std::string& session_id){}))
+                .then(  [tr](const cis::execution_info& info)
+                        {
                             dto::cis_job_finished res;
                             res.success = info.success;
                             res.exit_code = info.exit_code;
-                            res.session_id = info.session_id;
 
                             tr.send(res);
                         })
                 .run();
         }
 
-        dto::cis_job_run_success res;
-
-        return tr.send(res);
+        return;
     }
 
     if(!permitted)

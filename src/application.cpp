@@ -75,26 +75,55 @@ void application::init_app()
 
 void application::init_cis_app()
 {
-    cis1::proto_utils::event_dispatcher<> dispatcher;
+    struct session_context
+    {
+        std::shared_ptr<cis::session> session = nullptr;
+    };
 
-    dispatcher.add_event_handler<cis1::cwu::log_entry>(
-            [](const cis1::cwu::log_entry& dto, cis1::proto_utils::transaction tr)
+    cis1::proto_utils::event_dispatcher<session_context&> dispatcher;
+
+    dispatcher.add_event_handler<cis1::cwu::session_auth>(
+            [&](     session_context& ctx,
+                    const cis1::cwu::session_auth& dto,
+                    cis1::proto_utils::transaction tr)
             {
-#ifndef NDEBUG
-                auto time = std::chrono::system_clock::to_time_t(dto.time);
-                std::cout << "[" << std::put_time(std::localtime(&time), "%Y-%m-%d-%H-%M-%S")
-                          << "|" << (dto.session_id ? *dto.session_id : "unknown") << "] "
-                          << dto.message << std::endl;
-#endif
+                ctx.session = cis_.connect_to_session(dto.session_id);
+
+                if(!ctx.session)
+                {
+                    if(auto queue = tr.get_queue().lock(); queue)
+                    {
+                        queue->close();
+                    }
+                }
             });
 
-    cis_app_.set_message_handler(
-                    [dispatcher](
-                        boost::asio::const_buffer buffer,
-                        std::shared_ptr<cis1::proto_utils::queue_interface> queue) mutable
+    dispatcher.add_event_handler<cis1::cwu::log_entry>(
+            [](     session_context& ctx,
+                    const cis1::cwu::log_entry& dto,
+                    cis1::proto_utils::transaction tr)
+            {
+                if(!ctx.session)
+                {
+                    if(auto queue = tr.get_queue().lock(); queue)
                     {
-                        dispatcher.dispatch(true, buffer, buffer.size(), queue);
-                    });
+                        queue->close();
+                    }
+                }
+                
+                ctx.session->log(dto);
+            });
+
+    cis_app_.set_session_acceptor(
+            [dispatcher]() mutable
+            {
+                return [&dispatcher, ctx = session_context{}](
+                            boost::asio::const_buffer buffer,
+                            std::shared_ptr<cis1::proto_utils::queue_interface> queue) mutable
+                        {
+                            dispatcher.dispatch(ctx, true, buffer, buffer.size(), queue);
+                        };
+            });
 
     cis_app_.listen({params_.cis_address, params_.cis_port});
 }
@@ -299,6 +328,18 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_session_subscribe>(
+            [this](auto&& ...args){
+                    wsh::session_subscribe(
+                            cis_,
+                            std::forward<decltype(args)>(args)...);
+            });
+    dispatcher.add_event_handler<ws::dto::cis_session_unsubscribe>(
+            [this](auto&& ...args){
+                    wsh::session_unsubscribe(
+                            cis_,
+                            std::forward<decltype(args)>(args)...);
+            });
 
     std::function <http::handle_result(
         beast::http::request<beast::http::empty_body>& req,
@@ -308,6 +349,12 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                 request_context& ctx,
                 tcp::socket& socket) mutable
                 {
+                    static uint64_t session_id = 0;
+
+                    ctx.session_id = session_id;
+
+                    ++session_id;
+
                     net::queued_websocket_session::accept_handler(
                             std::move(socket),
                             std::move(req),

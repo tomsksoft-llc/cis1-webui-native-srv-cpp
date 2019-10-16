@@ -6,14 +6,16 @@
 #include <vector>
 
 #include <boost/asio.hpp>
+#include <cis1_proto_utils/transaction.h>
 
-#include "cis_manager_interface.h"
+#include "cis_job.h"
 #include "database.h"
 #include "fs_cache.h"
 #include "cis_structs.h"
 #include "fs_mapper.h"
 #include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
+#include "session.h"
 
 namespace cis
 {
@@ -23,13 +25,6 @@ struct cron_entry
     std::string project;
     std::string job;
     std::string cron_expr;
-};
-
-struct execution_info
-{
-    bool success;
-    int exit_code;
-    std::string session_id;
 };
 
 struct cis_manager_interface
@@ -73,7 +68,11 @@ struct cis_manager_interface
     virtual run_job_task_t run_job(
             const std::string& project_name,
             const std::string& job_name,
-            const std::vector<std::string>& params = {}) = 0;
+            const std::vector<std::string>& params,
+            std::function<
+                    void(const std::string&)> on_session_started,
+            std::function<
+                    void(const std::string&)> on_session_finished) = 0;
 
     virtual bool add_cron(
             const std::string& project_name,
@@ -87,6 +86,18 @@ struct cis_manager_interface
 
     virtual list_cron_task_t list_cron(
             const std::string& mask) = 0;
+
+    virtual std::shared_ptr<session> connect_to_session(
+            const std::string& session_id) = 0;
+
+    virtual void subscribe_to_session(
+            const std::string& session_id,
+            uint64_t ws_session_id,
+            std::shared_ptr<subscriber_interface> subscriber) = 0;
+
+    virtual std::shared_ptr<subscriber_interface> get_session_subscriber(
+            const std::string& session_id,
+            uint64_t ws_session_id) = 0;
 };
 
 } // namespace cis

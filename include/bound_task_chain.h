@@ -4,10 +4,9 @@
 
 #include <boost/asio/bind_executor.hpp>
 #include <boost/asio/executor.hpp>
+#include <boost/asio/post.hpp>
 
 #include "tpl_helpers/detect_idiom.h"
-
-#include <iostream>
 
 namespace thennable
 {
@@ -84,7 +83,7 @@ template <size_t N, class... ContinuationArgs>
 void bound_task_chain_impl<Args...>::call(ContinuationArgs&&... args)
 {
     auto e = std::get<N>(fn_chain_).get_executor();
-    post(e,
+    boost::asio::post(e,
             [
             &,
             self = this->shared_from_this(),
@@ -120,12 +119,11 @@ void bound_task_chain_impl<Args...>::call(ContinuationArgs&&... args)
                                     {
                                         bound_fn(std::forward<decltype(args1)>(
                                                 args1)...,
-                                                [&, self = this->shared_from_this()]
+                                                [self = this->shared_from_this()]
                                                 (auto&&... args2){});
                                     },
                                     std::move(packed_args));
                         }
-                        return;
                     }
                     else if constexpr(!std::is_same<
                             decltype(std::apply(bound_fn, std::move(packed_args))),

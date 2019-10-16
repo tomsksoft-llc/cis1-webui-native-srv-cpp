@@ -8,6 +8,7 @@
 
 struct request_context
 {
+    uint64_t session_id;
     std::string username;
     std::map<std::string, std::string> cookies;
     std::string active_token;

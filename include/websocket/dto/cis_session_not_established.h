@@ -10,22 +10,21 @@ namespace websocket
 namespace dto
 {
 
-struct cis_job_run_success
+struct cis_session_not_established
 {
     std::string session_id;
 
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<cis_job_run_success>()
+        return make_meta_converter<cis_session_not_established>()
                 .set_name(
                         CT_STRING("cis"),
-                        CT_STRING("job"),
-                        CT_STRING("run"),
-                        CT_STRING("success"))
+                        CT_STRING("session"),
+                        CT_STRING("not_established"))
                 .add_field(
                         CT_STRING("session_id"),
-                        ptr_v<&cis_job_run_success::session_id>{})
+                        ptr_v<&cis_session_not_established::session_id>{})
                 .done();
     }
 };

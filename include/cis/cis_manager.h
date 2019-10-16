@@ -11,9 +11,11 @@
 #include "database.h"
 #include "fs_cache.h"
 #include "cis_structs.h"
+#include "session_manager.h"
 #include "fs_mapper.h"
 #include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
+#include "session.h"
 
 namespace cis
 {
@@ -61,7 +63,11 @@ public:
     run_job_task_t run_job(
             const std::string& project_name,
             const std::string& job_name,
-            const std::vector<std::string>& params) override;
+            const std::vector<std::string>& params,
+            std::function<
+                    void(const std::string&)> on_session_started,
+            std::function<
+                    void(const std::string&)> on_session_finished) override;
 
     bool add_cron(
             const std::string& project_name,
@@ -75,6 +81,18 @@ public:
 
     list_cron_task_t list_cron(
             const std::string& mask) override;
+
+    std::shared_ptr<session> connect_to_session(
+            const std::string& session_id) override;
+
+    void subscribe_to_session(
+            const std::string& session_id,
+            uint64_t ws_session_id,
+            std::shared_ptr<subscriber_interface> subscriber) override;
+
+    std::shared_ptr<subscriber_interface> get_session_subscriber(
+            const std::string& session_id,
+            uint64_t ws_session_id) override;
 
 private:
     struct executables
@@ -96,6 +114,7 @@ private:
     project_list projects_;
     fs_cache<fs_mapper> fs_;
     executables execs_;
+    session_manager session_manager_;
 
     void parse_cron_list(
             const std::vector<char>& exe_output,
