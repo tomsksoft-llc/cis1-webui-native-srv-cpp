@@ -6,64 +6,70 @@
 
 child_process::child_process(
         boost::asio::io_context& ctx,
-        const boost::process::environment& env)
+        const boost::process::environment& env,
+        const std::filesystem::path& start_dir,
+        const std::string& program)
     : ctx_(ctx)
     , env_(env)
-    , start_dir_(std::filesystem::path{cis::get_root_dir()} / cis::core)
-    , pipe_(ctx)
+    , start_dir_(start_dir)
+    , program_(program)
     , proc_(nullptr)
-{
-}
-
-void child_process::set_interactive_params(
-        const std::vector<std::string>& params)
-{
-    interactive_params_ = params;
-}
+    , exit_code_(std::nullopt)
+    , std_in_(std::make_shared<boost::process::async_pipe>(ctx))
+    , std_out_(std::make_shared<boost::process::async_pipe>(ctx))
+    , std_err_(std::make_shared<boost::process::async_pipe>(ctx))
+{}
 
 void child_process::run(
-        const std::string& programm,
         std::vector<std::string> args,
-        const on_exit_cb_t& cb,
-        bool ignore_output)
+        const std::shared_ptr<process_io_handler_interface>& io,
+        const std::shared_ptr<task_callback_interface>& callbacks)
 {
     namespace bp = boost::process;
 
-    for(auto& param : interactive_params_)
+    if(io)
     {
-        std::copy(
-                param.begin(),
-                param.end(),
-                std::back_inserter(buffer_));
-        buffer_.push_back('\n');
+        io->accept_std_in(std_in_);
+        io->accept_std_out(std_out_);
+        io->accept_std_err(std_err_);
     }
-
-    cb_ = cb;
 
     try
     {
         proc_ = std::make_unique<bp::child>(
-                programm,
+                program_,
                 env_,
                 ctx_,
-                bp::std_in < boost::asio::buffer(buffer_),
-                bp::std_out > pipe_,
+                bp::std_in < *std_in_,
+                bp::std_out > *std_out_,
+                bp::std_err > *std_err_,
                 bp::start_dir = start_dir_.c_str(),
                 bp::args = args,
                 bp::on_exit =
-                        [&, self = shared_from_this(), ignore_output](
+                        [
+                        &,
+                        self = shared_from_this(),
+                        io = std::move(io),
+                        callbacks = std::move(callbacks)
+                        ](
                                 int exit_code,
                                 const std::error_code& ec) mutable
                         {
                             exit_code_ = exit_code;
-                            buffer_.clear();
-                            if(!ignore_output)
+                            finished_ = true;
+
+                            if(!callbacks)
                             {
-                                do_read(std::move(self));
+                                return;
+                            }
+
+                            if(!ec)
+                            {
+                                callbacks->on_success();
                             }
                             else
                             {
-                                on_done();
+                                callbacks->on_error();
                             }
                         });
     }
@@ -73,42 +79,35 @@ void child_process::run(
     }
 }
 
-void child_process::do_read(
-        std::shared_ptr<child_process> self,
-        size_t offset)
+void child_process::cancel()
 {
-    buffer_.resize(offset + read_size);
-    boost::asio::async_read(
-            pipe_,
-            boost::asio::buffer(
-                    buffer_.data() + offset,
-                    buffer_.size() - offset),
-            [&, self = std::move(self)](
-                const boost::system::error_code& ec,
-                size_t transferred) mutable
-            {
-                if(ec == boost::asio::error::eof)
-                {
-                    buffer_.resize(buffer_.size() - (read_size - transferred));
-                    on_done();
-                }
-                else if(!ec)
-                {
-                    buffer_.resize(offset + transferred);
-                    do_read(std::move(self), offset + transferred);
-                }
-                else
-                {
-                    //TODO handle errors
-                }
-            });
+    //TODO
 }
 
-void child_process::on_done()
+bool child_process::finished()
 {
-    if(cb_)
+    return finished_;
+}
+
+std::optional<int> child_process::exit_code()
+{
+    return exit_code_;
+}
+
+std::vector<char> make_interactive_args_buffer(
+        const std::vector<std::string>& args)
+{
+    std::vector<char> buffer;
+
+    for(auto& param : args)
     {
-        cb_(exit_code_.value(), buffer_);
-        cb_ = [](auto&&...){}; // reset std::function
+        std::copy(
+                param.begin(),
+                param.end(),
+                std::back_inserter(buffer));
+
+        buffer.push_back('\n');
     }
+
+    return buffer;
 }

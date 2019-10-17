@@ -42,6 +42,8 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/set_user_permissions.cpp
     src/websocket/handlers/token.cpp
     src/websocket/handlers/unban_user.cpp
+    src/websocket/handlers/session_subscribe.cpp
+    src/websocket/handlers/session_unsubscribe.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 
@@ -49,9 +51,12 @@ set(${PROJECT_NAME}_SRC
     src/beast_ext/message_stream_parser.cpp
     src/beast_ext/multipart_stream_parser.cpp
 
+    src/cis/cis_job.cpp
     src/cis/dirs.cpp
     src/cis/cis_structs.cpp
     src/cis/fs_mapper.cpp
+    src/cis/session_manager.cpp
+    src/cis/session.cpp
     src/cis/cis_manager.cpp
 
     src/exceptions/base_cis_srv_exception.cpp

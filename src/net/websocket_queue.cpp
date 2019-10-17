@@ -11,6 +11,11 @@ websocket_queue::websocket_queue(queued_websocket_session& self)
     static_assert(limit > 0, "queue limit must be positive");
 }
 
+websocket_queue::~websocket_queue()
+{
+    close();
+}
+
 void websocket_queue::send()
 {
     self_.ws_.text(messages_.front().text);
@@ -52,6 +57,40 @@ void websocket_queue::send_binary(
 bool websocket_queue::is_full()
 {
     return messages_.size() >= limit;
+}
+
+uint32_t websocket_queue::add_close_handler(
+        std::function<void()> on_close)
+{
+    if(close_handlers_.empty())
+    {
+        close_handlers_.insert({0, on_close});
+
+        return 0;
+    }
+    else
+    {
+        auto it = close_handlers_.end();
+        --it;
+
+        auto new_key = it->first - 1;
+        close_handlers_.insert({new_key, on_close});
+
+        return new_key;
+    }
+}
+
+void websocket_queue::remove_close_handler(uint32_t id)
+{
+    close_handlers_.erase(id);
+}
+
+void websocket_queue::close()
+{
+    for(auto& [key, handler] : close_handlers_)
+    {
+        handler();
+    }
 }
 
 bool websocket_queue::on_write()

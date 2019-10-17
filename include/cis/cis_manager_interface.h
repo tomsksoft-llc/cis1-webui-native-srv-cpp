@@ -6,14 +6,16 @@
 #include <vector>
 
 #include <boost/asio.hpp>
+#include <cis1_proto_utils/transaction.h>
 
-#include "cis_manager_interface.h"
+#include "cis_job.h"
 #include "database.h"
 #include "fs_cache.h"
 #include "cis_structs.h"
 #include "fs_mapper.h"
 #include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
+#include "session.h"
 
 namespace cis
 {
@@ -27,9 +29,11 @@ struct cron_entry
 
 struct cis_manager_interface
 {
-    using list_cron_continuation_t = void(const std::vector<cron_entry>&);
-    using list_cron_cb_t = void(std::function<list_cron_continuation_t>&&);
-    using list_cron_task_t = async_task_wrapper<std::function<list_cron_cb_t>>;
+    using list_cron_task_t = typename make_async_task_t<
+            void(const std::vector<cron_entry>&)>::task;
+
+    using run_job_task_t = typename make_async_task_t<
+            void(const execution_info&)>::task;
 
     virtual ~cis_manager_interface() = default;
 
@@ -61,10 +65,14 @@ struct cis_manager_interface
             const std::string& job_name,
             const std::string& new_name) = 0;
 
-    virtual bool run_job(
+    virtual run_job_task_t run_job(
             const std::string& project_name,
             const std::string& job_name,
-            const std::vector<std::string>& params = {}) = 0;
+            const std::vector<std::string>& params,
+            std::function<
+                    void(const std::string&)> on_session_started,
+            std::function<
+                    void(const std::string&)> on_session_finished) = 0;
 
     virtual bool add_cron(
             const std::string& project_name,
@@ -78,6 +86,18 @@ struct cis_manager_interface
 
     virtual list_cron_task_t list_cron(
             const std::string& mask) = 0;
+
+    virtual std::shared_ptr<session> connect_to_session(
+            const std::string& session_id) = 0;
+
+    virtual void subscribe_to_session(
+            const std::string& session_id,
+            uint64_t ws_session_id,
+            std::shared_ptr<subscriber_interface> subscriber) = 0;
+
+    virtual std::shared_ptr<subscriber_interface> get_session_subscriber(
+            const std::string& session_id,
+            uint64_t ws_session_id) = 0;
 };
 
 } // namespace cis

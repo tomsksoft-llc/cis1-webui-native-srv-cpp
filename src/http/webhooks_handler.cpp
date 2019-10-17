@@ -221,11 +221,11 @@ void webhooks_handler::handle_github_signature(
     if(hex_hmac != signature)
     {
         beast::http::response<beast::http::string_body> res{
-            beast::http::status::forbidden,
-            req.version()};
-            res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-            res.set(beast::http::field::content_type, "text/html");
-            res.keep_alive(req.keep_alive());
+                beast::http::status::forbidden,
+                req.version()};
+                res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+                res.set(beast::http::field::content_type, "text/html");
+                res.keep_alive(req.keep_alive());
         res.body() = "Forbidden.";
         queue.send(std::move(res));
     }
@@ -253,15 +253,23 @@ void webhooks_handler::finish(
                 file_path,
                 ev);
 
-        cis_.run_job(project, job, params);
+        make_async_chain(boost::asio::system_executor{})
+            .then(cis_.run_job(
+                        project,
+                        job,
+                        params,
+                        [](auto&&...){},   //TODO make real answer to client
+                        [](auto&&...){}))
+            .run();
     }
 
     beast::http::response<beast::http::empty_body> res{
-        beast::http::status::ok,
-        req.version()};
-        res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
-        res.set(beast::http::field::content_type, "text/html");
-        res.keep_alive(req.keep_alive());
+            beast::http::status::ok,
+            req.version()};
+            res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+            res.set(beast::http::field::content_type, "text/html");
+            res.keep_alive(req.keep_alive());
+
     queue.send(std::move(res));
 }
 
@@ -269,20 +277,25 @@ std::filesystem::path webhooks_handler::save_body(std::string_view body)
 {
     std::filesystem::path result = std::filesystem::current_path();
     result = result / "webhooks_temp";
+
     while(true)
     {
         uint64_t name_str = random_generator::instance()();
         std::stringstream ss;
         ss << std::hex << name_str;
         auto path = result / ss.str();
+
         if(!std::filesystem::exists(path))
         {
             result = path;
+
             break;
         }
     }
+
     std::ofstream file(result, std::ofstream::binary);
     file << body;
+
     return result;
 }
 

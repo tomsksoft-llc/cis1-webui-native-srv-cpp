@@ -9,7 +9,7 @@ namespace net
 {
 
 http_session::http_session(
-    boost::asio::ip::tcp::socket socket,
+    boost::asio::ip::tcp::socket&& socket,
     std::shared_ptr<http_handler_interface const> app)
     : socket_(std::move(socket))
     , strand_(socket_.get_executor())

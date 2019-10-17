@@ -5,6 +5,7 @@
 #include <boost/process.hpp>
 #include <boost/asio/system_executor.hpp>
 
+#include "cis/cis_job.h"
 #include "exceptions/load_config_error.h"
 #include "child_process.h"
 #include "cis/dirs.h"
@@ -25,8 +26,10 @@ cis_manager::cis_manager(
     , webui_port_(webui_port)
     , projects_(db)
     , fs_(cis_root_ / cis::projects, &projects_)
+    , session_manager_(ioc)
 {
     std::ifstream cis_core_conf(cis_root_ / core / "cis.conf");
+
     while(cis_core_conf.good())
     {
         std::string exec_name;
@@ -43,6 +46,7 @@ cis_manager::cis_manager(
             throw load_config_error("Can't load cis.conf");
         }
     }
+
     if(!execs_.valid())
     {
         throw load_config_error("Can't load cis.conf");
@@ -55,8 +59,10 @@ bool cis_manager::refresh(const std::filesystem::path& path)
             it != fs_.end())
     {
         it->update();
+
         return true;
     }
+
     return false;
 }
 
@@ -66,8 +72,10 @@ bool cis_manager::remove(const std::filesystem::path& path)
             it != fs_.end())
     {
         it->remove();
+
         return true;
     }
+
     return false;
 }
 
@@ -91,11 +99,13 @@ const project* cis_manager::get_project_info(
         const std::string& project_name) const
 {
     auto& projects = projects_.get_projects();
+
     if(auto project_it = projects.find(project_name);
             project_it != projects.cend())
     {
         return &(project_it->second);
     }
+
     return nullptr;
 }
 
@@ -104,6 +114,7 @@ const job* cis_manager::get_job_info(
         const std::string& job_name) const
 {
     auto* project = get_project_info(project_name);
+
     if(project != nullptr)
     {
         auto& jobs = project->get_jobs();
@@ -113,6 +124,7 @@ const job* cis_manager::get_job_info(
             return &(job_it->second);
         }
     }
+
     return nullptr;
 }
 
@@ -122,6 +134,7 @@ const build* cis_manager::get_build_info(
         const std::string& build_name) const
 {
     auto* job = get_job_info(project_name, job_name);
+
     if(job != nullptr)
     {
         auto& builds = job->get_builds();
@@ -131,6 +144,7 @@ const build* cis_manager::get_build_info(
             return &(build_it->second);
         }
     }
+
     return nullptr;
 }
 
@@ -150,35 +164,63 @@ bool cis_manager::rename_job(
     return !ec;
 }
 
-bool cis_manager::run_job(
+cis_manager::run_job_task_t cis_manager::run_job(
         const std::string& project_name,
         const std::string& job_name,
-        const std::vector<std::string>& params)
+        const std::vector<std::string>& params,
+        std::function<void(const std::string&)> on_session_started,
+        std::function<void(const std::string&)> on_session_finished)
 {
     if(get_job_info(project_name, job_name) == nullptr)
     {
-        return false;
-    }
-    auto executable = canonical(cis_root_ / core / execs_.startjob);
-    auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_).string();
-    env["webui_address"] = webui_address_.to_string();
-    env["webui_port"] = std::to_string(webui_port_);
-    auto cp = std::make_shared<child_process>(ioc_, env);
-    cp->set_interactive_params(params);
-    cp->run(executable.string(),
-            {path_cat(project_name, "/" + job_name)},
-            [project_name, job_name](
-                    int exit,
-                    const std::vector<char>&)
+        return {
+            [](auto&& continuation)
             {
-                std::cout << "job " << project_name
-                          << "/" << job_name
-                          << " finished" << std::endl;
-                std::cout << "process exited with " << exit << std::endl;
+                continuation({false, -1, std::nullopt});
             },
-            true);
-    return true;
+            ioc_.get_executor()};
+    }
+
+    return {[&,
+            job = cis_job(
+                    ioc_,
+                    webui_address_,
+                    webui_port_,
+                    cis_root_,
+                    execs_.startjob),
+            project_name,
+            job_name,
+            params,
+            on_session_started,
+            on_session_finished]
+            (auto&& continuation) mutable
+            {
+                job.run(project_name,
+                        job_name,
+                        params,
+                        on_session_started,
+                        [&](const std::string& session_id)
+                        {
+                            session_manager_.finish_session(session_id);
+
+                            on_session_finished(session_id);
+                        },
+                        [&,
+                         continuation,
+                         project_name,
+                         job_name](auto&&... args)
+                        {
+                            auto* job = get_job_info(project_name, job_name);
+                            if(job != nullptr)
+                            {
+                                job->refresh();
+
+                            }
+
+                            continuation(std::forward<decltype(args)>(args)...);
+                        });
+            },
+            ioc_.get_executor()};
 }
 
 bool cis_manager::add_cron(
@@ -190,13 +232,20 @@ bool cis_manager::add_cron(
     {
         return false;
     }
-    auto executable = canonical(cis_root_ / core / execs_.cis_cron);
+
     auto env = boost::this_process::environment();
     env["cis_base_dir"] = canonical(cis_root_).string();
-    auto cp = std::make_shared<child_process>(ioc_, env);
-    cp->run(executable.string(),
-            {"--add", cron_expression, path_cat(project_name, "/" + job_name)},
-            {});
+
+    auto cp = std::make_shared<child_process>(
+            ioc_,
+            env,
+            std::filesystem::path{cis::get_root_dir()} / cis::core,
+            execs_.cis_cron);
+
+    cp->run({"--add", cron_expression, path_cat(project_name, "/" + job_name)},
+            nullptr,
+            nullptr);
+
     return true;
 }
 
@@ -209,38 +258,78 @@ bool cis_manager::remove_cron(
     {
         return false;
     }
-    auto executable = canonical(cis_root_ / core / execs_.cis_cron);
+
     auto env = boost::this_process::environment();
     env["cis_base_dir"] = canonical(cis_root_).string();
-    auto cp = std::make_shared<child_process>(ioc_, env);
-    cp->run(executable.string(),
-            {"--del", cron_expression, path_cat(project_name, "/" + job_name)},
-            {});
+
+    auto cp = std::make_shared<child_process>(
+            ioc_,
+            env,
+            std::filesystem::path{cis::get_root_dir()} / cis::core,
+            execs_.cis_cron);
+
+    cp->run({"--del", cron_expression, path_cat(project_name, "/" + job_name)},
+            nullptr,
+            nullptr);
+
     return true;
 }
 
 cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
 {
-    auto executable = canonical(cis_root_ / core / execs_.cis_cron);
     auto env = boost::this_process::environment();
     env["cis_base_dir"] = canonical(cis_root_).string();
 
-    return {[&, cp = std::make_shared<child_process>(ioc_, env),
-                executable = executable.string(),
-                mask](auto&& continuation)
+    return {[
+            &,
+            cp = std::make_shared<child_process>(
+                    ioc_,
+                    env,
+                    std::filesystem::path{cis::get_root_dir()} / cis::core,
+                    execs_.cis_cron),
+            mask
+            ](auto&& continuation)
             {
-                cp->run(executable,
-                        {"--list", mask},
-                        [&, continuation](
-                            int exit_code,
-                            const std::vector<char>& buf) mutable
+                auto reader = std::make_shared<buffer_reader>(
+                        [&, continuation](const std::vector<char>& buf) mutable
                         {
                             std::vector<cron_entry> entries;
                             parse_cron_list(buf, entries);
                             continuation(entries);
                         });
+
+                cp->run({"--list", mask},
+                        std::make_shared<process_io_handler>(
+                                [](auto){},
+                                [reader = std::move(reader)](auto pipe)
+                                {
+                                    reader->accept_pipe(pipe);
+                                },
+                                [](auto){}),
+                        nullptr);
             },
-            boost::asio::system_executor{}};
+            ioc_.get_executor()};
+}
+
+std::shared_ptr<session> cis_manager::connect_to_session(
+        const std::string& session_id)
+{
+    return session_manager_.connect(session_id);
+}
+
+void cis_manager::subscribe_to_session(
+        const std::string& session_id,
+        uint64_t ws_session_id,
+        std::shared_ptr<subscriber_interface> subscriber)
+{
+    return session_manager_.subscribe(session_id, ws_session_id, subscriber);
+}
+
+std::shared_ptr<subscriber_interface> cis_manager::get_session_subscriber(
+        const std::string& session_id,
+        uint64_t ws_session_id)
+{
+    return session_manager_.get_subscriber(session_id, ws_session_id);
 }
 
 bool cis_manager::executables::set(
