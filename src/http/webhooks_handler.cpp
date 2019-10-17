@@ -88,9 +88,22 @@ handle_result webhooks_handler::operator()(
                     job,
                     query_string);
         }
+        case api::plain:
+        {
+            return handle_plain_headers(
+                    req,
+                    ctx,
+                    reader,
+                    queue,
+                    project,
+                    job,
+                    query_string);
+        }
+        default:
+        {
+            return handle_result::error;
+        }
     }
-    //unreachable
-    return handle_result::error;
 }
 
 handle_result webhooks_handler::handle_github_headers(
@@ -110,6 +123,7 @@ handle_result webhooks_handler::handle_github_headers(
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
+
         return handle_result::error;
     }
 
@@ -142,6 +156,7 @@ handle_result webhooks_handler::handle_github_headers(
                         ev,
                         signature);
             });
+
     return handle_result::done;
 }
 
@@ -162,6 +177,7 @@ handle_result webhooks_handler::handle_gitlab_headers(
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
+
         return handle_result::error;
     }
 
@@ -187,6 +203,60 @@ handle_result webhooks_handler::handle_gitlab_headers(
                         query_string,
                         ev);
             });
+
+    return handle_result::done;
+}
+
+handle_result webhooks_handler::handle_plain_headers(
+        beast::http::request<beast::http::empty_body>& req,
+        request_context& ctx,
+        net::http_session::request_reader& reader,
+        net::http_session::queue& queue,
+        const std::string& project,
+        const std::string& job,
+        const std::string& query_string)
+{
+    auto signature_it = req.find("X-Plain-Token");
+
+    auto event_it = req.find("X-Plain-Event");
+
+    if(signature_it == req.end()
+            || event_it == req.end()
+            || signature_it->value() != ctx.api_access_key)
+    {
+        ctx.res_status = beast::http::status::forbidden;
+        ctx.error = "Forbidden.";
+
+        return handle_result::error;
+    }
+
+    hook_event ev = hook_event::unknown;
+    if(event_it->value() == "push")
+    {
+        ev = hook_event::push;
+    }
+    else if(event_it->value() == "ping")
+    {
+        ev = hook_event::ping;
+    }
+
+    reader.async_read_body<beast::http::string_body>(
+            [](beast::http::request<beast::http::string_body>& req){},
+            [&, ctx, project, job, ev, query_string](
+                    beast::http::request<
+                            beast::http::string_body>&& req,
+                    net::http_session::queue& queue) mutable
+            {
+                finish(
+                        std::move(req),
+                        ctx,
+                        queue,
+                        project,
+                        job,
+                        query_string,
+                        ev);
+            });
+
     return handle_result::done;
 }
 
