@@ -147,6 +147,16 @@ std::shared_ptr<http_router> application::make_http_router()
                         http::webhooks_handler::api::gitlab);
             });
 
+    router->add_route(
+            webhooks_url / CT_STRING("plain") /
+                    url::bound_string() / url::bound_string() << url::query_string(),
+            [&whh = webhooks_handler_](auto&& ...args)
+            {
+                return whh(
+                        std::forward<decltype(args)>(args)...,
+                        http::webhooks_handler::api::plain);
+            });
+
     std::function<http::handle_result(
             beast::http::request<beast::http::empty_body>&,
             request_context&,

@@ -20,7 +20,8 @@ public:
     enum class api
     {
         github,
-        gitlab
+        gitlab,
+        plain,
     };
 
     webhooks_handler(
@@ -43,7 +44,7 @@ private:
     {
         ping,
         push,
-        unknown
+        unknown,
     };
 
     auth_manager& auth_;
@@ -60,6 +61,15 @@ private:
             const std::string& query_string);
 
     handle_result handle_gitlab_headers(
+            beast::http::request<beast::http::empty_body>& req,
+            request_context& ctx,
+            net::http_session::request_reader& reader,
+            net::http_session::queue& queue,
+            const std::string& project,
+            const std::string& job,
+            const std::string& query_string);
+
+    handle_result handle_plain_headers(
             beast::http::request<beast::http::empty_body>& req,
             request_context& ctx,
             net::http_session::request_reader& reader,
@@ -86,7 +96,7 @@ private:
             const std::string& job,
             const std::string& query_string,
             hook_event ev);
-    
+
     std::filesystem::path save_body(std::string_view body);
 
     const char* ev_to_string(hook_event ev);
