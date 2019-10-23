@@ -128,7 +128,11 @@ void job::add_params(
                     1,
                     default_value.size() - 2);
         }
-        params_.emplace_back(param, default_value);
+
+        if(!param.empty())
+        {
+            params_.emplace_back(param, default_value);
+        }
     }
 }
 
