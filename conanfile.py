@@ -31,9 +31,9 @@ class Cis1WebUINativeSrvCpp(ConanFile):
                 "OpenSSL/1.1.1a@conan/stable",
                 "sqlite_orm/1.3@tomsksoft/cis1",
                 "cis1_tpl/0.0.1@tomsksoft/cis1",
-                "cis1_cwu_transport/0.0.2@tomsksoft/cis1",
+                "cis1_cwu_transport/0.0.3@tomsksoft/cis1",
                 "cis1_cwu_protocol/0.0.2@tomsksoft/cis1",
-                "cis1_proto_utils/0.0.2@tomsksoft/cis1")
+                "cis1_proto_utils/0.0.3@tomsksoft/cis1")
 
     def build(self):
         cmake = CMake(self)
