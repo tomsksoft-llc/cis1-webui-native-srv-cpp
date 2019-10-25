@@ -2,287 +2,187 @@
 
 #include <utility>
 #include <fstream>
+#include <regex>
 
 namespace cis
 {
 
-// build
-
-build::build(fs_cache_node<fs_mapper>* fs_node)
-    : fs_node_(fs_node)
+fs_entry_ref::fs_entry_ref(const fs_iterator& it)
+    : it_(it)
 {}
 
-void build::set_fs_node(
-        fs_cache_node<fs_mapper>* fs_node)
+fs_iterator fs_entry_ref::get_files()
 {
-    fs_node_ = fs_node;
+    return it_;
 }
 
-std::pair<cis_entry_interface*, std::any> build::make_child(
-        fs_cache_node<fs_mapper>* child_node)
+const std::filesystem::directory_entry& fs_entry_ref::dir_entry()
 {
-    return {nullptr, {}};
+    return *it_;
 }
 
-void build::remove_child(std::any it)
+void fs_entry_ref::invalidate()
+{
+    it_.invalidate();
+}
+
+bool project::is_entry(fs_iterator& it)
+{
+    return it->is_directory();
+}
+
+project::project(const fs_iterator& it)
+    : fs_entry_ref(it)
 {}
 
-void build::add_output(
-        fs_cache_node<fs_mapper>* fs_node)
+std::shared_ptr<job_interface> project::get_job_info(
+        const std::string& job_name)
 {
-    std::ifstream output_file(fs_node->dir_entry().path());
-    std::string date;
-    output_file >> date;
-    info_.date = date.substr(0, 10);
-}
-
-void build::remove_output()
-{
-    info_.date = std::nullopt;
-}
-
-void build::add_exitcode(
-        fs_cache_node<fs_mapper>* fs_node)
-{
-    std::ifstream exitcode_file(fs_node->dir_entry().path());
-    int exitcode;
-    exitcode_file >> exitcode;
-    info_.status = exitcode;
-}
-
-void build::remove_exitcode()
-{
-    info_.status = std::nullopt;
-}
-
-void build::erase()
-{
-    fs_node_->remove();
-}
-
-const build_info& build::get_info() const
-{
-    return info_;
-}
-
-immutable_container_proxy<
-        typename fs_cache_node<fs_mapper>::tree_t> build::get_files()
-{
-    return fs_node_->childs();
-}
-
-const fs_cache_node<fs_mapper>::tree_t& build::get_files() const
-{
-    return std::as_const(*fs_node_).childs();
-}
-
-// param
-
-param::param(
-        std::string param_name,
-        std::string param_default_value)
-    : name(param_name)
-    , default_value(param_default_value)
-{}
-
-// job
-
-job::job(fs_cache_node<fs_mapper>* fs_node)
-    : fs_node_(fs_node)
-{}
-
-void job::set_fs_node(fs_cache_node<fs_mapper>* fs_node)
-{
-    fs_node_ = fs_node;
-}
-
-std::pair<cis_entry_interface*, std::any> job::make_child(
-        fs_cache_node<fs_mapper>* child_node)
-{
-    auto [it, ok] = builds_.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(child_node->filename()),
-            std::forward_as_tuple(child_node));
-    return {&(it->second), it};
-}
-
-void job::remove_child(std::any it)
-{
-    auto build_it = std::any_cast<std::map<std::string, build>::iterator>(it);
-    builds_.erase(build_it);
-}
-
-void job::add_params(
-        fs_cache_node<fs_mapper>* fs_node)
-{
-    std::ifstream params_file(fs_node->dir_entry().path());
-    std::string param;
-    std::string default_value;
-    while(params_file.good())
+    if(auto it = it_.find(job_name);
+            it != it_.end() && job::is_entry(it))
     {
-        std::getline(params_file, param, '=');
-        std::getline(params_file, default_value, '\n');
-        if(!default_value.empty())
+        return std::make_shared<job>(it);
+    }
+    
+    return nullptr;
+}
+
+project::job_list_t project::get_job_list()
+{
+    project::job_list_t list;
+    
+    for(auto it = it_.begin(); it != it_.end(); ++it)
+    {
+        if(job::is_entry(it))
         {
-            default_value = default_value.substr(
-                    1,
-                    default_value.size() - 2);
+            list.push_back(
+                    static_cast<std::shared_ptr<job_interface>>(
+                            std::make_shared<job>(it)));
         }
-        params_.emplace_back(param, default_value);
+        else
+        {
+            list.push_back(std::make_shared<fs_entry_ref>(it));
+        }
+    }
+
+    return list;
+}
+
+bool job::is_entry(fs_iterator& it)
+{
+    return it->is_directory() && (it.find("job.conf") != it.end());
+}
+
+job::job(const fs_iterator& it)
+    : fs_entry_ref(it)
+{
+    if(auto params = it_.find("job.params");
+            params != it_.end()
+            && params->is_regular_file())
+    {
+        std::ifstream params_file(params->path());
+        std::string param;
+        std::string default_value;
+        while(params_file.good())
+        {
+            std::getline(params_file, param, '=');
+            std::getline(params_file, default_value, '\n');
+            if(!default_value.empty())
+            {
+                default_value = default_value.substr(
+                        1,
+                        default_value.size() - 2);
+            }
+
+            if(!param.empty())
+            {
+                params_.push_back(job::param{param, default_value});
+            }
+        }
     }
 }
 
-void job::remove_params()
+job::build_list_t job::get_build_list()
 {
-    params_.clear();
+    job::build_list_t list;
+
+    for(auto it = it_.begin(); it != it_.end(); ++it)
+    {
+        if(build::is_entry(it))
+        {
+            list.push_back(
+                    static_cast<std::shared_ptr<build_interface>>(
+                            std::make_shared<build>(it)));
+        }
+        else
+        {
+            list.push_back(std::make_shared<fs_entry_ref>(it));
+        }
+    }
+    
+    return list;
 }
 
-void job::erase()
+std::shared_ptr<build_interface> job::get_build_info(
+        const std::string& build_name)
 {
-    fs_node_->remove();
+    if(auto it = it_.find(build_name);
+            it != it_.end() && build::is_entry(it))
+    {
+        return std::make_shared<build>(it);
+    }
+    
+    return nullptr;
 }
 
-void job::refresh() const
-{
-    fs_node_->update();
-}
-
-immutable_container_proxy<std::map<std::string, build>> job::get_builds()
-{
-    return {builds_};
-}
-
-const std::map<std::string, build>& job::get_builds() const
-{
-    return builds_;
-}
-
-const std::vector<param>& job::get_params() const
+const std::vector<job::param>& job::get_params()
 {
     return params_;
 }
 
-immutable_container_proxy<
-        typename fs_cache_node<fs_mapper>::tree_t> job::get_files()
+
+bool build::is_entry(fs_iterator& it)
 {
-    return fs_node_->childs();
-}
-
-const fs_cache_node<fs_mapper>::tree_t& job::get_files() const
-{
-    return std::as_const(*fs_node_).childs();
-}
-
-// project
-
-project::project(fs_cache_node<fs_mapper>* fs_node)
-    : fs_node_(fs_node)
-{}
-
-void project::set_fs_node(
-        fs_cache_node<fs_mapper>* fs_node)
-{
-    fs_node_ = fs_node;
-}
-
-std::pair<cis_entry_interface*, std::any> project::make_child(
-        fs_cache_node<fs_mapper>* child_node)
-{
-    auto [it, ok] = jobs_.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(child_node->filename()),
-            std::forward_as_tuple(child_node));
-    return {&(it->second), {it}};
-}
-
-void project::remove_child(std::any it)
-{
-    auto job_it = std::any_cast<std::map<std::string, job>::iterator>(it);
-    jobs_.erase(job_it);
-}
-
-void project::erase()
-{
-    fs_node_->remove();
-}
-
-immutable_container_proxy<
-        std::map<std::string, job>> project::get_jobs()
-{
-    return {jobs_};
-}
-
-const std::map<std::string, job>& project::get_jobs() const
-{
-    return jobs_;
-}
-
-immutable_container_proxy<
-        typename fs_cache_node<fs_mapper>::tree_t> project::get_files()
-{
-    return fs_node_->childs();
-}
-
-const fs_cache_node<fs_mapper>::tree_t& project::get_files() const
-{
-    return std::as_const(*fs_node_).childs();
-}
-
-// project_list
-
-project_list::project_list(database::database_wrapper& db)
-    : db_(db)
-{}
-
-void project_list::set_fs_node(
-        fs_cache_node<fs_mapper>* fs_node)
-{
-    fs_node_ = fs_node;
-}
-
-std::pair<cis_entry_interface*, std::any> project_list::make_child(
-        fs_cache_node<fs_mapper>* child_node)
-{
-    std::string project_name = child_node->filename();
+    static const auto is_build = [](const std::string& dir_name)
     {
-        using namespace sqlite_orm;
-        auto db = db_.make_transaction();
-        auto ids = db->select(
-            &database::project::id,
-            where(c(&database::project::name) == project_name));
-        if(!ids.size())
+        static const std::regex build_mask("^\\d{6}$");
+        return std::regex_match(dir_name, build_mask);
+    };
+
+    return it->is_directory() && is_build(it->path().filename());
+}
+
+build::build(const fs_iterator& it)
+    : fs_entry_ref(it)
+{
+    if(auto exit_code = it_.find("exitcode.txt");
+            exit_code != it_.end()
+            && exit_code->is_regular_file())
+    {
+        std::ifstream exit_code_file(exit_code->path());
+        int exitcode;
+        exit_code_file >> exitcode;
+        info_.status = exitcode;
+    }
+
+    if(auto session_id = it_.find("session_id.txt");
+            session_id != it_.end()
+            && session_id->is_regular_file())
+    {
+        std::ifstream session_id_file(session_id->path());
+        std::string date;
+        session_id_file >> date;
+
+        if(date.length() > 19)
         {
-            db->insert(
-                    database::project{
-                            -1,
-                            project_name,
-                            false});
-            db.commit();
+            info_.date = date.substr(0, 19);
         }
     }
-    auto [it, ok] = projects_.emplace(
-            std::piecewise_construct,
-            std::forward_as_tuple(project_name),
-            std::forward_as_tuple(child_node));
-    return {&(it->second), {it}};
 }
 
-void project_list::remove_child(std::any it)
+const build::info& build::get_info()
 {
-    auto project_it = std::any_cast<
-            std::map<std::string, project>::iterator>(it);
-    projects_.erase(project_it);
-}
-
-immutable_container_proxy<
-        std::map<std::string, project>> project_list::get_projects()
-{
-    return {projects_};
-}
-
-const std::map<std::string, project>& project_list::get_projects() const
-{
-    return projects_;
+    return info_;
 }
 
 } // namespace cis

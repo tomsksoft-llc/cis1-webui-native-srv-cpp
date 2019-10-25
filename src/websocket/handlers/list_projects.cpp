@@ -2,6 +2,8 @@
 
 #include "websocket/dto/cis_project_list_get_success.h"
 
+#include "cis/dirs.h"
+
 namespace websocket
 {
 
@@ -17,39 +19,54 @@ void list_projects(
 {
     dto::cis_project_list_get_success res;
 
-    for(auto& file : cis_manager.fs())
+    for(auto& entry : cis_manager.get_project_list())
     {
-        bool is_directory = file.dir_entry().is_directory();
-        auto path = ("/" / file.relative_path()).generic_string();
-        auto link = ("/download" / file.relative_path()).generic_string();
-
-        res.fs_entries.push_back(dto::fs_entry{
-                file.filename(),
-                false,
-                is_directory,
-                path,
-                link});
-    }
-
-    for(auto& [project_name, project] : cis_manager.get_projects())
-    {
-        auto it = std::find_if(
-                res.fs_entries.begin(),
-                res.fs_entries.end(),
-                [&project_name](auto& entry)
-                {
-                    return entry.name == project_name;
-                });
-
-        bool permitted = false;
-
-        if(auto perm = rights.check_project_right(ctx.username, project_name);
-                (perm.has_value() && perm.value().read) || !perm.has_value())
+        auto make_dir_entry =
+        [&](const std::shared_ptr<fs_entry_interface>& entry)
         {
-            permitted = true;
-        }
+            auto& file = entry->dir_entry();
 
-        it->metainfo = dto::fs_entry::project_info{true};
+            bool is_directory = file.is_directory();
+
+            auto relative_path = file.path().lexically_relative(
+                    cis_manager.fs().root().path());
+
+            auto path = ("/" / relative_path)
+                    .generic_string();
+
+            auto link = "/download" + path;
+
+            return dto::fs_entry{
+                    file.path().filename(),
+                    false,
+                    is_directory,
+                    path,
+                    link};
+        };
+
+        auto res_entry = std::visit(
+                meta::overloaded{
+                    make_dir_entry,
+                    [&](const std::shared_ptr<project_interface>& project)
+                    {
+                        auto entry = make_dir_entry(project);
+
+                        bool permitted = false;
+
+                        if(auto perm = rights.check_project_right(ctx.username, entry.name);
+                                (perm.has_value() && perm.value().read) || !perm.has_value())
+                        {
+                            permitted = true;
+                        }
+
+                        entry.metainfo = dto::fs_entry::project_info{permitted};
+
+                        return entry;
+                    }
+                },
+                entry);
+
+        res.fs_entries.push_back(res_entry);
     }
 
     return tr.send(res);

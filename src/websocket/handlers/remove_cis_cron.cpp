@@ -17,7 +17,7 @@ void remove_cis_cron(
         const dto::cis_cron_remove& req,
         cis1::proto_utils::transaction tr)
 {
-    auto* job = cis_manager.get_job_info(req.project, req.job);
+    auto job = cis_manager.get_job_info(req.project, req.job);
     auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted =
         perm.has_value() ? (perm.value().execute && perm.value().write) : true;

@@ -1,183 +1,210 @@
 #pragma once
 
-#include <system_error>
-#include <stdexcept>
+#include <filesystem>
+#include <vector>
+#include <thread>
+#include <variant>
 
-#include "fs_cache_node.h"
+#include <boost/intrusive/set_hook.hpp>
+#include <boost/intrusive/rbtree.hpp>
 
-template <class Notifier>
+#include <tpl_helpers/overloaded.h>
+
+enum class fs_type
+{
+    dir,
+    file,
+};
+
+class fs_cache;
+
+class fs_node;
+
+struct fs_node_functor_hook
+{
+   //Required types
+   using hook_type = boost::intrusive::set_member_hook<>;
+   using hook_ptr = hook_type*;
+   using const_hook_ptr = const hook_type*;
+   using value_type = fs_node;
+   using pointer = value_type*;
+   using const_pointer = const value_type*;
+
+   static hook_ptr to_hook_ptr(value_type &value);
+   static const_hook_ptr to_hook_ptr(const value_type &value);
+   static pointer to_value_ptr(hook_ptr n);
+   static const_pointer to_value_ptr(const_hook_ptr n);
+};
+
+class fs_node
+{
+public:
+    friend class fs_cache;
+    friend class fs_iterator;
+    friend class fs_node_functor_hook;
+
+    using tree_t = boost::intrusive::rbtree<
+            fs_node,
+            boost::intrusive::function_hook<
+                    fs_node_functor_hook>>;
+
+    struct comparator
+    {
+        template <class StringComparable>
+        bool operator()(
+                const fs_node& lhs,
+                const StringComparable& rhs) const;
+
+        template <class StringComparable>
+        bool operator()(
+                const StringComparable& lhs,
+                const fs_node& rhs) const;
+    };
+
+    enum class node_state
+    {
+        init,
+        deleted,
+        sync,
+        modified,
+    };
+
+    fs_node(std::chrono::nanoseconds invalidation_time,
+            const std::filesystem::path& path,
+            size_t caching_level);
+
+    std::filesystem::path path() const;
+
+    std::string name() const;
+
+    uint64_t last_modified() const;
+
+    std::chrono::time_point<std::chrono::system_clock> last_updated() const;
+
+    const std::filesystem::directory_entry& dir_entry() const;
+
+    fs_type type() const;
+
+    tree_t::iterator begin();
+
+    tree_t::iterator end();
+
+    void update(bool force = false);
+
+    void remove();
+
+    void invalidate();
+
+    node_state state() const;
+
+    bool operator<(const fs_node& other) const;
+
+    bool operator==(const fs_node& other) const;
+
+private:
+    node_state state_;
+    std::chrono::time_point<std::chrono::system_clock> last_updated_;
+    std::filesystem::directory_entry dir_entry_;
+    std::chrono::nanoseconds invalidation_time_;
+    size_t caching_level_;
+    boost::intrusive::set_member_hook<> hook_;
+    std::vector<fs_node> childs_container_;
+    tree_t childs_;
+
+    void load();
+};
+
+template <class StringComparable>
+bool fs_node::comparator::operator()(
+        const fs_node& lhs,
+        const StringComparable& rhs) const
+{
+    return lhs.dir_entry_.path().filename().string() < rhs;
+}
+
+template <class StringComparable>
+bool fs_node::comparator::operator()(
+        const StringComparable& lhs,
+        const fs_node& rhs) const
+{
+    return lhs < rhs.dir_entry_.path().filename().string();
+}
+
+class fs_iterator
+{
+public:
+    fs_iterator(
+            fs_cache& root,
+            const fs_node::tree_t::iterator& it);
+
+    fs_iterator(
+            fs_cache& root,
+            const std::filesystem::directory_iterator& it);
+
+    fs_iterator& operator=(const fs_iterator& other);
+
+    const std::filesystem::directory_entry& operator*() const;
+
+    const std::filesystem::directory_entry* operator->() const;
+
+    fs_cache& root();
+
+    fs_iterator begin();
+
+    fs_iterator end();
+
+    fs_iterator find(const std::string& filename);
+
+    void remove();
+
+    void update();
+
+    void invalidate();
+
+    bool operator==(const fs_iterator& other);
+
+    bool operator!=(const fs_iterator& other);
+
+    fs_iterator& operator++();
+
+private:
+    fs_cache* root_;
+    std::variant<
+        fs_node::tree_t::iterator,
+        std::filesystem::directory_iterator> it_;
+};
+
 class fs_cache
 {
 public:
-    using comparator = typename fs_cache_node<Notifier>::comparator;
+    using comparator = fs_node::comparator;
 
-    template <class U>
-    fs_cache(std::filesystem::path path, U* context);
+    fs_cache(
+            const std::filesystem::path& path,
+            size_t max_caching_level,
+            std::chrono::nanoseconds invalidation_time);
 
-    fs_cache_node<Notifier>& at(std::filesystem::path path);
-    typename fs_cache_node<Notifier>::tree_t::iterator find(
-            std::filesystem::path path);
+    fs_node& root();
 
-    typename fs_cache_node<Notifier>::tree_t::iterator begin();
-    typename fs_cache_node<Notifier>::tree_t::iterator end();
+    void preload();
 
-    void create_directory(std::filesystem::path path, std::error_code& ec);
+    fs_iterator begin();
+
+    fs_iterator end();
+
+    fs_iterator find(const std::filesystem::path& path);
+
     void move_entry(
-            std::filesystem::path old_path,
-            std::filesystem::path new_path,
+            const std::filesystem::path& old_path,
+            const std::filesystem::path& new_path,
             std::error_code& ec);
+
+    void create_directory(
+            const std::filesystem::path& path,
+            std::error_code& ec);
+
 private:
-    fs_cache_node<Notifier> root_;
+    fs_node root_;
+    size_t max_caching_level_;
+    std::chrono::nanoseconds invalidation_time_;
 };
-
-template <class Notifier>
-template <class U>
-fs_cache<Notifier>::fs_cache(std::filesystem::path path, U* context)
-    : root_(std::filesystem::directory_entry(path), 0)
-{
-    root_.data_.set_context(context);
-    root_.update();
-}
-
-template <class Notifier>
-fs_cache_node<Notifier>& fs_cache<Notifier>::at(std::filesystem::path path)
-{
-    fs_cache_node<Notifier>* current = &root_;
-    for(auto& part : path)
-    {
-        if(part == "/")
-        {
-            continue;
-        }
-        auto it = current->childs_.find(part.filename().string(), comparator{});
-        if(it == current->childs_.end())
-        {
-            throw std::out_of_range("Can't find sufficient child");
-        }
-        current = &(*it);
-    }
-    return *current;
-}
-
-template <class Notifier>
-typename fs_cache_node<Notifier>::tree_t::iterator fs_cache<Notifier>::find(
-        std::filesystem::path path)
-{
-    fs_cache_node<Notifier>* current = &root_;
-    for(auto& part : path)
-    {
-        if(part == "/")
-        {
-            continue;
-        }
-        auto it = current->childs_.find(part.filename().string(), comparator{});
-        if(it == current->childs_.end())
-        {
-            return end();
-        }
-        current = &(*it);
-    }
-    return current->parent_->childs_.iterator_to(*current);
-}
-
-template <class Notifier>
-typename fs_cache_node<Notifier>::tree_t::iterator fs_cache<Notifier>::begin()
-{
-    return root_.childs_.begin();
-}
-
-template <class Notifier>
-typename fs_cache_node<Notifier>::tree_t::iterator fs_cache<Notifier>::end()
-{
-    return root_.childs_.end();
-}
-
-template <class Notifier>
-void fs_cache<Notifier>::create_directory(
-        std::filesystem::path path,
-        std::error_code& ec)
-{
-    auto parent_dir_it = find(path.parent_path());
-    if(parent_dir_it == end() || !parent_dir_it->dir_entry().is_directory())
-    {
-        //FIXME errorsystem
-        ec.assign(1, ec.category());
-        return;
-    }
-
-    if(auto child_it = parent_dir_it->childs().find(
-                path.filename(),
-                comparator{});
-            child_it != parent_dir_it->childs().end())
-    {
-        //FIXME errorsystem
-        ec.assign(1, ec.category());
-        return;
-    }
-
-    std::filesystem::create_directory(
-            parent_dir_it->dir_entry().path() / path.filename(), ec);
-
-    if(ec)
-    {
-        ec.assign(1, ec.category());
-        //FIXME errorsystem
-        return;
-    }
-
-    parent_dir_it->update();
-
-    ec.assign(0, ec.category());
-}
-
-template <class Notifier>
-void fs_cache<Notifier>::move_entry(
-        std::filesystem::path old_path,
-        std::filesystem::path new_path,
-        std::error_code& ec)
-{
-    auto old_parent_dir_it = find(old_path.parent_path());
-    auto new_parent_dir_it = find(new_path.parent_path());
-
-    if(old_parent_dir_it == end() || new_parent_dir_it == end())
-    {
-        ec.assign(1, ec.category());
-        //FIXME errorsystem
-        return;
-    }
-
-    if(auto source_it = old_parent_dir_it->childs().find(
-                old_path.filename(),
-                comparator{});
-        source_it == old_parent_dir_it->childs().end())
-    {
-        ec.assign(1, ec.category());
-        //FIXME errorsystem
-        return;
-    }
-
-    if(auto dest_it = new_parent_dir_it->childs().find(
-                new_path.filename(),
-                comparator{});
-        dest_it != new_parent_dir_it->childs().end())
-    {
-        ec.assign(1, ec.category());
-        //FIXME errorsystem
-        return;
-    }
-
-    std::filesystem::rename(
-            old_parent_dir_it->dir_entry().path() / old_path.filename(),
-            new_parent_dir_it->dir_entry().path() / new_path.filename(),
-            ec);
-    if(ec)
-    {
-        return;
-    }
-
-    old_parent_dir_it->update();
-    if(old_parent_dir_it != new_parent_dir_it)
-    {
-        new_parent_dir_it->update();
-    }
-}

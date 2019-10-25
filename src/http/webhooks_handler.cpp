@@ -399,7 +399,7 @@ std::vector<std::string> webhooks_handler::prepare_params(
 {
     std::vector<std::string> result;
 
-    auto* job_info = cis_.get_job_info(project, job);
+    auto job_info = cis_.get_job_info(project, job);
     if(job_info == nullptr)
     {
         return result;

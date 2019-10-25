@@ -10,6 +10,7 @@
 #include "child_process.h"
 #include "cis/dirs.h"
 #include "file_util.h"
+#include "cis/cis_structs.h"
 
 namespace cis
 {
@@ -24,8 +25,7 @@ cis_manager::cis_manager(
     , cis_root_(std::move(cis_root))
     , webui_address_(webui_address)
     , webui_port_(webui_port)
-    , projects_(db)
-    , fs_(cis_root_ / cis::projects, &projects_)
+    , fs_(cis_root_ / cis::projects, 4, std::chrono::seconds(5))
     , session_manager_(ioc)
 {
     std::ifstream cis_core_conf(cis_root_ / core / "cis.conf");
@@ -58,7 +58,7 @@ bool cis_manager::refresh(const std::filesystem::path& path)
     if(auto it = fs_.find(path);
             it != fs_.end())
     {
-        it->update();
+        it.update();
 
         return true;
     }
@@ -71,7 +71,7 @@ bool cis_manager::remove(const std::filesystem::path& path)
     if(auto it = fs_.find(path);
             it != fs_.end())
     {
-        it->remove();
+        it.remove();
 
         return true;
     }
@@ -84,64 +84,78 @@ std::filesystem::path cis_manager::get_projects_path() const
     return cis_root_;
 }
 
-fs_cache<fs_mapper>& cis_manager::fs()
+fs_cache& cis_manager::fs()
 {
     return fs_;
 }
 
-immutable_container_proxy<
-            std::map<std::string, project>> cis_manager::get_projects()
+cis_manager::project_list_t cis_manager::get_project_list()
 {
-    return projects_.get_projects();
+    project_list_t list;
+
+    for(auto it = fs().begin(); it != fs().end(); ++it)
+    {
+        if(project::is_entry(it))
+        {
+            list.push_back(
+                    static_cast<std::shared_ptr<project_interface>>(
+                            std::make_shared<project>(it)));
+        }
+        else
+        {
+            list.push_back(std::make_shared<fs_entry_ref>(it));
+        }
+    }
+
+    return list;
 }
 
-const project* cis_manager::get_project_info(
-        const std::string& project_name) const
+cis_manager::project_info_t cis_manager::get_project_info(
+        const std::string& project_name)
 {
-    auto& projects = projects_.get_projects();
+    auto it = fs().find(std::filesystem::path{"/" + project_name});
 
-    if(auto project_it = projects.find(project_name);
-            project_it != projects.cend())
+    if(it != fs().end() && project::is_entry(it))
     {
-        return &(project_it->second);
+        return std::make_shared<project>(it);
     }
 
     return nullptr;
 }
 
-const job* cis_manager::get_job_info(
+cis_manager::job_info_t cis_manager::get_job_info(
         const std::string& project_name,
-        const std::string& job_name) const
+        const std::string& job_name)
 {
-    auto* project = get_project_info(project_name);
+    auto project = get_project_info(project_name);
 
     if(project != nullptr)
     {
-        auto& jobs = project->get_jobs();
-        if(auto job_it = jobs.find(job_name);
-                job_it != jobs.cend())
+        auto job = project->get_job_info(job_name);
+
+        if(job != nullptr)
         {
-            return &(job_it->second);
+            return job;
         }
     }
 
     return nullptr;
 }
 
-const build* cis_manager::get_build_info(
+cis_manager::build_info_t cis_manager::get_build_info(
         const std::string& project_name,
         const std::string& job_name,
-        const std::string& build_name) const
+        const std::string& build_name)
 {
-    auto* job = get_job_info(project_name, job_name);
+    auto job = get_job_info(project_name, job_name);
 
     if(job != nullptr)
     {
-        auto& builds = job->get_builds();
-        if(auto build_it = builds.find(build_name);
-                build_it != builds.cend())
+        auto build = job->get_build_info(build_name);
+
+        if(build != nullptr)
         {
-            return &(build_it->second);
+            return build;
         }
     }
 
@@ -210,10 +224,10 @@ cis_manager::run_job_task_t cis_manager::run_job(
                          project_name,
                          job_name](auto&&... args)
                         {
-                            auto* job = get_job_info(project_name, job_name);
+                            auto job = get_job_info(project_name, job_name);
                             if(job != nullptr)
                             {
-                                job->refresh();
+                                job->invalidate();
 
                             }
 

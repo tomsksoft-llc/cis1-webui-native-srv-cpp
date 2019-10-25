@@ -36,7 +36,7 @@ void add_cis_cron(
         return handle.send_error("Invalid cron expression.");
     }
 
-    auto* job = cis_manager.get_job_info(req.project, req.job);
+    auto job = cis_manager.get_job_info(req.project, req.job);
     auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted =
         perm.has_value() ? (perm.value().execute && perm.value().write) : true;
