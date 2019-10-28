@@ -142,10 +142,14 @@ void fs_node::load()
         }
         else if(*old_it == *new_it)
         {
-            new_it->childs_ = std::move(old_it->childs_);
-            new_it->childs_container_ = std::move(old_it->childs_container_);
-            new_it->last_updated_ = old_it->last_updated_;
-            new_it->state_ = old_it->state_;
+            if(old_it->state_ == node_state::sync)
+            {
+                new_it->childs_ = std::move(old_it->childs_);
+                new_it->childs_container_ = std::move(old_it->childs_container_);
+                new_it->last_updated_ = old_it->last_updated_;
+                new_it->state_ = old_it->state_;
+            }
+
             ++old_it;
             ++new_it;
         }
@@ -441,14 +445,19 @@ fs_iterator& fs_iterator::operator++()
             meta::overloaded{
                     [](fs_node::tree_t::iterator& it)
                     {
+                        auto end = fs_node::tree_t::container_from_iterator(it).end();
+
+                        do {
+
                         ++it;
+
+                        } while(it != end && it->state_ == fs_node::node_state::deleted);
                     },
                     [&](std::filesystem::directory_iterator& it)
                     {
                         std::error_code ec;
 
                         it.increment(ec);
-
 
                         if(ec)
                         {
@@ -578,6 +587,23 @@ void fs_cache::move_entry(
             root_.path() += old_path,
             root_.path() += new_path,
             ec);
+
+    if(!ec)
+    {
+        auto old_it = find(old_path.parent_path());
+
+        if(old_it != end())
+        {
+            old_it.invalidate();
+        }
+
+        auto new_it = find(new_path.parent_path());
+
+        if(new_it != end())
+        {
+            new_it.invalidate();
+        }
+    }
 }
 
 void fs_cache::create_directory(
@@ -587,4 +613,14 @@ void fs_cache::create_directory(
     std::filesystem::create_directories(
             root_.path() += path,
             ec);
+
+    if(!ec)
+    {
+        auto it = find(path.parent_path());
+
+        if(it != end())
+        {
+            it.invalidate();
+        }
+    }
 }
