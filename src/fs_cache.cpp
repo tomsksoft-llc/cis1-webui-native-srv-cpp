@@ -117,8 +117,19 @@ void fs_node::load()
     std::vector<fs_node> childs_container;
     tree_t childs;
 
-    for(auto& entry : std::filesystem::directory_iterator(dir_entry_))
+    std::error_code ec;
+
+    for(auto it = std::filesystem::directory_iterator(dir_entry_, ec);
+             it != std::filesystem::directory_iterator();
+             it.increment(ec))
     {
+        if(ec)
+        {
+            return;
+        }
+
+        auto& entry = *it;
+
         childs_container.emplace_back(
                 invalidation_time_,
                 entry.path(),
