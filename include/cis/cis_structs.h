@@ -17,10 +17,10 @@ public:
     fs_entry_ref(const fs_iterator& it);
 
     fs_iterator get_files() override;
-    
+
     void invalidate() override;
 
-    const std::filesystem::directory_entry& dir_entry() override;
+    const std::filesystem::directory_entry& dir_entry() const override;
 
 protected:
     fs_iterator it_;

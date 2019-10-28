@@ -4,6 +4,8 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 
+#include "websocket/handlers/utils/make_dir_entry.h"
+
 namespace websocket
 {
 
@@ -33,34 +35,19 @@ void get_job_info(
 
         for(auto& entry : job->get_build_list())
         {
-            auto make_dir_entry = [&](const std::shared_ptr<fs_entry_interface>& entry)
-            {
-                auto& file = entry->dir_entry();
-
-                bool is_directory = file.is_directory();
-
-                auto relative_path = file.path().lexically_relative(
-                        cis_manager.fs().root().path());
-
-                auto path = ("/" / relative_path)
-                        .generic_string();
-
-                auto link = "/download" + path;
-
-                return dto::fs_entry{
-                        file.path().filename(),
-                        false,
-                        is_directory,
-                        path,
-                        link};
-            };
-
             auto res_entry = std::visit(
                     meta::overloaded{
-                        make_dir_entry,
+                        [&](const std::shared_ptr<fs_entry_interface>& entry)
+                        {
+                                return make_dir_entry(
+                                        cis_manager.fs().root().path(),
+                                        *entry);
+                        },
                         [&](const std::shared_ptr<build_interface>& build)
                         {
-                            auto entry = make_dir_entry(build);
+                            auto entry = make_dir_entry(
+                                    cis_manager.fs().root().path(),
+                                    *build);
 
                             auto& info = build->get_info();
 

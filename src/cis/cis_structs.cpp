@@ -16,7 +16,7 @@ fs_iterator fs_entry_ref::get_files()
     return it_;
 }
 
-const std::filesystem::directory_entry& fs_entry_ref::dir_entry()
+const std::filesystem::directory_entry& fs_entry_ref::dir_entry() const
 {
     return *it_;
 }
@@ -43,14 +43,14 @@ std::shared_ptr<job_interface> project::get_job_info(
     {
         return std::make_shared<job>(it);
     }
-    
+
     return nullptr;
 }
 
 project::job_list_t project::get_job_list()
 {
     project::job_list_t list;
-    
+
     for(auto it = it_.begin(); it != it_.end(); ++it)
     {
         if(job::is_entry(it))
@@ -119,7 +119,7 @@ job::build_list_t job::get_build_list()
             list.push_back(std::make_shared<fs_entry_ref>(it));
         }
     }
-    
+
     return list;
 }
 
@@ -131,7 +131,7 @@ std::shared_ptr<build_interface> job::get_build_info(
     {
         return std::make_shared<build>(it);
     }
-    
+
     return nullptr;
 }
 

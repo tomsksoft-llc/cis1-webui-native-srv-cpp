@@ -17,6 +17,7 @@ set(${PROJECT_NAME}_SRC
     src/net/listener.cpp
     src/net/fail.cpp
 
+    src/websocket/handlers/utils/make_dir_entry.cpp
     src/websocket/handlers/authenticate.cpp
     src/websocket/handlers/ban_user.cpp
     src/websocket/handlers/change_group.cpp

@@ -18,7 +18,7 @@ struct fs_entry_interface
 
     virtual void invalidate() = 0;
 
-    virtual const std::filesystem::directory_entry& dir_entry() = 0;
+    virtual const std::filesystem::directory_entry& dir_entry() const = 0;
 };
 
 struct project_interface
