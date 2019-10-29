@@ -110,7 +110,7 @@ void application::init_cis_app()
                         queue->close();
                     }
                 }
-                
+
                 ctx.session->log(dto);
             });
 

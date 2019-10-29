@@ -90,6 +90,11 @@ private:
         // Called when a message finishes sending
         // Returns `true` if the caller should initiate a read
         bool on_write();
+    
+        boost::asio::executor get_executor()
+        {
+            return self_.strand_;
+        }
 
         template<bool isRequest, class Body, class Fields>
         void send(boost::beast::http::message<isRequest, Body, Fields>&& msg)

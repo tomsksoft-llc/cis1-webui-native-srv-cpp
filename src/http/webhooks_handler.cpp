@@ -272,9 +272,11 @@ void webhooks_handler::handle_github_signature(
         const std::string& signature)
 {
     openssl::hmac hmac;
+
     hmac.set_secret_key(
             reinterpret_cast<unsigned char*>(ctx.api_access_key.data()),
             ctx.api_access_key.length());
+
     auto result = hmac.calc_digest(
             reinterpret_cast<unsigned char*>(req.body().data()),
             req.body().length());
@@ -328,8 +330,14 @@ void webhooks_handler::finish(
                         project,
                         job,
                         params,
-                        [](auto&&...){},   //TODO make real answer to client
-                        [](auto&&...){}))
+                        {},
+                        {}))
+            .then([file_path](auto&&...)
+                        {
+                            std::error_code ec;
+
+                            std::filesystem::remove_all(file_path, ec);
+                        })
             .run();
     }
 
