@@ -217,7 +217,10 @@ cis_manager::run_job_task_t cis_manager::run_job(
                         {
                             session_manager_.finish_session(session_id);
 
-                            on_session_finished(session_id);
+                            if(on_session_finished)
+                            {
+                                on_session_finished(session_id);
+                            }
                         },
                         [&,
                          continuation,
@@ -231,7 +234,10 @@ cis_manager::run_job_task_t cis_manager::run_job(
 
                             }
 
-                            continuation(std::forward<decltype(args)>(args)...);
+                            if(continuation)
+                            {
+                                continuation(std::forward<decltype(args)>(args)...);
+                            }
                         });
             },
             ioc_.get_executor()};

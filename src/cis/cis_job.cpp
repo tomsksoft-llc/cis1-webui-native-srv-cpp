@@ -49,7 +49,7 @@ void cis_job::run(
             got_session_id = false
             ](const std::string& str) mutable
             {
-                if(!got_session_id)
+                if(!got_session_id && session_started_cb_)
                 {
                     session_started_cb_(str);
 
@@ -75,17 +75,20 @@ void cis_job::run(
                     {
                         auto exit_code = cp_->exit_code();
 
-                        if(session_id_)
+                        if(session_id_ && session_finished_cb_)
                         {
                             session_finished_cb_(session_id_.value());
                         }
 
-                        job_finished_cb_(
-                                {
-                                    true,
-                                    exit_code ? *exit_code : -1,
-                                    session_id_
-                                });
+                        if(job_finished_cb_)
+                        {
+                            job_finished_cb_(
+                                    {
+                                        true,
+                                        exit_code ? *exit_code : -1,
+                                        session_id_
+                                    });
+                        }
 
                         job_finished_cb_ = {};
                     },
@@ -93,7 +96,6 @@ void cis_job::run(
                     {
                         if(session_id_)
                         {
-                            //session_id_.finish();
                             session_finished_cb_(session_id_.value());
                         }
 
