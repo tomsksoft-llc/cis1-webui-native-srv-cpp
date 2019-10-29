@@ -17,11 +17,4 @@ handle_result handle_authenticate(
         net::http_session::request_reader& reader,
         net::http_session::queue& queue);
 
-handle_result handle_update_projects(
-        cis::project_list& projects,
-        beast::http::request<beast::http::empty_body>& req,
-        request_context& ctx,
-        net::http_session::request_reader& reader,
-        net::http_session::queue& queue);
-
 } // namespace http

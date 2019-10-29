@@ -40,6 +40,7 @@ void new_directory(
     auto& fs = cis_manager.fs();
 
     std::error_code ec;
+
     fs.create_directory(path, ec);
 
     if(ec)

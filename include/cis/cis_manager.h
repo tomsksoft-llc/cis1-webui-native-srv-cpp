@@ -10,9 +10,7 @@
 #include "cis_manager_interface.h"
 #include "database.h"
 #include "fs_cache.h"
-#include "cis_structs.h"
 #include "session_manager.h"
-#include "fs_mapper.h"
 #include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
 #include "session.h"
@@ -30,6 +28,7 @@ public:
             boost::asio::ip::address webui_address,
             unsigned short webui_port,
             database::database_wrapper& db);
+
     cis_manager(const cis_manager&) = delete;
 
     bool refresh(const std::filesystem::path& path) override;
@@ -38,22 +37,21 @@ public:
 
     std::filesystem::path get_projects_path() const override;
 
-    fs_cache<fs_mapper>& fs() override;
+    fs_cache& fs() override;
 
-    immutable_container_proxy<
-            std::map<std::string, project>> get_projects() override;
+    project_list_t get_project_list() override;
 
-    const project* get_project_info(
-            const std::string& project_name) const override;
+    project_info_t get_project_info(
+            const std::string& project_name) override;
 
-    const job* get_job_info(
+    job_info_t get_job_info(
             const std::string& project_name,
-            const std::string& job_name) const override;
+            const std::string& job_name) override;
 
-    const build* get_build_info(
+    build_info_t get_build_info(
             const std::string& project_name,
             const std::string& job_name,
-            const std::string& build_name) const override;
+            const std::string& build_name) override;
 
     bool rename_job(
             const std::string& project_name,
@@ -111,8 +109,7 @@ private:
     std::filesystem::path cis_root_;
     boost::asio::ip::address webui_address_;
     short unsigned webui_port_;
-    project_list projects_;
-    fs_cache<fs_mapper> fs_;
+    fs_cache fs_;
     executables execs_;
     session_manager session_manager_;
 

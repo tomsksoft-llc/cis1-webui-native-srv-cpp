@@ -17,6 +17,7 @@ set(${PROJECT_NAME}_SRC
     src/net/listener.cpp
     src/net/fail.cpp
 
+    src/websocket/handlers/utils/make_dir_entry.cpp
     src/websocket/handlers/authenticate.cpp
     src/websocket/handlers/ban_user.cpp
     src/websocket/handlers/change_group.cpp
@@ -54,7 +55,6 @@ set(${PROJECT_NAME}_SRC
     src/cis/cis_job.cpp
     src/cis/dirs.cpp
     src/cis/cis_structs.cpp
-    src/cis/fs_mapper.cpp
     src/cis/session_manager.cpp
     src/cis/session.cpp
     src/cis/cis_manager.cpp
@@ -83,7 +83,8 @@ set(${PROJECT_NAME}_SRC
     src/database.cpp
     src/file_util.cpp
     src/rights_manager.cpp
-    src/child_process.cpp)
+    src/child_process.cpp
+    src/fs_cache.cpp)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
