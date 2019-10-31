@@ -41,10 +41,7 @@ cis_manager::cis_manager(
             break;
         }
 
-        if(!execs_.set(exec_name, exec_file))
-        {
-            throw load_config_error("Can't load cis.conf");
-        }
+        execs_.set(exec_name, exec_file);
     }
 
     if(!execs_.valid())
