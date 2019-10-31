@@ -29,7 +29,7 @@ struct cron_entry
 struct cis_manager_interface
 {
     using list_cron_task_t = typename make_async_task_t<
-            void(const std::vector<cron_entry>&)>::task;
+            void(bool, const std::vector<cron_entry>&)>::task;
 
     using add_cron_task_t = typename make_async_task_t<
             void(bool)>::task;

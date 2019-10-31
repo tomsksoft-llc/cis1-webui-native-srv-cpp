@@ -345,12 +345,12 @@ cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
             mask
             ](auto&& continuation)
             {
+                auto entries = std::make_shared<std::vector<cron_entry>>();
+
                 auto reader = std::make_shared<buffer_reader>(
-                        [&, continuation](const std::vector<char>& buf) mutable
+                        [&, entries](const std::vector<char>& buf) mutable
                         {
-                            std::vector<cron_entry> entries;
-                            parse_cron_list(buf, entries);
-                            continuation(entries);
+                            parse_cron_list(buf, *entries);
                         });
 
                 cp->run({"--list", mask},
@@ -361,7 +361,15 @@ cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
                                     reader->accept_pipe(pipe);
                                 },
                                 [](auto){}),
-                        nullptr);
+                        std::make_shared<task_callback>(
+                            [continuation, entries]()
+                            {
+                                continuation(true, *entries);
+                            },
+                            [continuation]()
+                            {
+                                continuation(false, {});
+                            }));
             },
             ioc_.get_executor()};
 }
@@ -448,14 +456,23 @@ void cis_manager::parse_cron_list(
 
         //[it, it1)/(it1, it2) (it2, it3)\n
 
+        if(it1 == exe_output.end() || it2 == exe_output.end())
+        {
+            return;
+        }
+
+        if(std::distance(it, it1) == 0
+        || std::distance(it1 + 1, it2) == 0
+        || std::distance(it2 + 1, it3) == 0)
+        {
+            return;
+        }
+
         std::string project(it, it1);
         std::string job(it1 + 1, it2);
         std::string expr(it2 + 1, it3);
 
-        if(!project.empty() && !job.empty() && !expr.empty())
-        {
-            entries.push_back({project, job, expr});
-        }
+        entries.push_back({project, job, expr});
 
         if(it3 != exe_output.end())
         {
