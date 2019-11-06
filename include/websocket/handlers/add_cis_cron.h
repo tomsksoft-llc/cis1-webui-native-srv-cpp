@@ -43,14 +43,30 @@ void add_cis_cron(
 
     if(job != nullptr && permitted)
     {
-        cis_manager.add_cron(
-                req.project,
-                req.job,
-                req.cron_expr);
+        if(auto executor = handle.get_executor(); executor)
+        {
+            make_async_chain(executor.value())
+                .then(cis_manager.add_cron(
+                        req.project,
+                        req.job,
+                        req.cron_expr))
+                .then([handle = std::move(handle)](bool success)
+                        {
+                            if(success)
+                            {
+                                dto::cis_cron_add_success res;
 
-        dto::cis_cron_add_success res;
+                                handle.send(res);
+                            }
+                            else
+                            {
+                                handle.send_error("Can't add cron.");
+                            }
+                        })
+                .run();
+        }
 
-        return handle.send(res);
+        return;
     }
 
     if(!permitted)

@@ -29,7 +29,13 @@ struct cron_entry
 struct cis_manager_interface
 {
     using list_cron_task_t = typename make_async_task_t<
-            void(const std::vector<cron_entry>&)>::task;
+            void(bool, const std::vector<cron_entry>&)>::task;
+
+    using add_cron_task_t = typename make_async_task_t<
+            void(bool)>::task;
+    
+    using remove_cron_task_t = typename make_async_task_t<
+            void(bool)>::task;
 
     using run_job_task_t = typename make_async_task_t<
             void(const execution_info&)>::task;
@@ -84,12 +90,12 @@ struct cis_manager_interface
             std::function<
                     void(const std::string&)> on_session_finished) = 0;
 
-    virtual bool add_cron(
+    virtual add_cron_task_t add_cron(
             const std::string& project_name,
             const std::string& job_name,
             const std::string& cron_expression) = 0;
 
-    virtual bool remove_cron(
+    virtual remove_cron_task_t remove_cron(
             const std::string& project_name,
             const std::string& job_name,
             const std::string& cron_expression) = 0;

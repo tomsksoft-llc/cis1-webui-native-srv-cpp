@@ -19,17 +19,27 @@ void list_cis_cron(
     {
         make_async_chain(executor.value())
             .then(cis_manager.list_cron(req.mask))
-            .then([tr](const std::vector<cis::cron_entry>& entries)
+            .then([tr]( bool success,
+                        const std::vector<cis::cron_entry>& entries)
                     {
-                        dto::cis_cron_list_success res;
-                        for(auto& entry : entries)
+                        if(success)
                         {
-                            res.entries.push_back({
-                                    entry.project,
-                                    entry.job,
-                                    entry.cron_expr});
+                            dto::cis_cron_list_success res;
+
+                            for(auto& entry : entries)
+                            {
+                                res.entries.push_back({
+                                        entry.project,
+                                        entry.job,
+                                        entry.cron_expr});
+                            }
+
+                            tr.send(res);
                         }
-                        tr.send(res);
+                        else
+                        {
+                            tr.send_error("Cron list error.");
+                        }
                     })
             .run();
     }

@@ -41,10 +41,7 @@ cis_manager::cis_manager(
             break;
         }
 
-        if(!execs_.set(exec_name, exec_file))
-        {
-            throw load_config_error("Can't load cis.conf");
-        }
+        execs_.set(exec_name, exec_file);
     }
 
     if(!execs_.valid())
@@ -243,56 +240,94 @@ cis_manager::run_job_task_t cis_manager::run_job(
             ioc_.get_executor()};
 }
 
-bool cis_manager::add_cron(
+cis_manager::add_cron_task_t cis_manager::add_cron(
         const std::string& project_name,
         const std::string& job_name,
         const std::string& cron_expression)
 {
     if(get_job_info(project_name, job_name) == nullptr)
     {
-        return false;
+        return {
+            [](auto&& continuation)
+            {
+                continuation(false);
+            },
+            ioc_.get_executor()};
     }
 
     auto env = boost::this_process::environment();
     env["cis_base_dir"] = canonical(cis_root_).string();
 
-    auto cp = std::make_shared<child_process>(
-            ioc_,
-            env,
-            std::filesystem::path{cis::get_root_dir()} / cis::core,
-            execs_.cis_cron);
-
-    cp->run({"--add", cron_expression, path_cat(project_name, "/" + job_name)},
-            nullptr,
-            nullptr);
-
-    return true;
+    return {
+        [
+            cp = std::make_shared<child_process>(
+                    ioc_,
+                    env,
+                    std::filesystem::path{cis::get_root_dir()} / cis::core,
+                    execs_.cis_cron),
+            project_name,
+            job_name,
+            cron_expression
+        ](auto&& continuation)
+        {
+            cp->run({"--add", cron_expression, path_cat(project_name, "/" + job_name)},
+                    nullptr,
+                    std::make_shared<task_callback>(
+                        [continuation]()
+                        {
+                            continuation(true);
+                        },
+                        [continuation]()
+                        {
+                            continuation(false);
+                        }));
+        },
+        ioc_.get_executor()};
 }
 
-bool cis_manager::remove_cron(
+cis_manager::remove_cron_task_t cis_manager::remove_cron(
         const std::string& project_name,
         const std::string& job_name,
         const std::string& cron_expression)
 {
     if(get_job_info(project_name, job_name) == nullptr)
     {
-        return false;
+        return {
+            [](auto&& continuation)
+            {
+                continuation(false);
+            },
+            ioc_.get_executor()};
     }
 
     auto env = boost::this_process::environment();
     env["cis_base_dir"] = canonical(cis_root_).string();
 
-    auto cp = std::make_shared<child_process>(
-            ioc_,
-            env,
-            std::filesystem::path{cis::get_root_dir()} / cis::core,
-            execs_.cis_cron);
-
-    cp->run({"--del", cron_expression, path_cat(project_name, "/" + job_name)},
-            nullptr,
-            nullptr);
-
-    return true;
+    return {
+        [
+            cp = std::make_shared<child_process>(
+                    ioc_,
+                    env,
+                    std::filesystem::path{cis::get_root_dir()} / cis::core,
+                    execs_.cis_cron),
+            project_name,
+            job_name,
+            cron_expression
+        ](auto&& continuation)
+        {
+            cp->run({"--del", cron_expression, path_cat(project_name, "/" + job_name)},
+                    nullptr,
+                    std::make_shared<task_callback>(
+                        [continuation]()
+                        {
+                            continuation(true);
+                        },
+                        [continuation]()
+                        {
+                            continuation(false);
+                        }));
+        },
+        ioc_.get_executor()};
 }
 
 cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
@@ -310,12 +345,12 @@ cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
             mask
             ](auto&& continuation)
             {
+                auto entries = std::make_shared<std::vector<cron_entry>>();
+
                 auto reader = std::make_shared<buffer_reader>(
-                        [&, continuation](const std::vector<char>& buf) mutable
+                        [&, entries](const std::vector<char>& buf) mutable
                         {
-                            std::vector<cron_entry> entries;
-                            parse_cron_list(buf, entries);
-                            continuation(entries);
+                            parse_cron_list(buf, *entries);
                         });
 
                 cp->run({"--list", mask},
@@ -326,7 +361,15 @@ cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
                                     reader->accept_pipe(pipe);
                                 },
                                 [](auto){}),
-                        nullptr);
+                        std::make_shared<task_callback>(
+                            [continuation, entries]()
+                            {
+                                continuation(true, *entries);
+                            },
+                            [continuation]()
+                            {
+                                continuation(false, {});
+                            }));
             },
             ioc_.get_executor()};
 }
@@ -400,22 +443,43 @@ bool cis_manager::executables::valid()
         &&  !cis_cron.empty());
 }
 
-const std::regex cron_line_regex(R"rx(\t((?:\*|(?:[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])|\*\/(?:[0-9]|1[0-9]|2[0-9]|3[0-9]|4[0-9]|5[0-9])) (?:\*|(?:[0-9]|1[0-9]|2[0-3])|\*\/(?:[0-9]|1[0-9]|2[0-3])) (?:\*|([1-9]|1[0-9]|2[0-9]|3[0-1])|\*\/(?:[1-9]|1[0-9]|2[0-9]|3[0-1])) (?:\*|([1-9]|1[0-2])|\*\/(?:[1-9]|1[0-2])) (?:\*|(?:[0-6])|\*\/(?:[0-6])))\t\/([^\/]+)\/([^\/\n]+)(?:\n|$))rx");
-
 void cis_manager::parse_cron_list(
         const std::vector<char>& exe_output,
         std::vector<cron_entry>& entries)
 {
-    auto start = exe_output.cbegin();
-    auto end = exe_output.cend();
-    std::match_results<std::vector<char>::const_iterator> what;
-    auto flags = std::regex_constants::match_default;
-
-    while(regex_search(start, end, what, cron_line_regex, flags))
+    auto it = exe_output.begin();
+    while(it != exe_output.end())
     {
-        entries.push_back({what[4], what[5], what[1]});
-        start = what[0].second;
-        flags |= std::regex_constants::match_prev_avail;
+        auto it1 = std::find(it, exe_output.end(), '/');
+        auto it2 = std::find(it1, exe_output.end(), ' ');
+        auto it3 = std::find(it2, exe_output.end(), '\n');
+
+        //[it, it1)/(it1, it2) (it2, it3)\n
+
+        if(it1 == exe_output.end() || it2 == exe_output.end())
+        {
+            return;
+        }
+
+        if(std::distance(it, it1) == 0
+        || std::distance(it1 + 1, it2) == 0
+        || std::distance(it2 + 1, it3) == 0)
+        {
+            return;
+        }
+
+        std::string project(it, it1);
+        std::string job(it1 + 1, it2);
+        std::string expr(it2 + 1, it3);
+
+        entries.push_back({project, job, expr});
+
+        if(it3 != exe_output.end())
+        {
+            ++it3;
+        }
+
+        it = it3;
     }
 }
 

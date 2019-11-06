@@ -67,12 +67,12 @@ public:
             std::function<
                     void(const std::string&)> on_session_finished) override;
 
-    bool add_cron(
+    add_cron_task_t add_cron(
             const std::string& project_name,
             const std::string& job_name,
             const std::string& cron_expression) override;
 
-    bool remove_cron(
+    remove_cron_task_t remove_cron(
             const std::string& project_name,
             const std::string& job_name,
             const std::string& cron_expression) override;
