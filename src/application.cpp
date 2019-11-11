@@ -136,14 +136,28 @@ std::shared_ptr<http_router> application::make_http_router()
             url::make() / CT_STRING("upload") / url::bound_string() / url::string(),
             [&upload_handler = upload_handler_](auto&& ...args)
             {
-                return upload_handler(std::forward<decltype(args)>(args)...);
+                return upload_handler.upload(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(
             url::make() / CT_STRING("upload") / url::bound_string(),
             [&upload_handler = upload_handler_](auto&& ...args)
             {
-                return upload_handler(std::forward<decltype(args)>(args)...);
+                return upload_handler.upload(std::forward<decltype(args)>(args)...);
+            });
+
+    router->add_route(
+            url::make() / CT_STRING("replace") / url::bound_string() / url::string(),
+            [&upload_handler = upload_handler_](auto&& ...args)
+            {
+                return upload_handler.replace(std::forward<decltype(args)>(args)...);
+            });
+
+    router->add_route(
+            url::make() / CT_STRING("replace") / url::bound_string(),
+            [&upload_handler = upload_handler_](auto&& ...args)
+            {
+                return upload_handler.replace(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(

@@ -144,6 +144,7 @@ handle_result webhooks_handler::handle_github_headers(
             [&, ctx, project, job, ev, signature, query_string](
                     beast::http::request<
                             beast::http::string_body>&& req,
+                    const boost::beast::error_code& /*ec*/,
                     net::http_session::queue& queue) mutable
             {
                 handle_github_signature(
@@ -192,6 +193,7 @@ handle_result webhooks_handler::handle_gitlab_headers(
             [&, ctx, project, job, ev, query_string](
                     beast::http::request<
                             beast::http::string_body>&& req,
+                    const boost::beast::error_code& /*ec*/,
                     net::http_session::queue& queue) mutable
             {
                 finish(
@@ -245,6 +247,7 @@ handle_result webhooks_handler::handle_plain_headers(
             [&, ctx, project, job, ev, query_string](
                     beast::http::request<
                             beast::http::string_body>&& req,
+                    const boost::beast::error_code& /*ec*/,
                     net::http_session::queue& queue) mutable
             {
                 finish(
