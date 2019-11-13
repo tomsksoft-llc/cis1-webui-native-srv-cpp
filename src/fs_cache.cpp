@@ -1,5 +1,7 @@
 #include "fs_cache.h"
 
+#include <fstream>
+
 fs_node::fs_node(std::chrono::nanoseconds invalidation_time,
         const std::filesystem::path& path,
         size_t caching_level)
@@ -634,4 +636,29 @@ void fs_cache::create_directory(
             it.invalidate();
         }
     }
+}
+
+std::unique_ptr<std::ostream> fs_cache::create_file_w(
+        const std::filesystem::path& path,
+        std::error_code& ec)
+{
+    auto file = std::make_unique<std::ofstream>(
+            root_.path() += path,
+            std::ios_base::out);
+    
+    if(!file->is_open())
+    {
+        ec.assign(1, ec.category());
+
+        return nullptr;
+    }
+
+    auto it = find(path.parent_path());
+
+    if(it != end())
+    {
+        it.invalidate();
+    }
+
+    return file;
 }

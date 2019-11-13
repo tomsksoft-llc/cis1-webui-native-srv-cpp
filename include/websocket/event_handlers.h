@@ -28,3 +28,4 @@
 #include "handlers/unban_user.h"
 #include "handlers/session_subscribe.h"
 #include "handlers/session_unsubscribe.h"
+#include "handlers/add_cis_job.h"
