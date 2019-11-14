@@ -289,7 +289,8 @@ fs_iterator fs_iterator::begin()
 
                             auto new_it = it->begin();
                             
-                            if(new_it->state_ == fs_node::node_state::deleted)
+                            if(new_it != it->end()
+                            && new_it->state_ == fs_node::node_state::deleted)
                             {
                                 ++new_it;
                             }
