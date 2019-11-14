@@ -315,6 +315,11 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::fs_entry_info>(
+            std::bind(&wsh::get_fs_entry_info,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::fs_entry_refresh>(
             std::bind(&wsh::refresh_fs_entry,
                     std::ref(cis_),

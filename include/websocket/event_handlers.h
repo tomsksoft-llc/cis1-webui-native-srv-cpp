@@ -16,6 +16,7 @@
 #include "handlers/list_projects.h"
 #include "handlers/list_users.h"
 #include "handlers/logout.h"
+#include "handlers/get_fs_entry_info.h"
 #include "handlers/move_fs_entry.h"
 #include "handlers/new_directory.h"
 #include "handlers/refresh_fs_entry.h"
