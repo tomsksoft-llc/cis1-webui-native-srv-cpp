@@ -11,7 +11,6 @@ set(${PROJECT_NAME}_SRC
 
     src/net/basic_websocket_session.cpp
     src/net/http_session.cpp
-    src/net/socket_util.cpp
     src/net/queued_websocket_session.cpp
     src/net/websocket_queue.cpp
     src/net/listener.cpp

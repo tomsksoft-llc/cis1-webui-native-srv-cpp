@@ -2,8 +2,9 @@
 
 #include <functional>
 
+#include <cis1_proto_utils/cloexec.h>
+
 #include "net/fail.h"
-#include "net/socket_util.h"
 
 namespace net
 {
@@ -30,7 +31,7 @@ void listener::listen(
     }
 
     // Automaticly close socket on exec
-    set_cloexec(acceptor_, ec);
+    cis1::proto_utils::set_cloexec(acceptor_, ec);
     if(ec)
     {
         fail(ec, "set_cloexec");
@@ -91,7 +92,7 @@ void listener::on_accept(boost::beast::error_code ec)
     else
     {
         // Automaticly close socket on exec
-        set_cloexec(socket_, ec);
+        cis1::proto_utils::set_cloexec(acceptor_, ec);
         if(ec)
         {
             fail(ec, "set_cloexec");
