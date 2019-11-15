@@ -288,7 +288,7 @@ fs_iterator fs_iterator::begin()
                             it->update();
 
                             auto new_it = it->begin();
-                            
+
                             if(new_it != it->end()
                             && new_it->state_ == fs_node::node_state::deleted)
                             {
@@ -678,4 +678,16 @@ std::unique_ptr<std::ostream> fs_cache::create_file_w(
     }
 
     return file;
+}
+
+void fs_cache::set_permissions(
+        const std::filesystem::path& path,
+        std::filesystem::perms permissions,
+        std::error_code& ec) const
+{
+    std::filesystem::permissions(
+            path,
+            permissions,
+            std::filesystem::perm_options::replace,
+            ec);
 }

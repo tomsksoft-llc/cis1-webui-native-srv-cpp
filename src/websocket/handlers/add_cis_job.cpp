@@ -58,6 +58,17 @@ void add_cis_job(
             return tr.send_error("Can't create file.");
         }
 
+        fs.set_permissions(
+                job_path / "script",
+                std::filesystem::perms::owner_all
+                    | std::filesystem::perms::group_read
+                    | std::filesystem::perms::others_read,
+                ec);
+        if(ec)
+        {
+            return tr.send_error("Can't make script executable.");
+        }
+
         auto job_params = fs.create_file_w(
                 job_path / "job.params",
                 ec);
