@@ -73,12 +73,46 @@ struct fs_entry
         }
     };
 
+    struct directory_info
+    {
+        static constexpr auto get_name()
+        {
+            return CT_STRING("directory");
+        }
+
+        static constexpr auto get_converter()
+        {
+            using namespace reflect;
+            return make_meta_converter<directory_info>()
+                    .done();
+        }
+    };
+
+    struct file_info
+    {
+        static constexpr auto get_name()
+        {
+            return CT_STRING("file");
+        }
+
+        static constexpr auto get_converter()
+        {
+            using namespace reflect;
+            return make_meta_converter<file_info>()
+                    .done();
+        }
+    };
+
     std::string name;
-    bool binary;
-    bool directory;
     std::string path;
     std::string link;
-    std::variant<std::monostate, project_info, job_info, build_info> metainfo;
+    std::variant<
+        std::monostate,
+        project_info,
+        job_info,
+        build_info,
+        directory_info,
+        file_info> metainfo;
 
     static constexpr auto get_converter()
     {
@@ -87,12 +121,6 @@ struct fs_entry
                 .add_field(
                         CT_STRING("name"),
                         ptr_v<&fs_entry::name>{})
-                .add_field(
-                        CT_STRING("binary"),
-                        ptr_v<&fs_entry::binary>{})
-                .add_field(
-                        CT_STRING("directory"),
-                        ptr_v<&fs_entry::directory>{})
                 .add_field(
                         CT_STRING("path"),
                         ptr_v<&fs_entry::path>{})

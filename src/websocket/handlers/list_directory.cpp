@@ -45,22 +45,30 @@ void list_directory(
 
         for(auto& file : it)
         {
-            bool is_directory = file.is_directory();
+            dto::fs_entry entry;
 
+            entry.name = file.path().filename();
+            
             auto relative_path = file.path().lexically_relative(
                     cis_manager.fs().root().path());
 
             auto path = ("/" / relative_path)
                     .generic_string();
 
-            auto link = "/download" + path;
+            entry.path = path;
 
-            res.entries.push_back(dto::fs_entry{
-                    file.path().filename(),
-                    false,
-                    is_directory,
-                    path,
-                    link});
+            entry.link = "/download" + path;
+
+            if(file.is_directory())
+            {
+                entry.metainfo = dto::fs_entry::directory_info{};
+            }
+            else if(file.is_regular_file())
+            {
+                entry.metainfo = dto::fs_entry::file_info{};
+            }
+
+            res.entries.push_back(entry);
         }
 
         return tr.send(res);

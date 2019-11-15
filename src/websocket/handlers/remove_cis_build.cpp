@@ -1,8 +1,8 @@
-#include "websocket/handlers/get_build_info.h"
+#include "websocket/handlers/remove_cis_build.h"
 
-#include "websocket/dto/cis_build_info_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/cis_build_remove_success.h"
 #include "websocket/dto/cis_build_error_doesnt_exist.h"
+#include "websocket/dto/user_permissions_error_access_denied.h"
 
 namespace websocket
 {
@@ -10,11 +10,11 @@ namespace websocket
 namespace handlers
 {
 
-void get_build_info(
+void remove_cis_build(
         cis::cis_manager_interface& cis_manager,
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::cis_build_info& req,
+        const dto::cis_build_remove& req,
         cis1::proto_utils::transaction tr)
 {
     auto build = cis_manager.get_build_info(
@@ -27,29 +27,25 @@ void get_build_info(
 
     if(build != nullptr && permitted)
     {
-        auto& info = build->get_info();
+        auto build_path =
+                std::filesystem::path{"/"} / req.project / req.job / req.build;
 
-        dto::cis_build_info_success res;
-        res.status = info.status ? info.status.value() : -1;
-        res.date = info.date ? info.date.value() : "";
+        auto& fs = cis_manager.fs();
 
-        for(auto& file : build->get_files())
+        if(auto it = fs.find(build_path); it != fs.end())
         {
-            auto relative_path = file.path().lexically_relative(
-                    cis_manager.fs().root().path());
+            it.remove();
 
-            auto path = ("/" / relative_path)
-                    .generic_string();
+            dto::cis_build_remove_success res;
 
-            auto link = "/download" + path;
-
-            res.fs_entries.push_back(dto::fs_entry{
-                    file.path().filename(),
-                    path,
-                    link});
+            return tr.send(res);
         }
 
-        return tr.send(res);
+        dto::cis_build_error_doesnt_exist err;
+        err.project = req.project;
+        err.job = err.job;
+
+        return tr.send_error(err, "Build doesn't exists.");
     }
 
     if(!permitted)

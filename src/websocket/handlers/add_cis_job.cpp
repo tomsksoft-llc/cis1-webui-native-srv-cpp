@@ -18,8 +18,6 @@ void add_cis_job(
         const dto::cis_job_add& req,
         cis1::proto_utils::transaction tr)
 {
-    dto::cis_job_add_success res;
-
     auto project = cis_manager.get_project_info(req.project);
 
     auto perm = rights.check_project_right(ctx.username, req.project);
@@ -36,9 +34,9 @@ void add_cis_job(
         {
             dto::cis_job_error_already_exist err;
             err.project = req.project;
-            err.job = err.job;
+            err.job = req.job;
 
-            return tr.send(err);
+            return tr.send_error(err, "Job already exits.");
         }
 
         std::error_code ec;
@@ -49,7 +47,7 @@ void add_cis_job(
 
         if(ec)
         {
-            return tr.send_error("internal_error");
+            return tr.send_error("Can't create directory.");
         }
 
         auto job_script = fs.create_file_w(
@@ -57,7 +55,7 @@ void add_cis_job(
                 ec);
         if(ec)
         {
-            return tr.send_error("internal_error");
+            return tr.send_error("Can't create file.");
         }
 
         auto job_params = fs.create_file_w(
@@ -65,7 +63,7 @@ void add_cis_job(
                 ec);
         if(ec)
         {
-            return tr.send_error("internal_error");
+            return tr.send_error("Can't create file.");
         }
 
         auto job_conf = fs.create_file_w(
@@ -73,7 +71,7 @@ void add_cis_job(
                 ec);
         if(ec)
         {
-            return tr.send_error("internal_error");
+            return tr.send_error("Can't create file.");
         }
 
         *job_conf << "script=script" << '\n';
@@ -95,7 +93,7 @@ void add_cis_job(
     dto::cis_project_error_doesnt_exist err;
     err.project = req.project;
 
-    return tr.send_error(err, "Project doesn't exists.");
+    return tr.send_error(err, "Job doesn't exists.");
 }
 
 } // namespace handlers

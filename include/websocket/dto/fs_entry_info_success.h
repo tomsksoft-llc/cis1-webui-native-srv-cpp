@@ -17,15 +17,15 @@ struct fs_entry_info_success
 {
 
     std::string name;
-    bool binary;
-    bool directory;
     std::string path;
     std::string link;
     std::variant<
         std::monostate,
         fs_entry::project_info,
         fs_entry::job_info,
-        fs_entry::build_info> metainfo;
+        fs_entry::build_info,
+        fs_entry::directory_info,
+        fs_entry::file_info> metainfo;
 
     static constexpr auto get_converter()
     {
@@ -39,12 +39,6 @@ struct fs_entry_info_success
                 .add_field(
                         CT_STRING("name"),
                         ptr_v<&fs_entry_info_success::name>{})
-                .add_field(
-                        CT_STRING("binary"),
-                        ptr_v<&fs_entry_info_success::binary>{})
-                .add_field(
-                        CT_STRING("directory"),
-                        ptr_v<&fs_entry_info_success::directory>{})
                 .add_field(
                         CT_STRING("path"),
                         ptr_v<&fs_entry_info_success::path>{})

@@ -295,8 +295,28 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_project_add>(
+            std::bind(&wsh::add_cis_project,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_project_remove>(
+            std::bind(&wsh::remove_cis_project,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_job_add>(
             std::bind(&wsh::add_cis_job,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_job_remove>(
+            std::bind(&wsh::remove_cis_job,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_build_remove>(
+            std::bind(&wsh::remove_cis_build,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));

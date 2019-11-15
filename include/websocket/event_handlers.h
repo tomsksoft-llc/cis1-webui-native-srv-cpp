@@ -29,4 +29,8 @@
 #include "handlers/unban_user.h"
 #include "handlers/session_subscribe.h"
 #include "handlers/session_unsubscribe.h"
+#include "handlers/add_cis_project.h"
+#include "handlers/remove_cis_project.h"
 #include "handlers/add_cis_job.h"
+#include "handlers/remove_cis_job.h"
+#include "handlers/remove_cis_build.h"

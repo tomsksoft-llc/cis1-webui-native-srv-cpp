@@ -45,9 +45,7 @@ void get_fs_entry_info(
 
         auto& file = *it;
 
-        res.name = file.path().filename(),
-        
-        res.directory = file.is_directory();
+        res.name = file.path().filename();
 
         auto relative_path = file.path().lexically_relative(
                 cis_manager.fs().root().path());
@@ -58,6 +56,15 @@ void get_fs_entry_info(
         res.path = path;
 
         res.link = "/download" + path;
+
+        if(file.is_directory())
+        {
+            res.metainfo = dto::fs_entry::directory_info{};
+        }
+        else if(file.is_regular_file())
+        {
+            res.metainfo = dto::fs_entry::file_info{};
+        }
 
         return tr.send(res);
     }

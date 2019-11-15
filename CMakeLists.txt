@@ -47,6 +47,11 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/session_subscribe.cpp
     src/websocket/handlers/session_unsubscribe.cpp
     src/websocket/handlers/add_cis_job.cpp
+    src/websocket/handlers/add_cis_project.cpp
+    src/websocket/handlers/remove_cis_project.cpp
+    src/websocket/handlers/add_cis_job.cpp
+    src/websocket/handlers/remove_cis_job.cpp
+    src/websocket/handlers/remove_cis_build.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 

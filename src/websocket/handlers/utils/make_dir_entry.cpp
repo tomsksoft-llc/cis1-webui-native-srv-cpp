@@ -10,23 +10,32 @@ dto::fs_entry make_dir_entry(
         const std::filesystem::path& root,
         const fs_entry_interface& entry)
 {
+    dto::fs_entry res;
+
     auto& file = entry.dir_entry();
 
-    bool is_directory = file.is_directory();
+    res.name = file.path().filename();
 
-    auto relative_path = file.path().lexically_relative(root);
+    auto relative_path = file.path().lexically_relative(
+            root);
 
     auto path = ("/" / relative_path)
             .generic_string();
 
-    auto link = "/download" + path;
+    res.path = path;
 
-    return dto::fs_entry{
-            file.path().filename(),
-            false,
-            is_directory,
-            path,
-            link};
+    res.link = "/download" + path;
+
+    if(file.is_directory())
+    {
+        res.metainfo = dto::fs_entry::directory_info{};
+    }
+    else if(file.is_regular_file())
+    {
+        res.metainfo = dto::fs_entry::file_info{};
+    }
+
+    return res;
 }
 
 } // handlers
