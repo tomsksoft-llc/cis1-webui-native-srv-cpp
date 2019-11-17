@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <variant>
 
 #include "tpl_reflect/meta_converter.h"
 #include "fs_entry.h"
@@ -35,6 +36,10 @@ struct cis_job_info_success
 
     std::vector<fs_entry> fs_entries;
     std::vector<param> params;
+    std::vector<
+        std::variant<
+            std::monostate,
+            fs_entry>> properties;
 
     static constexpr auto get_converter()
     {
@@ -51,6 +56,9 @@ struct cis_job_info_success
                 .add_field(
                         CT_STRING("params"),
                         ptr_v<&cis_job_info_success::params>{})
+                .add_field(
+                        CT_STRING("properties"),
+                        ptr_v<&cis_job_info_success::properties>{})
                 .done();
     }
 };

@@ -114,6 +114,11 @@ struct fs_entry
         directory_info,
         file_info> metainfo;
 
+    static constexpr auto get_name()
+    {
+        return CT_STRING("fs_entry");
+    }
+
     static constexpr auto get_converter()
     {
         using namespace reflect;

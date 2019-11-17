@@ -79,6 +79,24 @@ void get_job_info(
                     return false;
                 });
 
+        res.properties.push_back(
+                make_dir_entry(
+                        cis_manager.fs().root().path(),
+                        *job->get_script_entry()));
+    
+        if(auto entry = job->get_params_entry(); entry != nullptr)
+        {
+            res.properties.push_back(
+                    make_dir_entry(
+                            cis_manager.fs().root().path(),
+                            *entry));
+        }
+
+        res.properties.push_back(
+                make_dir_entry(
+                        cis_manager.fs().root().path(),
+                        *job->get_conf_entry()));
+
         return tr.send(res);
     }
 
