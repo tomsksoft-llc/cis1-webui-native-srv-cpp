@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/session_subscribe.h"
 
 #include "websocket/dto/cis_session_log_entry.h"

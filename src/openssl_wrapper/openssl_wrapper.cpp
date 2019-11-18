@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "openssl_wrapper/openssl_wrapper.h"
 
 #include <openssl/engine.h>

@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #pragma once
 
 #include <string>
@@ -11,8 +19,7 @@
 #include "cis_job.h"
 #include "database.h"
 #include "fs_cache.h"
-#include "cis_structs.h"
-#include "fs_mapper.h"
+#include "cis_structs_interface.h"
 #include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
 #include "session.h"
@@ -30,7 +37,13 @@ struct cron_entry
 struct cis_manager_interface
 {
     using list_cron_task_t = typename make_async_task_t<
-            void(const std::vector<cron_entry>&)>::task;
+            void(bool, const std::vector<cron_entry>&)>::task;
+
+    using add_cron_task_t = typename make_async_task_t<
+            void(bool)>::task;
+    
+    using remove_cron_task_t = typename make_async_task_t<
+            void(bool)>::task;
 
     using run_job_task_t = typename make_async_task_t<
             void(const execution_info&)>::task;
@@ -43,22 +56,33 @@ struct cis_manager_interface
 
     virtual std::filesystem::path get_projects_path() const = 0;
 
-    virtual fs_cache<fs_mapper>& fs() = 0;
+    virtual fs_cache& fs() = 0;
 
-    virtual immutable_container_proxy<
-            std::map<std::string, project>> get_projects() = 0;
+    using project_list_t =
+        std::vector<
+                std::variant<
+                        std::shared_ptr<fs_entry_interface>,
+                        std::shared_ptr<project_interface>>>;
 
-    virtual const project* get_project_info(
-            const std::string& project_name) const = 0;
+    virtual project_list_t get_project_list() = 0;
 
-    virtual const job* get_job_info(
+    using project_info_t = std::shared_ptr<project_interface>;
+
+    virtual project_info_t get_project_info(
+            const std::string& project_name) = 0;
+
+    using job_info_t = std::shared_ptr<job_interface>;
+
+    virtual job_info_t get_job_info(
             const std::string& project_name,
-            const std::string& job_name) const = 0;
+            const std::string& job_name) = 0;
 
-    virtual const build* get_build_info(
+    using build_info_t = std::shared_ptr<build_interface>;
+
+    virtual build_info_t get_build_info(
             const std::string& project_name,
             const std::string& job_name,
-            const std::string& build_name) const = 0;
+            const std::string& build_name) = 0;
 
     virtual bool rename_job(
             const std::string& project_name,
@@ -74,12 +98,12 @@ struct cis_manager_interface
             std::function<
                     void(const std::string&)> on_session_finished) = 0;
 
-    virtual bool add_cron(
+    virtual add_cron_task_t add_cron(
             const std::string& project_name,
             const std::string& job_name,
             const std::string& cron_expression) = 0;
 
-    virtual bool remove_cron(
+    virtual remove_cron_task_t remove_cron(
             const std::string& project_name,
             const std::string& job_name,
             const std::string& cron_expression) = 0;

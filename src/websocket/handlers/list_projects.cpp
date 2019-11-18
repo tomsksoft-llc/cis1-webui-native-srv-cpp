@@ -1,6 +1,18 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/list_projects.h"
 
 #include "websocket/dto/cis_project_list_get_success.h"
+
+#include "websocket/handlers/utils/make_dir_entry.h"
+
+#include "cis/dirs.h"
 
 namespace websocket
 {
@@ -17,39 +29,38 @@ void list_projects(
 {
     dto::cis_project_list_get_success res;
 
-    for(auto& file : cis_manager.fs())
+    for(auto& entry : cis_manager.get_project_list())
     {
-        bool is_directory = file.dir_entry().is_directory();
-        auto path = ("/" / file.relative_path()).generic_string();
-        auto link = ("/download" / file.relative_path()).generic_string();
+        auto res_entry = std::visit(
+                meta::overloaded{
+                    [&](const std::shared_ptr<fs_entry_interface>& entry)
+                    {
+                            return make_dir_entry(
+                                    cis_manager.fs().root().path(),
+                                    *entry);
+                    },
+                    [&](const std::shared_ptr<project_interface>& project)
+                    {
+                        auto entry = make_dir_entry(
+                                cis_manager.fs().root().path(),
+                                *project);
 
-        res.fs_entries.push_back(dto::fs_entry{
-                file.filename(),
-                false,
-                is_directory,
-                path,
-                link});
-    }
+                        bool permitted = false;
 
-    for(auto& [project_name, project] : cis_manager.get_projects())
-    {
-        auto it = std::find_if(
-                res.fs_entries.begin(),
-                res.fs_entries.end(),
-                [&project_name](auto& entry)
-                {
-                    return entry.name == project_name;
-                });
+                        if(auto perm = rights.check_project_right(ctx.username, entry.name);
+                                (perm.has_value() && perm.value().read) || !perm.has_value())
+                        {
+                            permitted = true;
+                        }
 
-        bool permitted = false;
+                        entry.metainfo = dto::fs_entry::project_info{permitted};
 
-        if(auto perm = rights.check_project_right(ctx.username, project_name);
-                (perm.has_value() && perm.value().read) || !perm.has_value())
-        {
-            permitted = true;
-        }
+                        return entry;
+                    }
+                },
+                entry);
 
-        it->metainfo = dto::fs_entry::project_info{true};
+        res.fs_entries.push_back(res_entry);
     }
 
     return tr.send(res);

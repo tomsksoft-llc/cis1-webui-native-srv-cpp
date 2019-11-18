@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #pragma once
 
 #include "request_context.h"
@@ -12,13 +20,6 @@ namespace http
 
 handle_result handle_authenticate(
         auth_manager& authentication_handler,
-        beast::http::request<beast::http::empty_body>& req,
-        request_context& ctx,
-        net::http_session::request_reader& reader,
-        net::http_session::queue& queue);
-
-handle_result handle_update_projects(
-        cis::project_list& projects,
         beast::http::request<beast::http::empty_body>& req,
         request_context& ctx,
         net::http_session::request_reader& reader,

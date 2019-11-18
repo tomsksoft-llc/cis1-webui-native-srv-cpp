@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/run_job.h"
 
 #include "websocket/dto/cis_job_run_success.h"
@@ -26,7 +34,7 @@ void run_job(
         params.insert({param.name, param.value});
     }
 
-    auto* job = cis_manager.get_job_info(req.project, req.job);
+    auto job = cis_manager.get_job_info(req.project, req.job);
 
     auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted = perm.has_value() ? perm.value().execute : true;

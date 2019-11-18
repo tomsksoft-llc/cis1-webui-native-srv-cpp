@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/list_directory.h"
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
@@ -43,14 +51,20 @@ void list_directory(
     {
         dto::fs_entry_list_success res;
 
-        for(auto& file : it->childs())
+        for(auto& file : it)
         {
-            bool is_directory = file.dir_entry().is_directory();
-            auto path = ("/" / file.relative_path()).generic_string();
-            auto link = ("/download" / file.relative_path()).generic_string();
+            bool is_directory = file.is_directory();
+
+            auto relative_path = file.path().lexically_relative(
+                    cis_manager.fs().root().path());
+
+            auto path = ("/" / relative_path)
+                    .generic_string();
+
+            auto link = "/download" + path;
 
             res.entries.push_back(dto::fs_entry{
-                    file.filename(),
+                    file.path().filename(),
                     false,
                     is_directory,
                     path,

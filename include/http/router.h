@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #pragma once
 
 #include <functional>
@@ -30,15 +38,18 @@ public:
     using request_t = beast::http::request<beast::http::empty_body>;
     using context_t = request_context;
     using handler_t = std::function<handle_result(request_t&, context_t&, Args...)>;
+
     struct handler_interface
     {
         virtual ~handler_interface() = default;
+
         virtual handle_result handle(
                 request_t&,
                 context_t&,
                 Args...,
                 const std::smatch&) const = 0;
     };
+
     handle_result operator()(request_t& req, context_t& ctx, Args... args)
     {
         std::string target{req.target()}; //TODO: use string_view somehow
@@ -47,12 +58,17 @@ public:
             std::smatch what;
             if(std::regex_match(target, what, regexp))
             {
-                return handler->handle(req, ctx, std::forward<decltype(args)>(args)..., what);
+                return handler->handle(
+                        req,
+                        ctx,
+                        std::forward<decltype(args)>(args)...,
+                        what);
             }
         }
 
         return handle_result::error;
     }
+
     template <
         class ParseString,
         class... RouteArgs,
@@ -62,13 +78,12 @@ public:
             Fn cb)
     {
         using namespace std::string_literals;
+
         class handler_impl
             : public handler_interface
         {
-            Fn fn;
         public:
-            handler_impl(
-                    Fn fn_arg)
+            handler_impl(Fn fn_arg)
                 : fn(fn_arg)
             {}
 
@@ -79,21 +94,28 @@ public:
                     const std::smatch& what) const
             {
                 auto parsed_args = meta::maybe_tuple<RouteArgs...>(what, 1);
+
                 if(parsed_args)
                 {
                     auto fn_args = std::tuple_cat(
                             std::forward_as_tuple(req, ctx, args...),
                             parsed_args.value());
+
                     return std::apply(fn, std::move(fn_args));
                 }
+
                 return handle_result::error;
             }
+
+        private:
+            Fn fn;
         };
 
         auto&& inserted = routes_.emplace_back(
                 "^"s + ParseString::value + "$"s,
                 std::make_unique<handler_impl>(cb));
     }
+
 private:
     std::vector<std::pair<std::regex, std::unique_ptr<handler_interface>>> routes_;
 };

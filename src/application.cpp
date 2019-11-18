@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "application.h"
 
 #include <functional>
@@ -25,7 +33,7 @@ application::application(const init_params& params)
     , cis_(ioc_, params_.cis_root, params_.cis_address, params_.cis_port, db_)
     , app_(std::make_shared<http::handlers_chain>())
     , cis_app_(ioc_)
-    , auth_manager_(db_)
+    , auth_manager_(ioc_, db_)
     , rights_manager_(db_)
     , files_(params.doc_root.string())
     , upload_handler_(
@@ -57,7 +65,7 @@ void application::init_app()
     app_->append_handler(
             std::bind(
                     &http::handle_authenticate,
-                    auth_manager_,
+                    std::ref(auth_manager_),
                     _1, _2, _3, _4));
     app_->append_handler(
             std::bind(
@@ -110,7 +118,7 @@ void application::init_cis_app()
                         queue->close();
                     }
                 }
-                
+
                 ctx.session->log(dto);
             });
 

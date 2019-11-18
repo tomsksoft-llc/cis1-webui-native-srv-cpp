@@ -1,8 +1,19 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/get_project_info.h"
 
 #include "websocket/dto/cis_project_info_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_project_error_doesnt_exist.h"
+
+#include "websocket/handlers/utils/make_dir_entry.h"
+
 namespace websocket
 {
 
@@ -16,7 +27,7 @@ void get_project_info(
         const dto::cis_project_info& req,
         cis1::proto_utils::transaction tr)
 {
-    auto* project = cis_manager.get_project_info(req.project);
+    auto project = cis_manager.get_project_info(req.project);
 
     auto perm = rights.check_project_right(ctx.username, req.project);
     auto permitted = perm.has_value() ? perm.value().read : true;
@@ -25,31 +36,30 @@ void get_project_info(
     {
         dto::cis_project_info_success res;
 
-        for(auto& file : project->get_files())
+        for(auto& entry : project->get_job_list())
         {
-            bool is_directory = file.dir_entry().is_directory();
-            auto path = ("/" / file.relative_path()).generic_string();
-            auto link = ("/download" / file.relative_path()).generic_string();
+            auto res_entry = std::visit(
+                    meta::overloaded{
+                        [&](const std::shared_ptr<fs_entry_interface>& entry)
+                        {
+                                return make_dir_entry(
+                                        cis_manager.fs().root().path(),
+                                        *entry);
+                        },
+                        [&](const std::shared_ptr<job_interface>& job)
+                        {
+                            auto entry = make_dir_entry(
+                                    cis_manager.fs().root().path(),
+                                    *job);
 
-            res.fs_entries.push_back(dto::fs_entry{
-                    file.filename(),
-                    false,
-                    is_directory,
-                    path,
-                    link});
-        }
+                            entry.metainfo = dto::fs_entry::job_info{};
 
-        for(auto& [job_name, job] : project->get_jobs())
-        {
-            auto it = std::find_if(
-                    res.fs_entries.begin(),
-                    res.fs_entries.end(),
-                    [&job_name](auto& entry)
-                    {
-                        return entry.name == job_name;
-                    });
+                            return entry;
+                        }
+                    },
+                    entry);
 
-            it->metainfo = dto::fs_entry::job_info{};
+            res.fs_entries.push_back(res_entry);
         }
 
         return tr.send(res);

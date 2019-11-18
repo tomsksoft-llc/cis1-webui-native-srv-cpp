@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #pragma once
 
 #include <memory>
@@ -101,11 +109,11 @@ void bound_task_chain_impl<Args...>::call(ContinuationArgs&&... args)
                                     [&](auto&&... args1)
                                     {
                                         bound_fn(std::forward<decltype(args1)>(
-                                                args1)...,
+                                                        args1)...,
                                                 [&, self = self->shared_from_this()]
                                                 (auto&&... args2)
                                                 {
-                                                    this->template call<N-1>(
+                                                    self->template call<N-1>(
                                                             std::forward<decltype(args2)>(
                                                                     args2)...);
                                                 });
@@ -118,9 +126,8 @@ void bound_task_chain_impl<Args...>::call(ContinuationArgs&&... args)
                                     [&](auto&&... args1)
                                     {
                                         bound_fn(std::forward<decltype(args1)>(
-                                                args1)...,
-                                                [self = this->shared_from_this()]
-                                                (auto&&... args2){});
+                                                        args1)...,
+                                                {});
                                     },
                                     std::move(packed_args));
                         }

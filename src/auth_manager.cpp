@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "auth_manager.h"
 
 #include <chrono>
@@ -18,9 +26,14 @@
 using namespace sqlite_orm;
 using namespace database;
 
-auth_manager::auth_manager(database::database_wrapper& db)
+auth_manager::auth_manager(
+        boost::asio::io_context& ioc,
+        database::database_wrapper& db)
     : db_(db)
-{}
+    , timer_(ioc)
+{
+    cleanup();
+}
 
 std::optional<std::string> auth_manager::authenticate(
         const std::string& username,
@@ -73,6 +86,7 @@ std::optional<std::string> auth_manager::authenticate(
     if(ids.size() == 1)
     {
         auto current_time = std::chrono::seconds(std::time(nullptr)).count();
+
         if(std::get<1>(ids[0]) < current_time)
         {
             db->remove_all<token>(where(c(&token::value) == token_value));
@@ -86,6 +100,7 @@ std::optional<std::string> auth_manager::authenticate(
                 where(c(&user::id) == std::get<0>(ids[0])));
 
         db.commit();
+
         return users[0];
     }
 
@@ -271,11 +286,11 @@ std::optional<user_info> auth_manager::get_user_info(
     {
         return std::nullopt;
     }
-    
+
     auto api_access_keys = db->select(
             &api_access_key::value,
             where(c(&api_access_key::user_id) == std::get<0>(users[0])));
-    
+
     std::optional<std::string> key;
 
     if(api_access_keys.size() == 1)
@@ -359,4 +374,26 @@ bool auth_manager::add_user(
     }
 
     return false;
+}
+
+void auth_manager::cleanup()
+{
+    auto db = db_.make_transaction();
+
+    auto current_time = std::chrono::seconds(std::time(nullptr)).count();
+
+    db->remove_all<token>(where(c(&token::expiration_time) < current_time));
+
+    db.commit();
+
+    timer_.expires_after(std::chrono::hours(12));
+
+    timer_.async_wait(
+            [&](const boost::system::error_code& error)
+            {
+                if(!error)
+                {
+                    cleanup();
+                }
+            });
 }
