@@ -686,7 +686,7 @@ void fs_cache::set_permissions(
         std::error_code& ec) const
 {
     std::filesystem::permissions(
-            path,
+            root_.path() += path,
             permissions,
             std::filesystem::perm_options::replace,
             ec);
