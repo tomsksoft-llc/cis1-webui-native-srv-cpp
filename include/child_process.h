@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #pragma once
 
 #include <optional>
@@ -108,7 +116,7 @@ private:
                 *pipe,
                 boost::asio::buffer(
                         buffer_.data() + total_bytes_transferred_,
-                        buffer_.size()),
+                        buffer_.size() - total_bytes_transferred_),
                 [&, pipe, self = shared_from_this()](
                         const boost::system::error_code& ec,
                         std::size_t bytes_transferred)
