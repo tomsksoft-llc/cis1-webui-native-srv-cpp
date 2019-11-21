@@ -144,14 +144,28 @@ std::shared_ptr<http_router> application::make_http_router()
             url::make() / CT_STRING("upload") / url::bound_string() / url::string(),
             [&upload_handler = upload_handler_](auto&& ...args)
             {
-                return upload_handler(std::forward<decltype(args)>(args)...);
+                return upload_handler.upload(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(
             url::make() / CT_STRING("upload") / url::bound_string(),
             [&upload_handler = upload_handler_](auto&& ...args)
             {
-                return upload_handler(std::forward<decltype(args)>(args)...);
+                return upload_handler.upload(std::forward<decltype(args)>(args)...);
+            });
+
+    router->add_route(
+            url::make() / CT_STRING("replace") / url::bound_string() / url::string(),
+            [&upload_handler = upload_handler_](auto&& ...args)
+            {
+                return upload_handler.replace(std::forward<decltype(args)>(args)...);
+            });
+
+    router->add_route(
+            url::make() / CT_STRING("replace") / url::bound_string(),
+            [&upload_handler = upload_handler_](auto&& ...args)
+            {
+                return upload_handler.replace(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(
@@ -289,6 +303,31 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_project_add>(
+            std::bind(&wsh::add_cis_project,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_project_remove>(
+            std::bind(&wsh::remove_cis_project,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_job_add>(
+            std::bind(&wsh::add_cis_job,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_job_remove>(
+            std::bind(&wsh::remove_cis_job,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::cis_build_remove>(
+            std::bind(&wsh::remove_cis_build,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_job_info>(
             std::bind(&wsh::get_job_info,
                     std::ref(cis_),
@@ -301,6 +340,11 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_build_info>(
             std::bind(&wsh::get_build_info,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::fs_entry_info>(
+            std::bind(&wsh::get_fs_entry_info,
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));

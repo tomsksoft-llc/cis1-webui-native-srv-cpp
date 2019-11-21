@@ -211,6 +211,15 @@ public:
             const std::filesystem::path& path,
             std::error_code& ec);
 
+    std::unique_ptr<std::ostream> create_file_w(
+            const std::filesystem::path& path,
+            std::error_code& ec);
+
+    void set_permissions(
+            const std::filesystem::path& path,
+            std::filesystem::perms permissions,
+            std::error_code& ec) const;
+
 private:
     fs_node root_;
     size_t max_caching_level_;

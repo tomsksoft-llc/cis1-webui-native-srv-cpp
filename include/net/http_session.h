@@ -14,12 +14,36 @@
 
 #include <boost/beast.hpp>
 #include <boost/asio.hpp>
+#include <tpl_helpers/detect_idiom.h>
 
 #include "fail.h"
 #include "beast_ext/sink_body.h"
 
+//FIXME
+#include <iostream>
+
 namespace net
 {
+
+template <typename Body>
+using has_user_error_category_t = decltype(std::declval<Body>().user_error_category());
+
+template <typename Body>
+constexpr bool has_user_error_category = meta::is_detected<
+        has_user_error_category_t, Body>::value;
+
+template <class Body>
+bool is_user_error(const boost::beast::error_code& ec)
+{
+    if constexpr(has_user_error_category<Body>)
+    {
+        return ec.category() == Body::user_error_category();
+    }
+    else
+    {
+        return false;
+    }
+}
 
 class http_handler_interface;
 
@@ -50,6 +74,7 @@ public:
     void on_read_body(
             std::function<void(
                     boost::beast::http::request<Body>&&,
+                    const boost::beast::error_code&,
                     http_session_queue&)> cb,
             boost::beast::error_code ec,
             std::size_t bytes_transferred)
@@ -66,14 +91,16 @@ public:
             return do_close();
         }
 
-        if(ec)
+        if(ec && !is_user_error<Body>(ec))
         {
             return fail(ec, "read");
         }
 
         if(cb)
         {
-            cb(request_reader_.get_parser<Body>().release(), queue_);
+            cb(     request_reader_.get_parser<Body>().release(),
+                    ec,
+                    queue_);
         }
 
         // If we aren't at the queue limit, try to pipeline another request
@@ -98,7 +125,7 @@ private:
         // Called when a message finishes sending
         // Returns `true` if the caller should initiate a read
         bool on_write();
-    
+
         boost::asio::executor get_executor()
         {
             return self_.strand_;
@@ -175,6 +202,7 @@ private:
                 std::function<void(boost::beast::http::request<Body>&)> pre,
                 std::function<void(
                         boost::beast::http::request<Body>&&,
+                        const boost::beast::error_code&,
                         http_session_queue&)> cb)
         {
             upgrade_parser<Body>();

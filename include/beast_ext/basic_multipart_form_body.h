@@ -49,6 +49,15 @@ struct basic_multipart_form_body
 template<class File>
 class basic_multipart_form_body<File>::value_type
 {
+public:
+    enum class mode
+    {
+        add,
+        replace,
+        add_or_replace,
+        ignore,
+    };
+private:
     friend class reader;
     friend class writer;
     friend struct basic_multipart_form_body;
@@ -62,14 +71,18 @@ class basic_multipart_form_body<File>::value_type
             , content(content_arg)
         {}
         bool is_file;
+        bool written = true;
         std::string content;
     };
 
     std::multimap<std::string, value_t> values_;
     std::multimap<std::string, File> files_;
+    mode mode_ = mode::add;
     using values_iterator = typename std::multimap<std::string, value_t>::iterator;
     using files_iterator = typename std::multimap<std::string, File>::iterator;
 public:
+
+
     /** Destructor.
 
         If the file is open, it is closed first.
@@ -86,6 +99,10 @@ public:
     value_type& operator=(value_type&& other) = default;
 
     void set_dir(const std::string& dir_path, boost::beast::error_code& ec);
+
+    void set_mode(mode m);
+
+    mode get_mode() const;
 
     const std::multimap<std::string, value_t>& get_values() const
     {
@@ -104,14 +121,29 @@ void basic_multipart_form_body<File>::value_type::set_dir(
         boost::beast::error_code& ec)
 {
     dir_ = dir_path;
+
     std::error_code std_ec;
+
     bool is_dir = std::filesystem::is_directory(dir_, std_ec);
-    if(!is_dir)
+
+    if(!is_dir || std_ec)
     {
         ec = make_error_code(boost::system::errc::not_a_directory);
     }
 }
 
+template<class File>
+void basic_multipart_form_body<File>::value_type::set_mode(mode m)
+{
+    mode_ = m;
+}
+
+template<class File>
+typename basic_multipart_form_body<File>::value_type::mode
+basic_multipart_form_body<File>::value_type::get_mode() const
+{
+    return mode_;
+}
 /** Algorithm for storing buffers when parsing.
 
     Objects of this type are created during parsing
@@ -199,7 +231,9 @@ void basic_multipart_form_body<File>::reader::init(
 
     // Check dir_ is directory
     std::error_code std_ec;
-    BOOST_ASSERT(std::filesystem::is_directory(body_.dir_, std_ec));
+    BOOST_ASSERT(
+            std::filesystem::is_directory(body_.dir_, std_ec)
+         || body_.mode_ == basic_multipart_form_body::value_type::mode::ignore);
 
     multipart_parser_.init(boundary_);
     // We don't do anything with this but a sophisticated
@@ -308,31 +342,40 @@ std::size_t basic_multipart_form_body<File>::reader::put(
                             std::back_inserter(filename_buffer));
                     part_offset = 0;
                 }
-                filename_buffer.reserve(
-                        filename_buffer.size() + part_offset_end - part_offset);
-                std::copy(
-                        (char*)(*part_it).data() + part_offset,
-                        (char*)(*part_it).data() + part_offset_end,
-                        std::back_inserter(filename_buffer));
-                part_offset += part_offset_end - part_offset;
+                if(part_end !=  boost::asio::buffer_sequence_end(buffers_view))
+                {
+                    filename_buffer.reserve(
+                            filename_buffer.size() + part_offset_end - part_offset);
+                    std::copy(
+                            (char*)(*part_it).data() + part_offset,
+                            (char*)(*part_it).data() + part_offset_end,
+                            std::back_inserter(filename_buffer));
+                    part_offset += part_offset_end - part_offset;
+                }
                 break;
             }
             case state::file:
             {
                 for(;part_it != part_end; ++part_it)
                 {
-                    current_file_->second.write(
-                            (char*)(*part_it).data() + part_offset,
-                            (*part_it).size() - part_offset,
-                            ec);
+                    if(current_file_->second.is_open())
+                    {
+                        current_file_->second.write(
+                                (char*)(*part_it).data() + part_offset,
+                                (*part_it).size() - part_offset,
+                                ec);
+                    }
                     part_offset = 0;
                 }
-                if(part_end !=  boost::asio::buffer_sequence_end(buffers_view))
+                if(part_end != boost::asio::buffer_sequence_end(buffers_view))
                 {
-                    current_file_->second.write(
-                            (char*)(*part_it).data() + part_offset,
-                            part_offset_end - part_offset,
-                            ec);
+                    if(current_file_->second.is_open())
+                    {
+                        current_file_->second.write(
+                                (char*)(*part_it).data() + part_offset,
+                                part_offset_end - part_offset,
+                                ec);
+                    }
                     part_offset += part_offset_end - part_offset;
                 }
                 break;
@@ -384,14 +427,41 @@ std::size_t basic_multipart_form_body<File>::reader::put(
                 part_offset_end = msg_offset;
                 write_part();
                 auto& filename = current_content_->second.content;
+
+                std::error_code std_ec;
+                auto file_exists = std::filesystem::exists(body_.dir_ / filename, std_ec);
+                //ignore ec
+
                 current_file_ = body_.files_.emplace(
                         std::piecewise_construct,
                         std::make_tuple(filename),
                         std::make_tuple());
-                current_file_->second.open(
-                        (body_.dir_ / filename).string().c_str(),
-                        boost::beast::file_mode::write,
-                        ec);
+
+                if(body_.mode_
+                == basic_multipart_form_body::value_type::mode::ignore)
+                {
+                    current_content_->second.written = false;
+                }
+                else if(body_.mode_
+                == basic_multipart_form_body::value_type::mode::replace
+                && !file_exists)
+                {
+                    current_content_->second.written = false;
+                }
+                else if(body_.mode_
+                == basic_multipart_form_body::value_type::mode::add
+                && file_exists)
+                {
+                    current_content_->second.written = false;
+                }
+                else
+                {
+                    current_file_->second.open(
+                            (body_.dir_ / filename).string().c_str(),
+                            boost::beast::file_mode::write,
+                            ec);
+                }
+
                 state_ = state::file;
                 break;
             }
@@ -473,10 +543,12 @@ std::size_t basic_multipart_form_body<File>::reader::put(
             char c = get_byte(it, offset);
 
             auto [adv, event] = multipart_parser_.handle_char(c, ec);
+
             if(ec)
             {
                 return nwritten;
             }
+
             if(event == multipart_stream_parser::event::message_begin)
             {
                 advance(adv, ec);
@@ -487,10 +559,12 @@ std::size_t basic_multipart_form_body<File>::reader::put(
                 on_parser_event(event, ec);
                 advance(adv, ec);
             }
+
             if(ec)
             {
                 return nwritten;
             }
+
             ++nwritten;
         }
     }

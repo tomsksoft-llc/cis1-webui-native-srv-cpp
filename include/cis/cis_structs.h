@@ -54,6 +54,13 @@ class job
     , public fs_entry_ref
 {
 public:
+    struct config
+    {
+        std::string script;
+        uint32_t keep_successful_builds;
+        uint32_t keep_broken_builds;
+    };
+
     static bool is_entry(fs_iterator& it);
 
     job(const fs_iterator& it);
@@ -65,7 +72,14 @@ public:
 
     const std::vector<param>& get_params() override;
 
+    std::shared_ptr<fs_entry_interface> get_script_entry() override;
+
+    std::shared_ptr<fs_entry_interface> get_params_entry() override;
+
+    std::shared_ptr<fs_entry_interface> get_conf_entry() override;
+
 private:
+    config config_;
     std::vector<param> params_;
 };
 
