@@ -1,16 +1,10 @@
-/*
- *    TomskSoft CIS1 WebUI
- *
- *   (c) 2019 TomskSoft LLC
- *   (c) Mokin Innokentiy [mia@tomsksoft.com]
- *
- */
-
 #include "websocket/handlers/get_build_info.h"
 
 #include "websocket/dto/cis_build_info_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_build_error_doesnt_exist.h"
+#include "websocket/handlers/utils/make_dir_entry.h"
+#include "cis/cis_structs.h"
 
 namespace websocket
 {
@@ -41,20 +35,15 @@ void get_build_info(
         res.status = info.status ? info.status.value() : -1;
         res.date = info.date ? info.date.value() : "";
 
-        for(auto& file : build->get_files())
+        for(auto it  = build->get_files().begin();
+                 it != build->get_files().end();
+                 ++it)
         {
-            auto relative_path = file.path().lexically_relative(
-                    cis_manager.fs().root().path());
-
-            auto path = ("/" / relative_path)
-                    .generic_string();
-
-            auto link = "/download" + path;
-
-            res.fs_entries.push_back(dto::fs_entry{
-                    file.path().filename(),
-                    path,
-                    link});
+            cis::fs_entry_ref entry(it);
+            res.fs_entries.push_back(
+                    make_dir_entry(
+                            cis_manager.fs().root().path(),
+                            entry));
         }
 
         return tr.send(res);
