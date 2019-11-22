@@ -71,6 +71,40 @@ void get_job_info(
             res.fs_entries.push_back(res_entry);
         }
 
+        std::stable_sort(
+                res.fs_entries.begin(),
+                res.fs_entries.end(),
+                [](const dto::fs_entry& lhs, const dto::fs_entry& rhs)
+                {
+                    if(std::holds_alternative<dto::fs_entry::build_info>(
+                            lhs.metainfo)
+                    && !std::holds_alternative<dto::fs_entry::build_info>(
+                            rhs.metainfo))
+                    {
+                        return true;
+                    }
+
+                    return false;
+                });
+
+        res.properties.push_back(
+                make_dir_entry(
+                        cis_manager.fs().root().path(),
+                        *job->get_script_entry()));
+    
+        if(auto entry = job->get_params_entry(); entry != nullptr)
+        {
+            res.properties.push_back(
+                    make_dir_entry(
+                            cis_manager.fs().root().path(),
+                            *entry));
+        }
+
+        res.properties.push_back(
+                make_dir_entry(
+                        cis_manager.fs().root().path(),
+                        *job->get_conf_entry()));
+
         return tr.send(res);
     }
 

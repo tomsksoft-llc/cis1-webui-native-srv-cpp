@@ -1,17 +1,9 @@
-/*
- *    TomskSoft CIS1 WebUI
- *
- *   (c) 2019 TomskSoft LLC
- *   (c) Mokin Innokentiy [mia@tomsksoft.com]
- *
- */
-
-#include "websocket/handlers/list_directory.h"
+#include "websocket/handlers/get_fs_entry_info.h"
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
-#include "websocket/dto/fs_entry_list_success.h"
+#include "websocket/dto/fs_entry_info_success.h"
 
 #include "path_utils.h"
 
@@ -21,11 +13,11 @@ namespace websocket
 namespace handlers
 {
 
-void list_directory(
+void get_fs_entry_info(
         cis::cis_manager_interface& cis_manager,
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::fs_entry_list& req,
+        const dto::fs_entry_info& req,
         cis1::proto_utils::transaction tr)
 {
     std::filesystem::path path(req.path);
@@ -49,34 +41,29 @@ void list_directory(
 
     if(auto it = fs.find(path); it != fs.end())
     {
-        dto::fs_entry_list_success res;
+        dto::fs_entry_info_success res;
 
-        for(auto& file : it)
+        auto& file = *it;
+
+        res.name = file.path().filename();
+
+        auto relative_path = file.path().lexically_relative(
+                cis_manager.fs().root().path());
+
+        auto path = ("/" / relative_path)
+                .generic_string();
+
+        res.path = path;
+
+        res.link = "/download" + path;
+
+        if(file.is_directory())
         {
-            dto::fs_entry entry;
-
-            entry.name = file.path().filename();
-            
-            auto relative_path = file.path().lexically_relative(
-                    cis_manager.fs().root().path());
-
-            auto path = ("/" / relative_path)
-                    .generic_string();
-
-            entry.path = path;
-
-            entry.link = "/download" + path;
-
-            if(file.is_directory())
-            {
-                entry.metainfo = dto::fs_entry::directory_info{};
-            }
-            else if(file.is_regular_file())
-            {
-                entry.metainfo = dto::fs_entry::file_info{};
-            }
-
-            res.entries.push_back(entry);
+            res.metainfo = dto::fs_entry::directory_info{};
+        }
+        else if(file.is_regular_file())
+        {
+            res.metainfo = dto::fs_entry::file_info{};
         }
 
         return tr.send(res);

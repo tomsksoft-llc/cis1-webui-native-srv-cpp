@@ -76,14 +76,97 @@ project::job_list_t project::get_job_list()
     return list;
 }
 
+std::map<std::string, std::string> load_job_conf(
+        const std::filesystem::path& path)
+{
+    std::map<std::string, std::string> conf;
+
+    std::ifstream conf_file(path);
+    while(!conf_file.eof())
+    {
+        std::string key;
+        std::string val;
+
+        std::getline(conf_file, key, '=');
+
+        if(key.empty() && conf_file.good() && !conf_file.eof())
+        {
+            conf.clear();
+
+            return conf;
+        }
+        else if(conf_file.eof())
+        {
+            break;
+        }
+
+        std::getline(conf_file, val, '\n');
+
+        val.erase(
+                std::find_if(
+                        val.rbegin(),
+                        val.rend(),
+                        [](int ch)
+                        {
+                            return !std::isspace(ch);
+                        }).base(),
+                val.end());
+
+        conf[key] = val;
+    }
+
+    if(conf.count("script") != 1
+    || conf.count("keep_last_success_builds") != 1
+    || conf.count("keep_last_break_builds") != 1)
+    {
+        conf.clear();
+
+        return conf;
+    }
+
+    try
+    {
+        stoul(conf["keep_last_success_builds"]);
+        stoul(conf["keep_last_break_builds"]);
+    }
+    catch(...)
+    {
+        conf.clear();
+
+        return conf;
+    }
+
+    return conf;
+}
+
 bool job::is_entry(fs_iterator& it)
 {
-    return it->is_directory() && (it.find("job.conf") != it.end());
+    if(!it->is_directory())
+    {
+        return false;
+    }
+
+    auto job_conf_entry = it.find("job.conf");
+
+    if(job_conf_entry == it.end())
+    {
+        return false;
+    }
+
+    return !load_job_conf(job_conf_entry->path()).empty();
 }
 
 job::job(const fs_iterator& it)
     : fs_entry_ref(it)
 {
+    auto job_conf = it_.find("job.conf");
+
+    std::map<std::string, std::string> conf = load_job_conf(job_conf->path());
+
+    config_.script = conf["script"];
+    config_.keep_successful_builds = stoul(conf["keep_last_success_builds"]);
+    config_.keep_broken_builds = stoul(conf["keep_last_break_builds"]);
+
     if(auto params = it_.find("job.params");
             params != it_.end()
             && params->is_regular_file())
@@ -148,6 +231,35 @@ const std::vector<job::param>& job::get_params()
     return params_;
 }
 
+std::shared_ptr<fs_entry_interface> job::get_script_entry()
+{
+    if(auto it = it_.find(config_.script); it != it_.end())
+    {
+        return std::make_shared<fs_entry_ref>(it);
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<fs_entry_interface> job::get_params_entry()
+{
+    if(auto it = it_.find("job.params"); it != it_.end())
+    {
+        return std::make_shared<fs_entry_ref>(it);
+    }
+
+    return nullptr;
+}
+
+std::shared_ptr<fs_entry_interface> job::get_conf_entry()
+{
+    if(auto it = it_.find("job.conf"); it != it_.end())
+    {
+        return std::make_shared<fs_entry_ref>(it);
+    }
+
+    return nullptr;
+}
 
 bool build::is_entry(fs_iterator& it)
 {

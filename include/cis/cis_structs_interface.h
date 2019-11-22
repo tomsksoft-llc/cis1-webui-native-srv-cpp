@@ -69,6 +69,12 @@ struct job_interface
             const std::string& build_name) = 0;
 
     virtual const std::vector<param>& get_params() = 0;
+
+    virtual std::shared_ptr<fs_entry_interface> get_script_entry() = 0;
+
+    virtual std::shared_ptr<fs_entry_interface> get_params_entry() = 0;
+
+    virtual std::shared_ptr<fs_entry_interface> get_conf_entry() = 0;
 };
 
 struct build_interface

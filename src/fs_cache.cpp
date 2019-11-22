@@ -8,6 +8,8 @@
 
 #include "fs_cache.h"
 
+#include <fstream>
+
 fs_node::fs_node(std::chrono::nanoseconds invalidation_time,
         const std::filesystem::path& path,
         size_t caching_level)
@@ -293,7 +295,15 @@ fs_iterator fs_iterator::begin()
                         {
                             it->update();
 
-                            return {*root_, it->begin()};
+                            auto new_it = it->begin();
+
+                            if(new_it != it->end()
+                            && new_it->state_ == fs_node::node_state::deleted)
+                            {
+                                ++new_it;
+                            }
+
+                            return {*root_, new_it};
                         }
                         else
                         {
@@ -353,10 +363,18 @@ fs_iterator fs_iterator::find(const std::string& name)
                         {
                             it->update();
 
-                            return {*root_,
-                                    it->childs_.find(
+                            auto tree_it = it->childs_.find(
                                             name,
-                                            fs_node::comparator{})};
+                                            fs_node::comparator{});
+
+                            if(tree_it != it->childs_.end()
+                            && tree_it->state_ == fs_node::node_state::deleted)
+                            {
+                                tree_it = it->childs_.end();
+                            }
+
+                            return {*root_,
+                                    tree_it};
                         }
                         else
                         {
@@ -544,7 +562,8 @@ fs_iterator fs_cache::find(const std::filesystem::path& path)
 
         if(depth == max_caching_level_)
         {
-            auto tmp_path = root_.dir_entry().path() / path;
+            auto tmp_path = root_.dir_entry().path();
+            tmp_path += path;
             tmp_path.remove_filename();
 
             std::error_code ec;
@@ -642,4 +661,41 @@ void fs_cache::create_directory(
             it.invalidate();
         }
     }
+}
+
+std::unique_ptr<std::ostream> fs_cache::create_file_w(
+        const std::filesystem::path& path,
+        std::error_code& ec)
+{
+    auto file = std::make_unique<std::ofstream>(
+            root_.path() += path,
+            std::ios_base::out);
+
+    if(!file->is_open())
+    {
+        ec.assign(1, ec.category());
+
+        return nullptr;
+    }
+
+    auto it = find(path.parent_path());
+
+    if(it != end())
+    {
+        it.invalidate();
+    }
+
+    return file;
+}
+
+void fs_cache::set_permissions(
+        const std::filesystem::path& path,
+        std::filesystem::perms permissions,
+        std::error_code& ec) const
+{
+    std::filesystem::permissions(
+            root_.path() += path,
+            permissions,
+            std::filesystem::perm_options::replace,
+            ec);
 }

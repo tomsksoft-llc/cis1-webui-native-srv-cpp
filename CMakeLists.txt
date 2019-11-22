@@ -34,6 +34,7 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/logout.cpp
     src/websocket/handlers/move_fs_entry.cpp
     src/websocket/handlers/new_directory.cpp
+    src/websocket/handlers/get_fs_entry_info.cpp
     src/websocket/handlers/refresh_fs_entry.cpp
     src/websocket/handlers/remove_api_key.cpp
     src/websocket/handlers/remove_cis_cron.cpp
@@ -44,6 +45,12 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/unban_user.cpp
     src/websocket/handlers/session_subscribe.cpp
     src/websocket/handlers/session_unsubscribe.cpp
+    src/websocket/handlers/add_cis_job.cpp
+    src/websocket/handlers/add_cis_project.cpp
+    src/websocket/handlers/remove_cis_project.cpp
+    src/websocket/handlers/add_cis_job.cpp
+    src/websocket/handlers/remove_cis_job.cpp
+    src/websocket/handlers/remove_cis_build.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 
