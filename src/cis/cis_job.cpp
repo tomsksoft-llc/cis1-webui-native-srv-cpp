@@ -74,7 +74,7 @@ void cis_job::run(
 
     if(force)
     {
-        args.push_back({"force"});
+        args.push_back({"--force"});
     }
 
     cp_->run(args,

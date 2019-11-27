@@ -210,6 +210,7 @@ cis_manager::run_job_task_t cis_manager::run_job(
                     execs_.startjob),
             project_name,
             job_name,
+            force,
             params,
             on_session_started,
             on_session_finished]
