@@ -36,6 +36,7 @@ cis_job::cis_job(
 void cis_job::run(
         const std::string& project_name,
         const std::string& job_name,
+        bool force,
         const std::vector<std::string>& params,
         std::function<
                 void(const std::string&)> on_session_started,
@@ -67,7 +68,16 @@ void cis_job::run(
                 }
             });
 
-    cp_->run({path_cat(project_name, "/" + job_name)},
+    std::vector<std::string> args;
+
+    args.push_back({path_cat(project_name, "/" + job_name)});
+
+    if(force)
+    {
+        args.push_back({"force"});
+    }
+
+    cp_->run(args,
             std::make_shared<process_io_handler>(
                     [&](auto&&... args)
                     {

@@ -37,6 +37,7 @@ public:
     void run(
             const std::string& project_name,
             const std::string& job_name,
+            bool force,
             const std::vector<std::string>& params,
             std::function<
                     void(const std::string&)> on_session_started,
