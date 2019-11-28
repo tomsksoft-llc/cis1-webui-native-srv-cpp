@@ -41,7 +41,7 @@ struct cis_manager_interface
 
     using add_cron_task_t = typename make_async_task_t<
             void(bool)>::task;
-    
+
     using remove_cron_task_t = typename make_async_task_t<
             void(bool)>::task;
 
@@ -92,6 +92,7 @@ struct cis_manager_interface
     virtual run_job_task_t run_job(
             const std::string& project_name,
             const std::string& job_name,
+            bool force,
             const std::vector<std::string>& params,
             std::function<
                     void(const std::string&)> on_session_started,

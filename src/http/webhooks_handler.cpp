@@ -48,12 +48,14 @@ handle_result webhooks_handler::operator()(
     if(!user)
     {
         ctx.res_status = beast::http::status::not_found;
+
         return http::handle_result::error;
     }
 
     if(!user->api_access_key)
     {
         ctx.res_status = beast::http::status::forbidden;
+
         return handle_result::error;
     }
 
@@ -340,6 +342,7 @@ void webhooks_handler::finish(
             .then(cis_.run_job(
                         project,
                         job,
+                        true,
                         params,
                         {},
                         {}))

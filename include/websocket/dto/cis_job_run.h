@@ -43,6 +43,7 @@ struct cis_job_run
 
     std::string project;
     std::string job;
+    bool force;
     std::vector<param> params;
 
     static constexpr auto get_converter()
@@ -59,6 +60,9 @@ struct cis_job_run
                 .add_field(
                         CT_STRING("job"),
                         ptr_v<&cis_job_run::job>{})
+                .add_field(
+                        CT_STRING("force"),
+                        ptr_v<&cis_job_run::force>{})
                 .add_field(
                         CT_STRING("params"),
                         ptr_v<&cis_job_run::params>{})
