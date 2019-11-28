@@ -186,6 +186,7 @@ bool cis_manager::rename_job(
 cis_manager::run_job_task_t cis_manager::run_job(
         const std::string& project_name,
         const std::string& job_name,
+        bool force,
         const std::vector<std::string>& params,
         std::function<void(const std::string&)> on_session_started,
         std::function<void(const std::string&)> on_session_finished)
@@ -209,6 +210,7 @@ cis_manager::run_job_task_t cis_manager::run_job(
                     execs_.startjob),
             project_name,
             job_name,
+            force,
             params,
             on_session_started,
             on_session_finished]
@@ -216,6 +218,7 @@ cis_manager::run_job_task_t cis_manager::run_job(
             {
                 job.run(project_name,
                         job_name,
+                        force,
                         params,
                         on_session_started,
                         [&](const std::string& session_id)

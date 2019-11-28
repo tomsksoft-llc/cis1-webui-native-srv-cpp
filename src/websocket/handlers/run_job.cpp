@@ -70,6 +70,7 @@ void run_job(
                 .then(cis_manager.run_job(
                         req.project,
                         req.job,
+                        req.force,
                         param_values,
                         [tr](const std::string& session_id)
                         {
