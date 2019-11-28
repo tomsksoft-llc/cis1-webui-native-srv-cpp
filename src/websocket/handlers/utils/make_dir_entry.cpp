@@ -40,7 +40,16 @@ dto::fs_entry make_dir_entry(
     }
     else if(file.is_regular_file())
     {
-        res.metainfo = dto::fs_entry::file_info{};
+        std::error_code ec;
+        auto status = std::filesystem::status(
+                file.path(), ec);
+
+
+        bool executable = ec ? false :
+            (status.permissions() & std::filesystem::perms::owner_exec)
+            != std::filesystem::perms::none;
+
+        res.metainfo = dto::fs_entry::file_info{executable};
     }
 
     return res;
