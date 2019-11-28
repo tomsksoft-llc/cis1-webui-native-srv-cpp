@@ -51,6 +51,7 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/add_cis_job.cpp
     src/websocket/handlers/remove_cis_job.cpp
     src/websocket/handlers/remove_cis_build.cpp
+    src/websocket/handlers/set_fs_entry_executable_flag.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 
