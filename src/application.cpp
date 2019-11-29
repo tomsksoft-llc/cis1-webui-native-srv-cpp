@@ -373,6 +373,11 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::fs_entry_set_executable_flag>(
+            std::bind(&wsh::set_fs_entry_executable_flag,
+                    std::ref(cis_),
+                    std::ref(rights_manager_),
+                    _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_cron_add>(
             [this](auto&& ...args){
                     wsh::add_cis_cron(

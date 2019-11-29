@@ -42,3 +42,4 @@
 #include "handlers/add_cis_job.h"
 #include "handlers/remove_cis_job.h"
 #include "handlers/remove_cis_build.h"
+#include "handlers/set_fs_entry_executable_flag.h"
