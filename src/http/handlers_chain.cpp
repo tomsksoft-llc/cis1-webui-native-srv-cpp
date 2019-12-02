@@ -14,6 +14,10 @@
 namespace http
 {
 
+handlers_chain::handlers_chain(boost::asio::io_context& ioc)
+    : ioc_(ioc)
+{}
+
 void handlers_chain::append_handler(const handler_t& handler)
 {
     handlers_.push_back(handler);
@@ -30,8 +34,8 @@ void handlers_chain::set_error_handler(const error_handler_t& handler)
 }
 
 void handlers_chain::listen(
-        boost::asio::io_context& ioc,
-        const tcp::endpoint& endpoint)
+        const boost::asio::ip::tcp::endpoint& ep,
+        std::error_code& ec)
 {
     auto accept_handler = [self = shared_from_this()](tcp::socket&& socket)
     {
@@ -41,14 +45,18 @@ void handlers_chain::listen(
     };
 
     auto l = std::make_shared<net::listener>(
-            ioc,
+            ioc_,
             accept_handler);
-    boost::beast::error_code ec;
-    l->listen(endpoint, ec);
 
-    if(ec)
+    boost::beast::error_code boost_ec;
+
+    l->listen(ep, boost_ec);
+
+    if(boost_ec)
     {
-        throw generic_error(ec.message());
+        ec.assign(1, ec.category());
+
+        return;
     }
 
     l->run();

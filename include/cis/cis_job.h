@@ -29,7 +29,7 @@ class cis_job
 {
 public:
     cis_job(boost::asio::io_context& ioc,
-            const boost::asio::ip::address& webui_address,
+            const std::string& webui_address,
             short unsigned webui_port,
             const std::filesystem::path& cis_root,
             const std::string& startjob_exec);

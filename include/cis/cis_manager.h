@@ -32,8 +32,10 @@ class cis_manager
 public:
     cis_manager(
             boost::asio::io_context& ioc,
+            const std::string& public_address,
+            unsigned short public_port,
             std::filesystem::path cis_root,
-            boost::asio::ip::address webui_address,
+            const std::string& webui_address,
             unsigned short webui_port,
             database::database_wrapper& db);
 
@@ -116,7 +118,7 @@ private:
 
     boost::asio::io_context& ioc_;
     std::filesystem::path cis_root_;
-    boost::asio::ip::address webui_address_;
+    std::string webui_address_;
     short unsigned webui_port_;
     fs_cache fs_;
     executables execs_;

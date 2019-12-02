@@ -10,6 +10,7 @@
 
 #include <optional>
 #include <filesystem>
+
 #include <boost/asio/ip/address.hpp>
 
 struct admin_user
@@ -21,9 +22,9 @@ struct admin_user
 
 struct init_params
 {
-    boost::asio::ip::address public_address;
+    std::string public_address;
     unsigned short public_port;
-    boost::asio::ip::address cis_address;
+    std::string cis_address;
     unsigned short cis_port;
     std::filesystem::path doc_root;
     std::filesystem::path cis_root;
@@ -31,4 +32,7 @@ struct init_params
     std::optional<admin_user> admin;
 };
 
-init_params parse_args(int argc, char* argv[]);
+std::optional<init_params> parse_args(
+        int argc,
+        char* argv[],
+        std::error_code& ec);

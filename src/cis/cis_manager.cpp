@@ -25,8 +25,10 @@ namespace cis
 
 cis_manager::cis_manager(
         boost::asio::io_context& ioc,
+        const std::string& public_address,
+        unsigned short public_port,
         std::filesystem::path cis_root,
-        boost::asio::ip::address webui_address,
+        const std::string& webui_address,
         unsigned short webui_port,
         database::database_wrapper& db)
     : ioc_(ioc)
@@ -239,7 +241,6 @@ cis_manager::run_job_task_t cis_manager::run_job(
                             if(job != nullptr)
                             {
                                 job->invalidate();
-
                             }
 
                             if(continuation)

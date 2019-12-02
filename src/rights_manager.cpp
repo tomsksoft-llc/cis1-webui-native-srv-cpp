@@ -20,8 +20,11 @@
 using namespace database;
 using namespace sqlite_orm;
 
-rights_manager::rights_manager(database::database_wrapper& db)
-    : db_(db)
+rights_manager::rights_manager(
+        boost::asio::io_context& ioc,
+        database::database_wrapper& db)
+    : ioc_(ioc)
+    , db_(db)
 {}
 
 std::optional<bool> rights_manager::check_user_permission(

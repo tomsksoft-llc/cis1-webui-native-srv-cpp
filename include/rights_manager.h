@@ -13,6 +13,8 @@
 #include <optional>
 #include <filesystem>
 
+#include <boost/asio.hpp>
+
 #include "rights_manager_interface.h"
 #include "database.h"
 
@@ -20,7 +22,9 @@ class rights_manager
     : public rights_manager_interface
 {
 public:
-    rights_manager(database::database_wrapper& db);
+    rights_manager(
+            boost::asio::io_context& ioc,
+            database::database_wrapper& db);
 
     std::optional<bool> check_user_permission(
             const std::string& username,
@@ -35,5 +39,6 @@ public:
             const std::string& project,
             database::project_user_right rights);
 private:
+    boost::asio::io_context& ioc_;
     database::database_wrapper& db_;
 };

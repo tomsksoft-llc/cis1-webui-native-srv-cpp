@@ -35,7 +35,7 @@ public:
     webhooks_handler(
             auth_manager& auth,
             rights_manager& rights,
-            cis::cis_manager& cis);
+            cis::cis_manager_interface& cis);
 
     handle_result operator()(
             beast::http::request<beast::http::empty_body>& req,
@@ -57,7 +57,7 @@ private:
 
     auth_manager& auth_;
     rights_manager& rights_;
-    cis::cis_manager& cis_;
+    cis::cis_manager_interface& cis_;
 
     handle_result handle_github_headers(
             beast::http::request<beast::http::empty_body>& req,
