@@ -19,6 +19,9 @@ enum class error_code
     ok,
     cant_parse_config_ini,
     incorrect_environment,
+    cant_run_http_listener,
+    cant_resolve_address,
+    cant_open_file,
 };
 
 std::error_code make_error_code(error_code ec);

@@ -10,6 +10,7 @@
 
 #include "net/listener.h"
 #include "exceptions/generic_error.h"
+#include "error_code.h"
 
 namespace http
 {
@@ -54,7 +55,7 @@ void handlers_chain::listen(
 
     if(boost_ec)
     {
-        ec.assign(1, ec.category());
+        ec = cis::error_code::cant_run_http_listener;
 
         return;
     }

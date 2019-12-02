@@ -29,6 +29,15 @@ std::string error_category::message(int ev) const
         case error_code::incorrect_environment:
             return "Incorrect environment";
 
+        case error_code::cant_run_http_listener:
+            return "Can't run HTTP listener";
+
+        case error_code::cant_resolve_address:
+            return "Can't resolve network address";
+
+        case error_code::cant_open_file:
+            return "Can't open file";
+
         default:
             return "(unrecognized error)";
     }

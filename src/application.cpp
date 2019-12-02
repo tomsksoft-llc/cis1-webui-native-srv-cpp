@@ -22,6 +22,7 @@
 #include "websocket/event_handlers.h"
 #include "cis/dirs.h"
 #include "openssl_wrapper/openssl_wrapper.h"
+#include "error_code.h"
 
 using namespace std::placeholders;              // from <functional>
 
@@ -438,7 +439,7 @@ std::optional<boost::asio::ip::tcp::endpoint> resolve_endpoint(
 
     if(boost_ec)
     {
-        ec.assign(1, ec.category());
+        ec = cis::error_code::cant_resolve_address;
 
         return std::nullopt;
     }
