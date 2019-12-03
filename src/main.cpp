@@ -13,7 +13,9 @@ int main(int argc, char* argv[])
 {
     std::error_code ec;
 
-    auto params_opt = parse_args(argc, argv, ec);
+    auto config = std::make_unique<configuration_manager>();
+
+    parse_args(argc, argv, *config, ec);
     if(ec)
     {
         std::cout << "Can't parse params: "
@@ -21,7 +23,6 @@ int main(int argc, char* argv[])
 
         return EXIT_FAILURE;
     }
-    auto& params = params_opt.value();
 
     boost::asio::io_context ioc;
 
@@ -37,7 +38,7 @@ int main(int argc, char* argv[])
                 ioc.stop();
             });
 
-    auto app_opt = application::create(ioc, params, ec);
+    auto app_opt = application::create(ioc, std::move(config), ec);
     if(ec)
     {
         std::cout << "Can't create WebUI instance: "

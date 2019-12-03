@@ -449,7 +449,7 @@ std::optional<boost::asio::ip::tcp::endpoint> resolve_endpoint(
 
 std::optional<application> application::create(
         boost::asio::io_context& ioc,
-        const init_params& params,
+        std::unique_ptr<configuration_manager> config,
         std::error_code& ec)
 {
     openssl::init();
@@ -461,16 +461,14 @@ std::optional<application> application::create(
     auto cis_app = std::make_shared<cis1::cwu::tcp_server>(ioc);
 
     auto db = std::make_unique<database::database_wrapper>(
-            params.db_root / "db.sqlite",
-            params.admin);
+            *(config->get_entry<std::filesystem::path>("db_root", ec)) / "db.sqlite",
+            config->get_entry<user_credentials>("admin_credentials", ec));
+
+    config->remove_entry("admin_credentials");
 
     auto cis = std::make_unique<cis::cis_manager>(
             ioc,
-            params.public_address,
-            params.public_port,
-            params.cis_root,
-            params.cis_address,
-            params.cis_port,
+            *config,
             *db);
 
     auto auth_manager_ = std::make_unique<auth_manager>(
@@ -482,14 +480,15 @@ std::optional<application> application::create(
             *db);
 
     auto files = std::make_unique<http::file_handler>(
-            params.doc_root.string());
+            (config->get_entry<std::filesystem::path>("doc_root", ec))
+                    ->generic_string().c_str());
 
     auto upload_handler = std::make_unique<http::multipart_form_handler>(
-            std::filesystem::path{params.cis_root / cis::projects},
+            *(config->get_entry<std::filesystem::path>("cis_root", ec)) / cis::projects,
             *rights_manager_);
 
     auto download_handler = std::make_unique<http::download_handler>(
-            std::filesystem::path{params.cis_root / cis::projects},
+            *(config->get_entry<std::filesystem::path>("cis_root", ec)) / cis::projects,
             *rights_manager_);
 
     auto webhooks_handler = std::make_unique<http::webhooks_handler>(
@@ -515,8 +514,8 @@ std::optional<application> application::create(
 
     auto endpoint = resolve_endpoint(
             ioc,
-            params.public_address,
-            params.public_port,
+            *(config->get_entry<std::string>("public_address", ec)),
+            *(config->get_entry<unsigned short>("public_port", ec)),
             ec);
 
     if(ec)
@@ -539,8 +538,8 @@ std::optional<application> application::create(
 
     endpoint = resolve_endpoint(
             ioc,
-            params.cis_address,
-            params.cis_port,
+            *(config->get_entry<std::string>("cis_address", ec)),
+            *(config->get_entry<unsigned short>("cis_port", ec)),
             ec);
 
     if(ec)
@@ -556,6 +555,7 @@ std::optional<application> application::create(
             ioc,
             public_app,
             cis_app,
+            std::move(config),
             std::move(db),
             std::move(cis),
             std::move(auth_manager_),
@@ -563,8 +563,7 @@ std::optional<application> application::create(
             std::move(files),
             std::move(upload_handler),
             std::move(download_handler),
-            std::move(webhooks_handler),
-            params};
+            std::move(webhooks_handler)};
 }
 
 application::private_constructor_delegate_t::private_constructor_delegate_t()
@@ -574,6 +573,7 @@ application::application(
         boost::asio::io_context& ioc,
         const std::shared_ptr<http::handlers_chain>& app,
         const std::shared_ptr<cis1::cwu::tcp_server>& cis_app,
+        std::unique_ptr<configuration_manager> config,
         std::unique_ptr<database::database_wrapper> db,
         std::unique_ptr<cis::cis_manager> cis,
         std::unique_ptr<auth_manager> auth_manager_arg,
@@ -581,11 +581,11 @@ application::application(
         std::unique_ptr<http::file_handler> files,
         std::unique_ptr<http::multipart_form_handler> upload_handler,
         std::unique_ptr<http::download_handler> download_handler,
-        std::unique_ptr<http::webhooks_handler> webhooks_handler,
-        const init_params& params)
+        std::unique_ptr<http::webhooks_handler> webhooks_handler)
     : ioc_(ioc)
     , app_(app)
     , cis_app_(cis_app)
+    , config_(std::move(config))
     , db_(std::move(db))
     , cis_(std::move(cis))
     , auth_manager_(std::move(auth_manager_arg))

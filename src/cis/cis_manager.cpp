@@ -25,20 +25,19 @@ namespace cis
 
 cis_manager::cis_manager(
         boost::asio::io_context& ioc,
-        const std::string& public_address,
-        unsigned short public_port,
-        std::filesystem::path cis_root,
-        const std::string& webui_address,
-        unsigned short webui_port,
+        configuration_manager& config,
         database::database_wrapper& db)
     : ioc_(ioc)
-    , cis_root_(std::move(cis_root))
-    , webui_address_(webui_address)
-    , webui_port_(webui_port)
-    , fs_(cis_root_ / cis::projects, 4, std::chrono::seconds(5))
+    , config_(config)
+    , fs_(  *config_.get_entry<std::filesystem::path>("cis_root")
+                    / cis::projects,
+            4,
+            std::chrono::seconds(5))
     , session_manager_(ioc)
 {
-    std::ifstream cis_core_conf(cis_root_ / core / "cis.conf");
+    std::ifstream cis_core_conf(
+            *config_.get_entry<std::filesystem::path>("cis_root")
+                    / core / "cis.conf");
 
     while(cis_core_conf.good())
     {
@@ -88,7 +87,7 @@ bool cis_manager::remove(const std::filesystem::path& path)
 
 std::filesystem::path cis_manager::get_projects_path() const
 {
-    return cis_root_;
+    return *config_.get_entry<std::filesystem::path>("cis_root");
 }
 
 fs_cache& cis_manager::fs()
@@ -174,7 +173,9 @@ bool cis_manager::rename_job(
         const std::string& job_name,
         const std::string& new_name)
 {
-    auto project_path = cis_root_ / cis::projects / project_name;
+    auto project_path = 
+            *config_.get_entry<std::filesystem::path>("cis_root")
+                    / cis::projects / project_name;
 
     std::error_code ec;
     std::filesystem::rename(
@@ -206,9 +207,12 @@ cis_manager::run_job_task_t cis_manager::run_job(
     return {[&,
             job = cis_job(
                     ioc_,
-                    webui_address_,
-                    webui_port_,
-                    cis_root_,
+                    webui_config{
+                            *config_.get_entry<std::string>("public_address"),
+                            *config_.get_entry<unsigned short>("public_port"),
+                            *config_.get_entry<std::string>("cis_address"),
+                            *config_.get_entry<unsigned short>("cis_port")},
+                    *config_.get_entry<std::filesystem::path>("cis_root"),
                     execs_.startjob),
             project_name,
             job_name,
@@ -268,7 +272,8 @@ cis_manager::add_cron_task_t cis_manager::add_cron(
     }
 
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_).string();
+    env["cis_base_dir"] = canonical(
+            *config_.get_entry<std::filesystem::path>("cis_root")).string();
 
     return {
         [
@@ -313,7 +318,8 @@ cis_manager::remove_cron_task_t cis_manager::remove_cron(
     }
 
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_).string();
+    env["cis_base_dir"] = canonical(
+            *config_.get_entry<std::filesystem::path>("cis_root")).string();
 
     return {
         [
@@ -345,7 +351,8 @@ cis_manager::remove_cron_task_t cis_manager::remove_cron(
 cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
 {
     auto env = boost::this_process::environment();
-    env["cis_base_dir"] = canonical(cis_root_).string();
+    env["cis_base_dir"] = canonical(
+                *config_.get_entry<std::filesystem::path>("cis_root")).string();
 
     return {[
             &,

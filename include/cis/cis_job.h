@@ -25,12 +25,20 @@ struct execution_info
     std::optional<std::string> session_id;
 };
 
+struct webui_config
+{
+    std::string public_address;
+    uint16_t public_port;
+
+    std::string internal_address;
+    uint16_t internal_port;
+};
+
 class cis_job
 {
 public:
     cis_job(boost::asio::io_context& ioc,
-            const std::string& webui_address,
-            short unsigned webui_port,
+            const webui_config& webui,
             const std::filesystem::path& cis_root,
             const std::string& startjob_exec);
 

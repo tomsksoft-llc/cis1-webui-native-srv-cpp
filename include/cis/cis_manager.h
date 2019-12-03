@@ -22,6 +22,7 @@
 #include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
 #include "session.h"
+#include "configuration_manager.h"
 
 namespace cis
 {
@@ -32,11 +33,7 @@ class cis_manager
 public:
     cis_manager(
             boost::asio::io_context& ioc,
-            const std::string& public_address,
-            unsigned short public_port,
-            std::filesystem::path cis_root,
-            const std::string& webui_address,
-            unsigned short webui_port,
+            configuration_manager& config,
             database::database_wrapper& db);
 
     cis_manager(const cis_manager&) = delete;
@@ -117,9 +114,7 @@ private:
     };
 
     boost::asio::io_context& ioc_;
-    std::filesystem::path cis_root_;
-    std::string webui_address_;
-    short unsigned webui_port_;
+    configuration_manager& config_;
     fs_cache fs_;
     executables execs_;
     session_manager session_manager_;
