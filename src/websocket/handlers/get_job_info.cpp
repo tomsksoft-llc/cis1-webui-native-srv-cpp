@@ -71,6 +71,8 @@ void get_job_info(
             res.fs_entries.push_back(res_entry);
         }
 
+        std::reverse(res.fs_entries.begin(), res.fs_entries.end());
+
         std::stable_sort(
                 res.fs_entries.begin(),
                 res.fs_entries.end(),
@@ -91,7 +93,7 @@ void get_job_info(
                 make_dir_entry(
                         cis_manager.fs().root().path(),
                         *job->get_script_entry()));
-    
+
         if(auto entry = job->get_params_entry(); entry != nullptr)
         {
             res.properties.push_back(
