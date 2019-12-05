@@ -15,14 +15,16 @@ namespace database
 
 database_wrapper::database_wrapper(
         const std::filesystem::path& path,
-        std::optional<admin_user> admin)
+        user_credentials* admin_credentials)
     : db_(detail::make_database(path.string().c_str()))
 {
     sync();
 
-    if(admin)
+    if(admin_credentials != nullptr)
     {
-        init(admin->name, admin->email, admin->pass);
+        init(   admin_credentials->name,
+                admin_credentials->email,
+                admin_credentials->pass);
     }
 }
 

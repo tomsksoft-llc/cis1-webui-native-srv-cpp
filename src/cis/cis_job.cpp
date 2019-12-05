@@ -16,15 +16,17 @@ namespace cis
 
 cis_job::cis_job(
         boost::asio::io_context& ioc,
-        const boost::asio::ip::address& webui_address,
-        short unsigned webui_port,
+        const webui_config& webui,
         const std::filesystem::path& cis_root,
         const std::string& startjob_exec)
 {
     auto env = boost::this_process::environment();
+
     env["cis_base_dir"] = canonical(cis_root).string();
-    env["webui_address"] = webui_address.to_string();
-    env["webui_port"] = std::to_string(webui_port);
+    env["webui_public_address"] = webui.public_address;
+    env["webui_public_port"] = std::to_string(webui.public_port);
+    env["webui_internal_address"] = webui.internal_address;
+    env["webui_internal_port"] = std::to_string(webui.internal_port);
 
     cp_ = std::make_shared<child_process>(
             ioc,

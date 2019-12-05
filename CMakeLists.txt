@@ -80,6 +80,7 @@ set(${PROJECT_NAME}_SRC
     src/http/error_handler.cpp
 
     src/application.cpp
+    src/error_code.cpp
     src/bound_task_chain.cpp
     src/base64.cpp
     src/path_utils.cpp

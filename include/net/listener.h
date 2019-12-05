@@ -25,7 +25,7 @@ public:
             std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket);
 
     void listen(
-            const boost::asio::ip::tcp::endpoint& endpoint,
+            const boost::asio::ip::tcp::endpoint& ep,
             boost::beast::error_code& ec);
 
     // Start accepting incoming connections
@@ -34,7 +34,9 @@ public:
     void do_accept();
 
     void on_accept(boost::beast::error_code ec);
+
 private:
+    boost::asio::io_context& ioc_;
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ip::tcp::socket socket_;
     std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket_;

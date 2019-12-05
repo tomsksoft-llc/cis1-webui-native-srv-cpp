@@ -26,7 +26,7 @@ namespace http
 webhooks_handler::webhooks_handler(
         auth_manager& auth,
         rights_manager& rights,
-        cis::cis_manager& cis)
+        cis::cis_manager_interface& cis)
     : auth_(auth)
     , rights_(rights)
     , cis_(cis)

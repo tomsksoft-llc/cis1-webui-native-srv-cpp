@@ -22,155 +22,49 @@
 #include "websocket/event_handlers.h"
 #include "cis/dirs.h"
 #include "openssl_wrapper/openssl_wrapper.h"
+#include "error_code.h"
 
 using namespace std::placeholders;              // from <functional>
 
-application::application(const init_params& params)
-    : params_(params)
-    , db_(params.db_root / "db.sqlite", params.admin)
-    , ioc_{}
-    , signals_(ioc_, SIGINT, SIGTERM)
-    , cis_(ioc_, params_.cis_root, params_.cis_address, params_.cis_port, db_)
-    , app_(std::make_shared<http::handlers_chain>())
-    , cis_app_(ioc_)
-    , auth_manager_(ioc_, db_)
-    , rights_manager_(db_)
-    , files_(params.doc_root.string())
-    , upload_handler_(
-        std::filesystem::path{params.cis_root / cis::projects},
-        rights_manager_)
-    , download_handler_(
-        std::filesystem::path{params.cis_root / cis::projects},
-        rights_manager_)
-    , webhooks_handler_(auth_manager_, rights_manager_, cis_)
-{
-    openssl::init();
-    signals_.async_wait(
-            [&](beast::error_code const&, int)
-            {
-                ioc_.stop();
-            });
-    init_app();
-    init_cis_app();
-}
-
-void application::init_app()
-{
-    app_->set_error_handler(
-            std::bind(
-                    &http::error_handler::operator(),
-                    std::make_shared<http::error_handler>(),
-                    _1, _2, _3));
-    app_->append_handler(&http::cookie_parser::parse);
-    app_->append_handler(
-            std::bind(
-                    &http::handle_authenticate,
-                    std::ref(auth_manager_),
-                    _1, _2, _3, _4));
-    app_->append_handler(
-            std::bind(
-                    &http_router::operator(),
-                    make_http_router(),
-                    _1, _2, _3, _4));
-    app_->append_ws_handler(
-            std::bind(
-                    &websocket_router::operator(),
-                    make_ws_router(),
-                    _1, _2, _3));
-
-    app_->listen(ioc_, tcp::endpoint{params_.public_address, params_.public_port});
-}
-
-void application::init_cis_app()
-{
-    struct session_context
-    {
-        std::shared_ptr<cis::session> session = nullptr;
-    };
-
-    cis1::proto_utils::event_dispatcher<session_context&> dispatcher;
-
-    dispatcher.add_event_handler<cis1::cwu::session_auth>(
-            [&](     session_context& ctx,
-                    const cis1::cwu::session_auth& dto,
-                    cis1::proto_utils::transaction tr)
-            {
-                ctx.session = cis_.connect_to_session(dto.session_id);
-
-                if(!ctx.session)
-                {
-                    if(auto queue = tr.get_queue().lock(); queue)
-                    {
-                        queue->close();
-                    }
-                }
-            });
-
-    dispatcher.add_event_handler<cis1::cwu::log_entry>(
-            [](     session_context& ctx,
-                    const cis1::cwu::log_entry& dto,
-                    cis1::proto_utils::transaction tr)
-            {
-                if(!ctx.session)
-                {
-                    if(auto queue = tr.get_queue().lock(); queue)
-                    {
-                        queue->close();
-                    }
-                }
-
-                ctx.session->log(dto);
-            });
-
-    cis_app_.set_session_acceptor(
-            [dispatcher]() mutable
-            {
-                return [&dispatcher, ctx = session_context{}](
-                            boost::asio::const_buffer buffer,
-                            std::shared_ptr<cis1::proto_utils::queue_interface> queue) mutable
-                        {
-                            dispatcher.dispatch(ctx, true, buffer, buffer.size(), queue);
-                        };
-            });
-
-    cis_app_.listen({params_.cis_address, params_.cis_port});
-}
-
-std::shared_ptr<http_router> application::make_http_router()
+std::shared_ptr<http_router> make_http_router(
+        http::file_handler& files,
+        http::multipart_form_handler& upload_handler,
+        http::download_handler& download_handler,
+        http::webhooks_handler& webhooks_handler)
 {
     auto router = std::make_shared<http_router>();
 
     router->add_route(
             url::make() / CT_STRING("upload") / url::bound_string() / url::string(),
-            [&upload_handler = upload_handler_](auto&& ...args)
+            [&upload_handler](auto&& ...args)
             {
                 return upload_handler.upload(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(
             url::make() / CT_STRING("upload") / url::bound_string(),
-            [&upload_handler = upload_handler_](auto&& ...args)
+            [&upload_handler](auto&& ...args)
             {
                 return upload_handler.upload(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(
             url::make() / CT_STRING("replace") / url::bound_string() / url::string(),
-            [&upload_handler = upload_handler_](auto&& ...args)
+            [&upload_handler](auto&& ...args)
             {
                 return upload_handler.replace(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(
             url::make() / CT_STRING("replace") / url::bound_string(),
-            [&upload_handler = upload_handler_](auto&& ...args)
+            [&upload_handler](auto&& ...args)
             {
                 return upload_handler.replace(std::forward<decltype(args)>(args)...);
             });
 
     router->add_route(
             url::make() / CT_STRING("download") / url::bound_string() / url::string(),
-            [&download_handler = download_handler_](auto&& ...args)
+            [&download_handler](auto&& ...args)
             {
                 return download_handler(std::forward<decltype(args)>(args)...);
             });
@@ -182,7 +76,7 @@ std::shared_ptr<http_router> application::make_http_router()
     router->add_route(
             webhooks_url / CT_STRING("github") /
                     url::bound_string() / url::bound_string() << url::query_string(),
-            [&whh = webhooks_handler_](auto&& ...args)
+            [&whh = webhooks_handler](auto&& ...args)
             {
                 return whh(
                         std::forward<decltype(args)>(args)...,
@@ -192,7 +86,7 @@ std::shared_ptr<http_router> application::make_http_router()
     router->add_route(
             webhooks_url / CT_STRING("gitlab") /
                     url::bound_string() / url::bound_string() << url::query_string(),
-            [&whh = webhooks_handler_](auto&& ...args)
+            [&whh = webhooks_handler](auto&& ...args)
             {
                 return whh(
                         std::forward<decltype(args)>(args)...,
@@ -202,7 +96,7 @@ std::shared_ptr<http_router> application::make_http_router()
     router->add_route(
             webhooks_url / CT_STRING("plain") /
                     url::bound_string() / url::bound_string() << url::query_string(),
-            [&whh = webhooks_handler_](auto&& ...args)
+            [&whh = webhooks_handler](auto&& ...args)
             {
                 return whh(
                         std::forward<decltype(args)>(args)...,
@@ -215,14 +109,14 @@ std::shared_ptr<http_router> application::make_http_router()
             net::http_session::request_reader&,
             net::http_session::queue&)> cb = std::bind(
             &http::file_handler::single_file,
-            files_,
+            std::ref(files),
             _1, _2, _3, _4,
             "/index.html");
 
     router->add_route(url::root(), cb);
 
     router->add_route(url::make() / url::ignore(),
-            [&files = files_](auto&& ...args)
+            [&files](auto&& ...args)
             {
                 return files(std::forward<decltype(args)>(args)...);
             });
@@ -230,7 +124,10 @@ std::shared_ptr<http_router> application::make_http_router()
     return router;
 }
 
-std::shared_ptr<websocket_router> application::make_ws_router()
+std::shared_ptr<websocket_router> make_ws_router(
+        cis::cis_manager& cis_,
+        auth_manager& auth_manager_,
+        rights_manager& rights_manager_)
 {
     namespace ws = websocket;
     namespace wsh = ws::handlers;
@@ -379,7 +276,7 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(rights_manager_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_cron_add>(
-            [this](auto&& ...args){
+            [&cis_, &rights_manager_](auto&& ...args){
                     wsh::add_cis_cron(
                             cis_,
                             rights_manager_,
@@ -396,13 +293,13 @@ std::shared_ptr<websocket_router> application::make_ws_router()
                     std::ref(rights_manager_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_session_subscribe>(
-            [this](auto&& ...args){
+            [&cis_](auto&& ...args){
                     wsh::session_subscribe(
                             cis_,
                             std::forward<decltype(args)>(args)...);
             });
     dispatcher.add_event_handler<ws::dto::cis_session_unsubscribe>(
-            [this](auto&& ...args){
+            [&cis_](auto&& ...args){
                     wsh::session_unsubscribe(
                             cis_,
                             std::forward<decltype(args)>(args)...);
@@ -438,6 +335,271 @@ std::shared_ptr<websocket_router> application::make_ws_router()
 
     return router;
 }
+
+void init_public_app(
+        const std::shared_ptr<http::handlers_chain>& public_app,
+        const std::shared_ptr<http::error_handler>& error_handler,
+        auth_manager& auth_manager_,
+        const std::shared_ptr<http_router>& http_router_arg,
+        const std::shared_ptr<websocket_router>& ws_router)
+{
+    public_app->set_error_handler(
+            std::bind(
+                    &http::error_handler::operator(),
+                    error_handler,
+                    _1, _2, _3));
+
+    public_app->append_handler(&http::cookie_parser::parse);
+
+    public_app->append_handler(
+            std::bind(
+                    &http::handle_authenticate,
+                    std::ref(auth_manager_),
+                    _1, _2, _3, _4));
+
+    public_app->append_handler(
+            std::bind(
+                    &http_router::operator(),
+                    http_router_arg,
+                    _1, _2, _3, _4));
+
+    public_app->append_ws_handler(
+            std::bind(
+                    &websocket_router::operator(),
+                    ws_router,
+                    _1, _2, _3));
+}
+
+void init_cis_app(
+        const std::shared_ptr<cis1::cwu::tcp_server>& cis_app,
+        cis::cis_manager& cis)
+{
+    struct session_context
+    {
+        std::shared_ptr<cis::session> session = nullptr;
+    };
+
+    cis1::proto_utils::event_dispatcher<session_context&> dispatcher;
+
+    dispatcher.add_event_handler<cis1::cwu::session_auth>(
+            [&cis = cis](
+                    session_context& ctx,
+                    const cis1::cwu::session_auth& dto,
+                    cis1::proto_utils::transaction tr)
+            {
+                ctx.session = cis.connect_to_session(dto.session_id);
+
+                if(!ctx.session)
+                {
+                    if(auto queue = tr.get_queue().lock(); queue)
+                    {
+                        queue->close();
+                    }
+                }
+            });
+
+    dispatcher.add_event_handler<cis1::cwu::log_entry>(
+            [](     session_context& ctx,
+                    const cis1::cwu::log_entry& dto,
+                    cis1::proto_utils::transaction tr)
+            {
+                if(!ctx.session)
+                {
+                    if(auto queue = tr.get_queue().lock(); queue)
+                    {
+                        queue->close();
+                    }
+                }
+
+                ctx.session->log(dto);
+            });
+
+    cis_app->set_session_acceptor(
+            [dispatcher = std::move(dispatcher)]() mutable
+            {
+                return [&dispatcher, ctx = session_context{}](
+                            boost::asio::const_buffer buffer,
+                            std::shared_ptr<cis1::proto_utils::queue_interface>
+                                            queue) mutable
+                        {
+                            dispatcher.dispatch(ctx, true, buffer, buffer.size(), queue);
+                        };
+            });
+}
+
+std::optional<boost::asio::ip::tcp::endpoint> resolve_endpoint(
+        boost::asio::io_context& ioc,
+        const std::string& address,
+        uint16_t port,
+        std::error_code& ec)
+{
+    boost::asio::ip::tcp::resolver resolver(ioc);
+
+    boost::system::error_code boost_ec;
+
+    auto endpoints = resolver.resolve(
+            address,
+            std::to_string(port),
+            boost_ec);
+
+    if(boost_ec)
+    {
+        ec = cis::error_code::cant_resolve_address;
+
+        return std::nullopt;
+    }
+
+    return *(endpoints.begin());
+}
+
+std::optional<application> application::create(
+        boost::asio::io_context& ioc,
+        std::unique_ptr<configuration_manager> config,
+        std::error_code& ec)
+{
+    openssl::init();
+
+    //apps
+
+    auto public_app = std::make_shared<http::handlers_chain>(ioc);
+
+    auto cis_app = std::make_shared<cis1::cwu::tcp_server>(ioc);
+
+    auto db = std::make_unique<database::database_wrapper>(
+            *(config->get_entry<std::filesystem::path>("db_root", ec)) / "db.sqlite",
+            config->get_entry<user_credentials>("admin_credentials", ec));
+
+    config->remove_entry("admin_credentials");
+
+    auto cis = std::make_unique<cis::cis_manager>(
+            ioc,
+            *config,
+            *db);
+
+    auto auth_manager_ = std::make_unique<auth_manager>(
+            ioc,
+            *db);
+
+    auto rights_manager_ = std::make_unique<rights_manager>(
+            ioc,
+            *db);
+
+    auto files = std::make_unique<http::file_handler>(
+            (config->get_entry<std::filesystem::path>("doc_root", ec))
+                    ->generic_string().c_str());
+
+    auto upload_handler = std::make_unique<http::multipart_form_handler>(
+            *(config->get_entry<std::filesystem::path>("cis_root", ec)) / cis::projects,
+            *rights_manager_);
+
+    auto download_handler = std::make_unique<http::download_handler>(
+            *(config->get_entry<std::filesystem::path>("cis_root", ec)) / cis::projects,
+            *rights_manager_);
+
+    auto webhooks_handler = std::make_unique<http::webhooks_handler>(
+            *auth_manager_,
+            *rights_manager_,
+            *cis);
+
+    //public_app
+
+    init_public_app(
+            public_app,
+            std::make_shared<http::error_handler>(),
+            *auth_manager_,
+            make_http_router(
+                    *files,
+                    *upload_handler,
+                    *download_handler,
+                    *webhooks_handler),
+            make_ws_router(
+                    *cis,
+                    *auth_manager_,
+                    *rights_manager_));
+
+    auto endpoint = resolve_endpoint(
+            ioc,
+            *(config->get_entry<std::string>("public_address", ec)),
+            *(config->get_entry<unsigned short>("public_port", ec)),
+            ec);
+
+    if(ec)
+    {
+        return std::nullopt;
+    }
+
+    public_app->listen(endpoint.value(), ec);
+
+    if(ec)
+    {
+        return std::nullopt;
+    }
+
+    //cis_app
+
+    init_cis_app(
+            cis_app,
+            *cis);
+
+    endpoint = resolve_endpoint(
+            ioc,
+            *(config->get_entry<std::string>("cis_address", ec)),
+            *(config->get_entry<unsigned short>("cis_port", ec)),
+            ec);
+
+    if(ec)
+    {
+        return std::nullopt;
+    }
+
+    cis_app->listen(endpoint.value());
+
+    return std::optional<application>{
+            std::in_place,
+            private_constructor_delegate_t{},
+            ioc,
+            public_app,
+            cis_app,
+            std::move(config),
+            std::move(db),
+            std::move(cis),
+            std::move(auth_manager_),
+            std::move(rights_manager_),
+            std::move(files),
+            std::move(upload_handler),
+            std::move(download_handler),
+            std::move(webhooks_handler)};
+}
+
+application::private_constructor_delegate_t::private_constructor_delegate_t()
+{}
+
+application::application(
+        boost::asio::io_context& ioc,
+        const std::shared_ptr<http::handlers_chain>& app,
+        const std::shared_ptr<cis1::cwu::tcp_server>& cis_app,
+        std::unique_ptr<configuration_manager> config,
+        std::unique_ptr<database::database_wrapper> db,
+        std::unique_ptr<cis::cis_manager> cis,
+        std::unique_ptr<auth_manager> auth_manager_arg,
+        std::unique_ptr<rights_manager> rights_manager_arg,
+        std::unique_ptr<http::file_handler> files,
+        std::unique_ptr<http::multipart_form_handler> upload_handler,
+        std::unique_ptr<http::download_handler> download_handler,
+        std::unique_ptr<http::webhooks_handler> webhooks_handler)
+    : ioc_(ioc)
+    , app_(app)
+    , cis_app_(cis_app)
+    , config_(std::move(config))
+    , db_(std::move(db))
+    , cis_(std::move(cis))
+    , auth_manager_(std::move(auth_manager_arg))
+    , rights_manager_(std::move(rights_manager_arg))
+    , files_(std::move(files))
+    , upload_handler_(std::move(upload_handler))
+    , download_handler_(std::move(download_handler))
+    , webhooks_handler_(std::move(webhooks_handler))
+{}
 
 void application::run()
 {
