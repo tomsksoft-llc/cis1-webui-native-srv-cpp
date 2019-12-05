@@ -44,7 +44,7 @@ public:
                 return entry;
             }
 
-            ec.assign(1, ec.category());
+            ec = cis::error_code::cant_cast_config_entry;
 
             return nullptr;
         }

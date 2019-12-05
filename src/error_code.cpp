@@ -38,6 +38,9 @@ std::string error_category::message(int ev) const
         case error_code::cant_open_file:
             return "Can't open file";
 
+        case error_code::cant_cast_config_entry:
+            return "Can't cast config entry";
+
         default:
             return "(unrecognized error)";
     }

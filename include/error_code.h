@@ -22,6 +22,7 @@ enum class error_code
     cant_run_http_listener,
     cant_resolve_address,
     cant_open_file,
+    cant_cast_config_entry,
 };
 
 std::error_code make_error_code(error_code ec);
