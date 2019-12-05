@@ -35,6 +35,18 @@ cis_manager::cis_manager(
             std::chrono::seconds(5))
     , session_manager_(ioc)
 {
+    //assert that config is correct
+    assert(config_.get_entry<std::filesystem::path>(
+                "cis_root") != nullptr);
+    assert(config_.get_entry<std::string>(
+                "public_address") != nullptr);
+    assert(config_.get_entry<unsigned short>(
+                "public_port") != nullptr);
+    assert(config_.get_entry<std::string>(
+                "cis_address") != nullptr);
+    assert(config_.get_entry<unsigned short>(
+            "cis_port") != nullptr);
+
     std::ifstream cis_core_conf(
             *config_.get_entry<std::filesystem::path>("cis_root")
                     / core / "cis.conf");
