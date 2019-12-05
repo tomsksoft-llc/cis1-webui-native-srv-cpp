@@ -16,80 +16,159 @@
 #include <boost/property_tree/ini_parser.hpp>
 
 #include "cis/dirs.h"
+#include "error_code.h"
 
 namespace net = boost::asio;                    // from <boost/asio.hpp>
 using tcp = boost::asio::ip::tcp;               // from <boost/asio/ip/tcp.hpp>
 namespace pt = boost::property_tree;
 
-init_params parse_args(int argc, char* argv[])
+void parse_args(
+        int argc,
+        char* argv[],
+        configuration_manager& config,
+        std::error_code& ec)
 {
-    init_params result{};
-
     if(argc == 2)
     {
         pt::ptree pt;
-        pt::ini_parser::read_ini(argv[1], pt);
+        try
+        {
+            pt::ini_parser::read_ini(argv[1], pt);
+        }
+        catch(pt::ini_parser_error& err)
+        {
+            ec = cis::error_code::cant_parse_config_ini;
+
+            return;
+        }
 
         auto opt_working_dir = pt.get_optional<std::string>(
                 "global.working_dir");
 
         if(opt_working_dir)
         {
-            std::filesystem::current_path(opt_working_dir.value());
+            std::filesystem::current_path(opt_working_dir.value(), ec);
+
+            if(ec)
+            {
+                return;
+            }
         }
 
-        result.public_address = net::ip::make_address(
-                pt.get<std::string>("http.ip"));
-        result.public_port = pt.get<unsigned short>("http.port");
-        result.doc_root = pt.get<std::string>("http.doc_root");
-        auto opt_cis_root = pt.get_optional<std::string>("cis.cis_root");
-
-        if(opt_cis_root)
+        auto public_address_opt = pt.get_optional<std::string>("http.host");
+        if(!public_address_opt)
         {
-            result.cis_root = opt_cis_root.value();
+            ec = cis::error_code::cant_parse_config_ini;
+
+            return;
+        }
+        config.add_entry("public_address", public_address_opt.value());
+
+        auto public_port_opt = pt.get_optional<unsigned short>("http.port");
+        if(!public_port_opt)
+        {
+            ec = cis::error_code::cant_parse_config_ini;
+
+            return;
+        }
+        config.add_entry("public_port", public_port_opt.value());
+
+        auto doc_root_opt = pt.get_optional<std::string>("http.doc_root");
+        if(!doc_root_opt)
+        {
+            ec = cis::error_code::cant_parse_config_ini;
+
+            return;
+        }
+        config.add_entry("doc_root", std::filesystem::path{doc_root_opt.value()});
+
+        auto cis_root_opt = pt.get_optional<std::string>("cis.cis_root");
+        if(cis_root_opt)
+        {
+            config.add_entry("cis_root", std::filesystem::path{cis_root_opt.value()});
+        }
+        else if(const char* cis_root = std::getenv("cis_base_dir");
+                            cis_root != nullptr)
+        {
+            config.add_entry("cis_root", std::filesystem::path{cis_root});
         }
         else
         {
-            result.cis_root = std::getenv("cis_base_dir");
+            ec = cis::error_code::incorrect_environment;
+
+            return;
         }
 
-        result.cis_address = net::ip::make_address(
-                pt.get<std::string>("cis.ip"));
-        result.cis_port = pt.get<unsigned short>("cis.port");
-        result.db_root = pt.get<std::string>("db.db_root");
+        auto cis_address_opt = pt.get_optional<std::string>("cis.host");
+        if(!cis_address_opt)
+        {
+            ec = cis::error_code::cant_parse_config_ini;
+
+            return;
+        }
+        
+        config.add_entry("cis_address", cis_address_opt.value());
+
+        auto cis_port_opt = pt.get_optional<unsigned short>("cis.port");
+        if(!cis_port_opt)
+        {
+            ec = cis::error_code::cant_parse_config_ini;
+
+            return;
+        }
+        
+        config.add_entry("cis_port", cis_port_opt.value());
+
+        auto db_root_opt = pt.get_optional<std::string>("db.db_root");
+        if(!db_root_opt)
+        {
+            ec = cis::error_code::cant_parse_config_ini;
+
+            return;
+        }
+
+        config.add_entry("db_root", std::filesystem::path{db_root_opt.value()});
     }
     else
     {
-        result.public_address = net::ip::make_address("127.0.0.1");
-        result.public_port = static_cast<unsigned short>(8080);
-        result.cis_address = net::ip::make_address("127.0.0.1");
-        result.cis_port = static_cast<unsigned short>(8081);
-        result.doc_root = ".";
+        config.add_entry("public_address", "127.0.0.1");
+        config.add_entry("public_port", static_cast<unsigned short>(8080));
+        config.add_entry("cis_address", "127.0.0.1");
+        config.add_entry("cis_port", static_cast<unsigned short>(8081));
+        config.add_entry("doc_root", std::filesystem::path{"."});
 
-        if(const auto* cis_base_dir = std::getenv("cis_base_dir");
+        if(const char* cis_base_dir = std::getenv("cis_base_dir");
                 cis_base_dir != nullptr)
         {
-            result.cis_root = cis_base_dir;
+            config.add_entry("cis_root", std::filesystem::path{cis_base_dir});
         }
         else
         {
-            result.cis_root = "./cis";
+            ec = cis::error_code::incorrect_environment;
+
+            return;
         }
 
-        result.db_root = ".";
+        config.add_entry("db_root", std::filesystem::path{"."});
     }
 
-    cis::set_root_dir(result.cis_root.string().c_str());
+    auto* cis_root = config.get_entry<std::filesystem::path>("cis_root", ec);
 
-    if(!std::filesystem::exists("webhooks_temp"))
+    cis::set_root_dir(cis_root->generic_string().c_str());
+
+    if(!std::filesystem::exists("webhooks_temp", ec))
     {
-        std::filesystem::create_directory("webhooks_temp");
+        std::filesystem::create_directory("webhooks_temp", ec);
     }
 
-    if(!std::filesystem::exists(result.db_root / "db.sqlite"))
+    auto* db_root = config.get_entry<std::filesystem::path>("db_root", ec);
+
+    if(!std::filesystem::exists(*db_root / "db.sqlite", ec))
     {
-        result.admin = admin_user{"admin", "admin@example.com" , "1234"};
+        config.add_entry(
+                "admin_credentials",
+                user_credentials{"admin", "admin@example.com" , "1234"});
     }
 
-    return result;
+    return;
 }

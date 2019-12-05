@@ -20,21 +20,22 @@ namespace net
 listener::listener(
     boost::asio::io_context& ioc,
     std::function<void(boost::asio::ip::tcp::socket&&)> accept_socket)
-    : acceptor_(ioc)
+    : ioc_(ioc)
+    , acceptor_(ioc)
     , socket_(ioc)
     , accept_socket_(std::move(accept_socket))
 {}
 
 void listener::listen(
-        const boost::asio::ip::tcp::endpoint& endpoint,
+        const boost::asio::ip::tcp::endpoint& ep,
         boost::beast::error_code& ec)
 {
-
     // Open the acceptor
-    acceptor_.open(endpoint.protocol(), ec);
+    acceptor_.open(boost::asio::ip::tcp::v4(), ec);
     if(ec)
     {
         fail(ec, "open");
+
         return;
     }
 
@@ -43,22 +44,27 @@ void listener::listen(
     if(ec)
     {
         fail(ec, "set_cloexec");
+
         return;
     }
 
     // Allow address reuse
-    acceptor_.set_option(boost::asio::socket_base::reuse_address(true), ec);
+    acceptor_.set_option(
+            boost::asio::socket_base::reuse_address(true),
+            ec);
     if(ec)
     {
         fail(ec, "set_option");
+
         return;
     }
 
     // Bind to the server address
-    acceptor_.bind(endpoint, ec);
+    acceptor_.bind(ep, ec);
     if(ec)
     {
         fail(ec, "bind");
+
         return;
     }
 
@@ -68,6 +74,7 @@ void listener::listen(
     if(ec)
     {
         fail(ec, "listen");
+
         return;
     }
 }

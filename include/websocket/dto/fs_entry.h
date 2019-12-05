@@ -98,6 +98,8 @@ struct fs_entry
 
     struct file_info
     {
+        bool executable;
+
         static constexpr auto get_name()
         {
             return CT_STRING("file");
@@ -107,6 +109,9 @@ struct fs_entry
         {
             using namespace reflect;
             return make_meta_converter<file_info>()
+                    .add_field(
+                            CT_STRING("executable"),
+                            ptr_v<&file_info::executable>{})
                     .done();
         }
     };

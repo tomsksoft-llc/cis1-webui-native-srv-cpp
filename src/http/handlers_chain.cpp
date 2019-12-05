@@ -10,9 +10,14 @@
 
 #include "net/listener.h"
 #include "exceptions/generic_error.h"
+#include "error_code.h"
 
 namespace http
 {
+
+handlers_chain::handlers_chain(boost::asio::io_context& ioc)
+    : ioc_(ioc)
+{}
 
 void handlers_chain::append_handler(const handler_t& handler)
 {
@@ -30,8 +35,8 @@ void handlers_chain::set_error_handler(const error_handler_t& handler)
 }
 
 void handlers_chain::listen(
-        boost::asio::io_context& ioc,
-        const tcp::endpoint& endpoint)
+        const boost::asio::ip::tcp::endpoint& ep,
+        std::error_code& ec)
 {
     auto accept_handler = [self = shared_from_this()](tcp::socket&& socket)
     {
@@ -41,14 +46,18 @@ void handlers_chain::listen(
     };
 
     auto l = std::make_shared<net::listener>(
-            ioc,
+            ioc_,
             accept_handler);
-    boost::beast::error_code ec;
-    l->listen(endpoint, ec);
 
-    if(ec)
+    boost::beast::error_code boost_ec;
+
+    l->listen(ep, boost_ec);
+
+    if(boost_ec)
     {
-        throw generic_error(ec.message());
+        ec = cis::error_code::cant_run_http_listener;
+
+        return;
     }
 
     l->run();

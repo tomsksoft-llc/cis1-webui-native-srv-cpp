@@ -10,6 +10,8 @@
 
 #include <fstream>
 
+#include "error_code.h"
+
 fs_node::fs_node(std::chrono::nanoseconds invalidation_time,
         const std::filesystem::path& path,
         size_t caching_level)
@@ -673,7 +675,7 @@ std::unique_ptr<std::ostream> fs_cache::create_file_w(
 
     if(!file->is_open())
     {
-        ec.assign(1, ec.category());
+        ec = cis::error_code::cant_open_file;
 
         return nullptr;
     }
