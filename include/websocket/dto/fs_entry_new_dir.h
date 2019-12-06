@@ -18,7 +18,7 @@ namespace websocket
 namespace dto
 {
 
-struct fs_entry_new_dir 
+struct fs_entry_new_dir
 {
     std::string path;
     static constexpr auto get_converter()

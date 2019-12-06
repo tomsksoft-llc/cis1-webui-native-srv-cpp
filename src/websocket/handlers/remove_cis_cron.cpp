@@ -54,7 +54,7 @@ void remove_cis_cron(
                         })
                 .run();
         }
-        
+
         return;
     }
 

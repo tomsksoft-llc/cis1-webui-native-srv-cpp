@@ -22,7 +22,7 @@ namespace beast = boost::beast;
 namespace http
 {
 
-class download_handler 
+class download_handler
 {
     rights_manager& rights_;
     file_handler files_;

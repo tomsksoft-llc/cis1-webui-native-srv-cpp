@@ -23,4 +23,4 @@ public:
     static std::mt19937& instance();
 private:
     std::mt19937 gen_;
-}; 
+};

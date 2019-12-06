@@ -185,7 +185,7 @@ bool cis_manager::rename_job(
         const std::string& job_name,
         const std::string& new_name)
 {
-    auto project_path = 
+    auto project_path =
             *config_.get_entry<std::filesystem::path>("cis_root")
                     / cis::projects / project_name;
 

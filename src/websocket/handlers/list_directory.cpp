@@ -56,7 +56,7 @@ void list_directory(
             dto::fs_entry entry;
 
             entry.name = file.path().filename();
-            
+
             auto relative_path = file.path().lexically_relative(
                     cis_manager.fs().root().path());
 
