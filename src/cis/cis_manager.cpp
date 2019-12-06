@@ -40,11 +40,11 @@ cis_manager::cis_manager(
                 "cis_root") != nullptr);
     assert(config_.get_entry<std::string>(
                 "public_address") != nullptr);
-    assert(config_.get_entry<unsigned short>(
+    assert(config_.get_entry<uint16_t>(
                 "public_port") != nullptr);
     assert(config_.get_entry<std::string>(
                 "cis_address") != nullptr);
-    assert(config_.get_entry<unsigned short>(
+    assert(config_.get_entry<uint16_t>(
             "cis_port") != nullptr);
 
     std::ifstream cis_core_conf(
@@ -221,9 +221,9 @@ cis_manager::run_job_task_t cis_manager::run_job(
                     ioc_,
                     webui_config{
                             *config_.get_entry<std::string>("public_address"),
-                            *config_.get_entry<unsigned short>("public_port"),
+                            *config_.get_entry<uint16_t>("public_port"),
                             *config_.get_entry<std::string>("cis_address"),
-                            *config_.get_entry<unsigned short>("cis_port")},
+                            *config_.get_entry<uint16_t>("cis_port")},
                     *config_.get_entry<std::filesystem::path>("cis_root"),
                     execs_.startjob),
             project_name,
