@@ -8,6 +8,8 @@
 
 #include "cis/cis_job.h"
 
+#include <regex>
+
 #include "cis/dirs.h"
 #include "file_util.h"
 
@@ -93,7 +95,20 @@ void cis_job::run(
             std::make_shared<task_callback>(
                     [&]()
                     {
-                        auto exit_code = cp_->exit_code();
+                        auto& exit_code_line = reader_->last_line();
+                        
+
+                        auto exit_code = [&]() -> std::optional<int>
+                        {
+                            static const std::regex exit_code_regex("Exit code: (\\d+)");
+                            if(std::smatch match;
+                                    std::regex_match(exit_code_line, match, exit_code_regex))
+                            {
+                                return std::stoul(match[1]);
+                            }
+
+                            return std::nullopt;
+                        }();
 
                         if(session_id_ && session_finished_cb_)
                         {
