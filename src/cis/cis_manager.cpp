@@ -45,7 +45,7 @@ cis_manager::cis_manager(
     assert(config_.get_entry<std::string>(
                 "cis_address") != nullptr);
     assert(config_.get_entry<uint16_t>(
-            "cis_port") != nullptr);
+                "cis_port") != nullptr);
 
     std::ifstream cis_core_conf(
             *config_.get_entry<std::filesystem::path>("cis_root")
