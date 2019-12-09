@@ -116,6 +116,7 @@ private:
     boost::asio::io_context& ioc_;
     configuration_manager& config_;
     fs_cache fs_;
+    database::database_wrapper& db_;
     executables execs_;
     session_manager session_manager_;
 

@@ -29,6 +29,7 @@ cis_manager::cis_manager(
         database::database_wrapper& db)
     : ioc_(ioc)
     , config_(config)
+    , db_(db)
     , fs_(  *config_.get_entry<std::filesystem::path>("cis_root")
                     / cis::projects,
             4,
@@ -69,6 +70,32 @@ cis_manager::cis_manager(
     {
         throw load_config_error("Can't load cis.conf");
     }
+
+    auto tr = db_.make_transaction();
+
+    for(auto it = fs().begin(); it != fs().end(); ++it)
+    {
+        if(project::is_entry(it))
+        {
+            auto project_name = it->path().filename().generic_string();
+
+            using namespace sqlite_orm;
+
+            auto projects = tr->select(
+                    &database::project::id,
+                    where(c(&database::project::name) == project_name));
+
+            if(projects.size() == 0)
+            {
+                tr->insert(
+                        database::project{
+                                -1,
+                                project_name});
+            }
+        }
+    }
+
+    tr.commit();
 }
 
 bool cis_manager::refresh(const std::filesystem::path& path)
