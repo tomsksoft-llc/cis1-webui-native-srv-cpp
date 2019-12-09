@@ -238,8 +238,22 @@ cis_manager::run_job_task_t cis_manager::run_job(
                         job_name,
                         force,
                         params,
-                        on_session_started,
-                        [&](const std::string& session_id)
+                        [   &,
+                            on_session_started = std::move(on_session_started),
+                            job_path = std::filesystem::path{project_name} / job_name
+                        ](const std::string& session_id)
+                        {
+                            if(auto it = fs_.find(job_path);
+                                    it != fs_.end())
+                            {
+                                it.invalidate();
+                            }
+
+                            on_session_started(session_id);
+                        },
+                        [   &,
+                            on_session_finished = std::move(on_session_finished)
+                        ](const std::string& session_id)
                         {
                             session_manager_.finish_session(session_id);
 
