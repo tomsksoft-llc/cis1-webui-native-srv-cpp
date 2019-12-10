@@ -73,16 +73,17 @@ cis_manager::cis_manager(
 
     auto tr = db_.make_transaction();
 
+    using namespace sqlite_orm;
+
+    tr->update_all(set(c(&database::project::deleted) = true));
+
     for(auto it = fs().begin(); it != fs().end(); ++it)
     {
         if(project::is_entry(it))
         {
             auto project_name = it->path().filename().generic_string();
 
-            using namespace sqlite_orm;
-
-            auto projects = tr->select(
-                    &database::project::id,
+            auto projects = tr->get_all<database::project>(
                     where(c(&database::project::name) == project_name));
 
             if(projects.size() == 0)
@@ -91,6 +92,12 @@ cis_manager::cis_manager(
                         database::project{
                                 -1,
                                 project_name});
+            }
+            else if(projects.size() == 1)
+            {
+                auto old_project = projects[0];
+                old_project.deleted = false;
+                tr->update(old_project);
             }
         }
     }
