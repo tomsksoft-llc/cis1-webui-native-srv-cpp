@@ -20,7 +20,6 @@
 #include "database.h"
 #include "fs_cache.h"
 #include "cis_structs_interface.h"
-#include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
 #include "session.h"
 

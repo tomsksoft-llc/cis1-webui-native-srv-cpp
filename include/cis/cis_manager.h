@@ -19,7 +19,6 @@
 #include "database.h"
 #include "fs_cache.h"
 #include "session_manager.h"
-#include "immutable_container_proxy.h"
 #include "bound_task_chain.h"
 #include "session.h"
 #include "configuration_manager.h"
