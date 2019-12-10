@@ -24,6 +24,8 @@ struct fs_entry_interface
 
     virtual fs_iterator get_files() = 0;
 
+    virtual fs_iterator& iterator() = 0;
+
     virtual void invalidate() = 0;
 
     virtual const std::filesystem::directory_entry& dir_entry() const = 0;

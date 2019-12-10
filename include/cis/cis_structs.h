@@ -26,6 +26,8 @@ public:
 
     fs_iterator get_files() override;
 
+    fs_iterator& iterator() override;
+
     void invalidate() override;
 
     const std::filesystem::directory_entry& dir_entry() const override;

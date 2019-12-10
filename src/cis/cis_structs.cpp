@@ -24,6 +24,11 @@ fs_iterator fs_entry_ref::get_files()
     return it_;
 }
 
+fs_iterator& fs_entry_ref::iterator()
+{
+    return it_;
+}
+
 const std::filesystem::directory_entry& fs_entry_ref::dir_entry() const
 {
     return *it_;

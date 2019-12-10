@@ -17,12 +17,10 @@ void add_cis_project(
         const dto::cis_project_add& req,
         cis1::proto_utils::transaction tr)
 {
-    auto project_path =
-            std::filesystem::path{"/"} / req.project;
 
-    auto& fs = cis_manager.fs();
+    auto project = cis_manager.get_project_info(req.project);
 
-    if(auto it = fs.find(project_path); it != fs.end())
+    if(project != nullptr)
     {
         dto::cis_project_error_already_exist err;
         err.project = req.project;
@@ -30,16 +28,7 @@ void add_cis_project(
         return tr.send_error(err, "Project already exists.");
     }
 
-    std::error_code ec;
-
-    fs.create_directory(
-            project_path,
-            ec);
-
-    if(ec)
-    {
-        return tr.send_error("Can't create directory.");
-    }
+    cis_manager.create_project(req.project); //, ec);
 
     dto::cis_project_add_success res;
 

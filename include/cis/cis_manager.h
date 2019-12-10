@@ -38,6 +38,8 @@ public:
 
     cis_manager(const cis_manager&) = delete;
 
+    void refresh_projects() override;
+
     bool refresh(const std::filesystem::path& path) override;
 
     bool remove(const std::filesystem::path& path) override;
@@ -50,6 +52,10 @@ public:
 
     project_info_t get_project_info(
             const std::string& project_name) override;
+
+    void create_project(const std::string& project_name) override;
+
+    void remove_project(const project_info_t& project) override;
 
     job_info_t get_job_info(
             const std::string& project_name,
