@@ -167,53 +167,79 @@ cis_manager::project_list_t cis_manager::get_project_list()
     return list;
 }
 
-void cis_manager::create_project(const std::string& project_name)
+void cis_manager::create_project(
+        const std::string& project_name,
+        std::error_code& ec)
 {
-    std::error_code ec;
     fs().create_directory(
             std::filesystem::path{"/"} / project_name,
             ec);
 
-    using namespace sqlite_orm;
-
-    auto db = db_.make_transaction();
-
-    auto projects = db->get_all<database::project>(
-            where(c(&database::project::name) == project_name));
-
-    if(projects.size() == 0)
+    if(ec)
     {
-        db->insert(
-                database::project{
-                        -1,
-                        project_name});
-    }
-    else if(projects.size() == 1)
-    {
-        auto old_project = projects[0];
-        old_project.deleted = false;
-        db->update(old_project);
+        return;
     }
 
-    db.commit();
+    try
+    {
+        using namespace sqlite_orm;
+
+        auto db = db_.make_transaction();
+
+        auto projects = db->get_all<database::project>(
+                where(c(&database::project::name) == project_name));
+
+        if(projects.size() == 0)
+        {
+            db->insert(
+                    database::project{
+                            -1,
+                            project_name});
+        }
+        else if(projects.size() == 1)
+        {
+            auto old_project = projects[0];
+            old_project.deleted = false;
+            db->update(old_project);
+        }
+
+        db.commit();
+    }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
+
+        return;
+    }
 }
 
-void cis_manager::remove_project(const project_info_t& project)
+void cis_manager::remove_project(
+        const project_info_t& project,
+        std::error_code& ec)
 {
     auto project_name = project->dir_entry().path().filename().generic_string();
     project->iterator().remove();
 
     fs().root().invalidate();
 
-    using namespace sqlite_orm;
+    try
+    {
+        using namespace sqlite_orm;
 
-    auto db = db_.make_transaction();
+        auto db = db_.make_transaction();
 
-    db->update_all(
-            set(c(&database::project::deleted) = true),
-            where(c(&database::project::name) == project_name));
+        db->update_all(
+                set(c(&database::project::deleted) = true),
+                where(c(&database::project::name) == project_name));
 
-    db.commit();
+        db.commit();
+    }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
+
+        return;
+    }
 }
 
 cis_manager::project_info_t cis_manager::get_project_info(

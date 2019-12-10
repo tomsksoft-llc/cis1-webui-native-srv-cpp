@@ -24,7 +24,14 @@ void remove_cis_project(
 
     if(project != nullptr && permitted)
     {
-        cis_manager.remove_project(project); //, ec);
+        std::error_code ec;
+
+        cis_manager.remove_project(project, ec);
+        
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         dto::cis_project_remove_success res;
 

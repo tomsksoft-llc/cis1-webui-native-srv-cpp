@@ -53,9 +53,13 @@ public:
     project_info_t get_project_info(
             const std::string& project_name) override;
 
-    void create_project(const std::string& project_name) override;
+    void create_project(
+            const std::string& project_name,
+            std::error_code& ec) override;
 
-    void remove_project(const project_info_t& project) override;
+    void remove_project(
+            const project_info_t& project,
+            std::error_code& ec) override;
 
     job_info_t get_job_info(
             const std::string& project_name,

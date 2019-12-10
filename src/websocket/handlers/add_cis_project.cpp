@@ -28,7 +28,14 @@ void add_cis_project(
         return tr.send_error(err, "Project already exists.");
     }
 
-    cis_manager.create_project(req.project); //, ec);
+    std::error_code ec;
+
+    cis_manager.create_project(req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
 
     dto::cis_project_add_success res;
 
