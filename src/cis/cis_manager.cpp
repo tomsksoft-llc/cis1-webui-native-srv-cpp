@@ -40,12 +40,12 @@ cis_manager::cis_manager(
                 "cis_root") != nullptr);
     assert(config_.get_entry<std::string>(
                 "public_address") != nullptr);
-    assert(config_.get_entry<unsigned short>(
+    assert(config_.get_entry<uint16_t>(
                 "public_port") != nullptr);
     assert(config_.get_entry<std::string>(
                 "cis_address") != nullptr);
-    assert(config_.get_entry<unsigned short>(
-            "cis_port") != nullptr);
+    assert(config_.get_entry<uint16_t>(
+                "cis_port") != nullptr);
 
     std::ifstream cis_core_conf(
             *config_.get_entry<std::filesystem::path>("cis_root")
@@ -185,7 +185,7 @@ bool cis_manager::rename_job(
         const std::string& job_name,
         const std::string& new_name)
 {
-    auto project_path = 
+    auto project_path =
             *config_.get_entry<std::filesystem::path>("cis_root")
                     / cis::projects / project_name;
 
@@ -221,9 +221,9 @@ cis_manager::run_job_task_t cis_manager::run_job(
                     ioc_,
                     webui_config{
                             *config_.get_entry<std::string>("public_address"),
-                            *config_.get_entry<unsigned short>("public_port"),
+                            *config_.get_entry<uint16_t>("public_port"),
                             *config_.get_entry<std::string>("cis_address"),
-                            *config_.get_entry<unsigned short>("cis_port")},
+                            *config_.get_entry<uint16_t>("cis_port")},
                     *config_.get_entry<std::filesystem::path>("cis_root"),
                     execs_.startjob),
             project_name,
@@ -238,8 +238,22 @@ cis_manager::run_job_task_t cis_manager::run_job(
                         job_name,
                         force,
                         params,
-                        on_session_started,
-                        [&](const std::string& session_id)
+                        [   &,
+                            on_session_started = std::move(on_session_started),
+                            job_path = std::filesystem::path{project_name} / job_name
+                        ](const std::string& session_id)
+                        {
+                            if(auto it = fs_.find(job_path);
+                                    it != fs_.end())
+                            {
+                                it.invalidate();
+                            }
+
+                            on_session_started(session_id);
+                        },
+                        [   &,
+                            on_session_finished = std::move(on_session_finished)
+                        ](const std::string& session_id)
                         {
                             session_manager_.finish_session(session_id);
 

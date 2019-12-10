@@ -520,7 +520,7 @@ std::optional<application> application::create(
     auto endpoint = resolve_endpoint(
             ioc,
             *(config->get_entry<std::string>("public_address", ec)),
-            *(config->get_entry<unsigned short>("public_port", ec)),
+            *(config->get_entry<uint16_t>("public_port", ec)),
             ec);
 
     if(ec)
@@ -544,7 +544,7 @@ std::optional<application> application::create(
     endpoint = resolve_endpoint(
             ioc,
             *(config->get_entry<std::string>("cis_address", ec)),
-            *(config->get_entry<unsigned short>("cis_port", ec)),
+            *(config->get_entry<uint16_t>("cis_port", ec)),
             ec);
 
     if(ec)

@@ -1,4 +1,3 @@
-#pragma once
 /*
  *    TomskSoft CIS1 WebUI
  *
@@ -7,6 +6,7 @@
  *
  */
 
+#pragma once
 
 #include <string>
 #include <map>

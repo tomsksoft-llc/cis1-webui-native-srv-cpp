@@ -64,7 +64,7 @@ void parse_args(
         }
         config.add_entry("public_address", public_address_opt.value());
 
-        auto public_port_opt = pt.get_optional<unsigned short>("http.port");
+        auto public_port_opt = pt.get_optional<uint16_t>("http.port");
         if(!public_port_opt)
         {
             ec = cis::error_code::cant_parse_config_ini;
@@ -106,17 +106,17 @@ void parse_args(
 
             return;
         }
-        
+
         config.add_entry("cis_address", cis_address_opt.value());
 
-        auto cis_port_opt = pt.get_optional<unsigned short>("cis.port");
+        auto cis_port_opt = pt.get_optional<uint16_t>("cis.port");
         if(!cis_port_opt)
         {
             ec = cis::error_code::cant_parse_config_ini;
 
             return;
         }
-        
+
         config.add_entry("cis_port", cis_port_opt.value());
 
         auto db_root_opt = pt.get_optional<std::string>("db.db_root");
@@ -132,9 +132,9 @@ void parse_args(
     else
     {
         config.add_entry("public_address", "127.0.0.1");
-        config.add_entry("public_port", static_cast<unsigned short>(8080));
+        config.add_entry("public_port", static_cast<uint16_t>(8080));
         config.add_entry("cis_address", "127.0.0.1");
-        config.add_entry("cis_port", static_cast<unsigned short>(8081));
+        config.add_entry("cis_port", static_cast<uint16_t>(8081));
         config.add_entry("doc_root", std::filesystem::path{"."});
 
         if(const char* cis_base_dir = std::getenv("cis_base_dir");

@@ -96,7 +96,7 @@ void cis_job::run(
                     [&]()
                     {
                         auto& exit_code_line = reader_->last_line();
-                        
+
 
                         auto exit_code = [&]() -> std::optional<int>
                         {

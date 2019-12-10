@@ -60,7 +60,7 @@ private:
     std::vector<cis1::cwu::log_entry> received_logs_;
     std::map<uint64_t, std::weak_ptr<subscriber_interface>> subscribers_;
     boost::asio::steady_timer timer_;
-    
+
     void on_timer(const boost::system::error_code& ec);
 };
 

@@ -44,7 +44,7 @@ struct detail
                     make_column("user_email", &user::email, unique()),
                     make_column("user_pass", &user::pass),
                     make_column("user_group_id", &user::group_id, default_value(1)),
-                    foreign_key(&user::group_id).references(&group::id).on_delete.set_default()), 
+                    foreign_key(&user::group_id).references(&group::id).on_delete.set_default()),
                 make_table("projects",
                     make_column("project_id", &project::id, autoincrement(), primary_key()),
                     make_column("project_name", &project::name, unique()),

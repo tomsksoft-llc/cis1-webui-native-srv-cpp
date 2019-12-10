@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/remove_cis_project.h"
 
 #include "websocket/dto/cis_project_remove_success.h"
