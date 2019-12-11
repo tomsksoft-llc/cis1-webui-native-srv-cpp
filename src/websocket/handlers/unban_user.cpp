@@ -25,15 +25,21 @@ void unban_user(
         const dto::user_auth_unban& req,
         cis1::proto_utils::transaction tr)
 {
+    std::error_code ec;
 
-    if(!authentication_handler.has_user(req.username))
+    auto user_exists = authentication_handler.has_user(req.username, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    if(!user_exists)
     {
         dto::user_auth_error_user_not_found err;
 
         return tr.send_error(err, "Invalid username.");
     }
-
-    std::error_code ec;
 
     auto perm = rights.check_user_permission(ctx.username, "users.change_group", ec);
 
@@ -48,7 +54,13 @@ void unban_user(
     {
         authentication_handler.change_group(
                 req.username,
-                "user");
+                "user",
+                ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         dto::user_auth_unban_success res;
 

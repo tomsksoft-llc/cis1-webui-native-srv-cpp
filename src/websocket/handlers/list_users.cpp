@@ -37,7 +37,12 @@ void list_users(
 
     if(permitted)
     {
-        const auto users = authentication_handler.get_user_infos();
+        const auto users = authentication_handler.get_user_infos(ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         dto::user_list_success res;
 
