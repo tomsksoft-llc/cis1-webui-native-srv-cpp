@@ -13,20 +13,43 @@ using namespace sqlite_orm;
 namespace database
 {
 
-database_wrapper::database_wrapper(
-        const std::filesystem::path& path,
-        user_credentials* admin_credentials)
-    : db_(detail::make_database(path.string().c_str()))
-{
-    sync();
+database_wrapper::private_constructor_delegate_t::private_constructor_delegate_t()
+{}
 
-    if(admin_credentials != nullptr)
+std::unique_ptr<database_wrapper> database_wrapper::create(
+        const std::filesystem::path& path,
+        user_credentials* admin_credentials,
+        std::error_code& ec)
+{
+    try
     {
-        init(   admin_credentials->name,
-                admin_credentials->email,
-                admin_credentials->pass);
+        auto db = std::make_unique<database_wrapper>(
+                private_constructor_delegate_t{},
+                path);
+
+        db->sync();
+
+        if(admin_credentials != nullptr)
+        {
+            db->init(admin_credentials->name,
+                    admin_credentials->email,
+                    admin_credentials->pass);
+        }
+        
+        return db;
+    }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
+
+        return nullptr;
     }
 }
+
+database_wrapper::database_wrapper(
+        const std::filesystem::path& path)
+    : db_(detail::make_database(path.string().c_str()))
+{}
 
 void database_wrapper::sync()
 {
