@@ -20,7 +20,15 @@ void add_cis_job(
 {
     auto project = cis_manager.get_project_info(req.project);
 
-    auto perm = rights.check_project_right(ctx.username, req.project);
+    std::error_code ec;
+
+    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value().write : true;
 
     if(project != nullptr && permitted)

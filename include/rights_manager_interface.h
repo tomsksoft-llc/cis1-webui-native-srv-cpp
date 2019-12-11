@@ -29,17 +29,21 @@ struct rights_manager_interface
 
     virtual std::optional<bool> check_user_permission(
             const std::string& username,
-            const std::string& permission_name) const = 0;
+            const std::string& permission_name,
+            std::error_code& ec) const = 0;
 
     virtual std::optional<database::project_user_right> check_project_right(
             const std::string& username,
-            const std::string& project) const = 0;
+            const std::string& project,
+            std::error_code& ec) const = 0;
 
     virtual std::map<std::string, project_rights> get_permissions(
-            const std::string& username) const = 0;
+            const std::string& username,
+            std::error_code& ec) const = 0;
 
     virtual bool set_user_project_permissions(
             const std::string& user,
             const std::string& project,
-            database::project_user_right rights) = 0;
+            database::project_user_right rights,
+            std::error_code& ec) = 0;
 };

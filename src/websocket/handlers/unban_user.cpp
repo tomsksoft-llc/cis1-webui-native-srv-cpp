@@ -33,7 +33,15 @@ void unban_user(
         return tr.send_error(err, "Invalid username.");
     }
 
-    auto perm = rights.check_user_permission(ctx.username, "users.change_group");
+    std::error_code ec;
+
+    auto perm = rights.check_user_permission(ctx.username, "users.change_group", ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)

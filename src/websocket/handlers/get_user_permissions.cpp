@@ -23,12 +23,25 @@ void get_user_permissions(
         const dto::user_permissions_get& req,
         cis1::proto_utils::transaction tr)
 {
-    auto perm = rights.check_user_permission(ctx.username, "users.permissions");
+    std::error_code ec;
+
+    auto perm = rights.check_user_permission(ctx.username, "users.permissions", ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
-        const auto permissions = rights.get_permissions(req.username);
+        const auto permissions = rights.get_permissions(req.username, ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         dto::user_permissions_get_success res;
 

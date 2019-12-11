@@ -23,7 +23,15 @@ void set_user_permissions(
         const dto::user_permissions_set& req,
         cis1::proto_utils::transaction tr)
 {
-    auto perm = rights.check_user_permission(ctx.username, "users.permissions");
+    std::error_code ec;
+
+    auto perm = rights.check_user_permission(ctx.username, "users.permissions", ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
@@ -33,7 +41,13 @@ void set_user_permissions(
             rights.set_user_project_permissions(
                     req.username,
                     perm.project,
-                    {-1, -1, -1, perm.read, perm.write, perm.execute});
+                    {-1, -1, -1, perm.read, perm.write, perm.execute},
+                    ec);
+
+            if(ec)
+            {
+                return tr.send_error("Internal error.");
+            }
         }
 
         dto::user_permissions_set_success res;

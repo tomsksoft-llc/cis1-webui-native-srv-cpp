@@ -19,7 +19,15 @@ void remove_cis_project(
 {
     auto project = cis_manager.get_project_info(req.project);
 
-    auto perm = rights.check_project_right(ctx.username, req.project);
+    std::error_code ec;
+
+    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(project != nullptr && permitted)
@@ -27,7 +35,7 @@ void remove_cis_project(
         std::error_code ec;
 
         cis_manager.remove_project(project, ec);
-        
+
         if(ec)
         {
             return tr.send_error("Internal error.");

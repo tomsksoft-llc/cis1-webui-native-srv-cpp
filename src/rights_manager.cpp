@@ -8,15 +8,6 @@
 
 #include "rights_manager.h"
 
-#include <fstream>
-
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/istreamwrapper.h>
-#include <rapidjson/ostreamwrapper.h>
-
-#include "exceptions/load_config_error.h"
-
 using namespace database;
 using namespace sqlite_orm;
 
@@ -29,139 +20,186 @@ rights_manager::rights_manager(
 
 std::optional<bool> rights_manager::check_user_permission(
         const std::string& username,
-        const std::string& permission_name) const
+        const std::string& permission_name,
+        std::error_code& ec) const
 {
-    auto db = db_.make_transaction();
-
-    auto groups = db->select(
-            &user::group_id,
-            where(c(&user::name) == username));
-    auto permissions = db->select(
-            &permission::id,
-            where(c(&permission::name) == permission_name));
-
-    if(groups.size() == 1 && permissions.size() == 1)
+    try
     {
-        auto group_permission_count = db->count<group_permission>(
-                where(c(&group_permission::group_id) == groups[0]
-                        && c(&group_permission::permission_id) == permissions[0]));
+        auto db = db_.make_transaction();
 
-        if(group_permission_count == 1)
+        auto groups = db->select(
+                &user::group_id,
+                where(c(&user::name) == username));
+
+        auto permissions = db->select(
+                &permission::id,
+                where(c(&permission::name) == permission_name));
+
+        if(groups.size() == 1 && permissions.size() == 1)
         {
-            db.commit();
-            return true;
-        }
-    }
+            auto group_permission_count = db->count<group_permission>(
+                    where(c(&group_permission::group_id)      == groups[0]
+                       && c(&group_permission::permission_id) == permissions[0]));
 
-    return false;
+            if(group_permission_count == 1)
+            {
+                db.commit();
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
+
+        return std::nullopt;
+    }
 }
 
 std::optional<project_user_right> rights_manager::check_project_right(
         const std::string& username,
-        const std::string& projectname) const
+        const std::string& projectname,
+        std::error_code& ec) const
 {
-    auto db = db_.make_transaction();
-
-    auto users = db->select(
-            &user::id,
-            where(c(&user::name) == username));
-    auto projects = db->select(
-            &project::id,
-            where(c(&project::name) == projectname));
-
-    if(users.size() == 1 && projects.size() == 1)
+    try
     {
-        auto rights = db->get_all<project_user_right>(
-                where(c(&project_user_right::user_id) == users[0]
-                        && c(&project_user_right::project_id) == projects[0]));
+        auto db = db_.make_transaction();
 
-        if(rights.size() == 1)
+        auto users = db->select(
+                &user::id,
+                where(c(&user::name) == username));
+
+        auto projects = db->select(
+                &project::id,
+                where(c(&project::name) == projectname));
+
+        if(users.size() == 1 && projects.size() == 1)
         {
-            db.commit();
-            return rights[0];
-        }
-    }
+            auto rights = db->get_all<project_user_right>(
+                    where(c(&project_user_right::user_id)    == users[0]
+                       && c(&project_user_right::project_id) == projects[0]));
 
-    return std::nullopt;
+            if(rights.size() == 1)
+            {
+                db.commit();
+
+                return rights[0];
+            }
+        }
+
+        return std::nullopt;
+    }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
+
+        return std::nullopt;
+    }
 }
 
 std::map<std::string, project_rights> rights_manager::get_permissions(
-        const std::string& username) const
+        const std::string& username,
+        std::error_code& ec) const
 {
-    std::map<std::string, project_rights> result;
-
-    auto db = db_.make_transaction();
-
-    auto users = db->select(
-            &user::id,
-            where(c(&user::name) == username));
-
-    if(users.size() == 1)
+    try
     {
-        auto projects = db->select(&project::name);
+        std::map<std::string, project_rights> result;
 
-        for(auto& project_name : projects)
+        auto db = db_.make_transaction();
+
+        auto users = db->select(
+                &user::id,
+                where(c(&user::name) == username));
+
+        if(users.size() == 1)
         {
-            result.insert({project_name, project_rights{true, true, true}});
+            auto projects = db->select(&project::name);
+
+            for(auto& project_name : projects)
+            {
+                result.insert({project_name, project_rights{true, true, true}});
+            }
+
+            auto projects_rights = db->select(
+                    columns(&project::name,
+                            &project_user_right::read,
+                            &project_user_right::write,
+                            &project_user_right::execute),
+                            inner_join<project>(
+                                    on(c(&project::id) == &project_user_right::project_id)),
+                            where(c(&project_user_right::user_id) == users[0]));
+
+            for(auto& [project_name, read, write, execute] : projects_rights)
+            {
+                result[project_name].read = read;
+                result[project_name].write = write;
+                result[project_name].execute = execute;
+            }
         }
 
-        auto projects_rights = db->select(
-                columns(&project::name,
-                        &project_user_right::read,
-                        &project_user_right::write,
-                        &project_user_right::execute),
-                        inner_join<project>(on(c(&project::id)
-                                == &project_user_right::project_id)),
-                        where(c(&project_user_right::user_id) == users[0]));
+        db.commit();
 
-        for(auto& [project_name, read, write, execute] : projects_rights)
-        {
-            result[project_name].read = read;
-            result[project_name].write = write;
-            result[project_name].execute = execute;
-        }
+        return result;
     }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
 
-    db.commit();
-    return result;
+        return {};
+    }
 }
 
 bool rights_manager::set_user_project_permissions(
         const std::string& username,
         const std::string& projectname,
-        project_user_right rights)
+        project_user_right rights,
+        std::error_code& ec)
 {
-    auto db = db_.make_transaction();
-
-    auto users = db->select(
-            &user::id,
-            where(c(&user::name) == username));
-    auto projects = db->select(
-            &project::id,
-            where(c(&project::name) == projectname));
-
-    if(users.size() == 1 && projects.size() == 1)
+    try
     {
-        rights.user_id = users[0];
-        rights.project_id = projects[0];
-        auto ids = db->select(&project_user_right::id,
-                where(c(&project_user_right::user_id) == users[0]
-                        && c(&project_user_right::project_id) == projects[0]));
+        auto db = db_.make_transaction();
 
-        if(ids.size() == 1)
+        auto users = db->select(
+                &user::id,
+                where(c(&user::name) == username));
+
+        auto projects = db->select(
+                &project::id,
+                where(c(&project::name) == projectname));
+
+        if(users.size() == 1 && projects.size() == 1)
         {
-            rights.id = ids[0];
-            db->replace(rights);
-        }
-        else
-        {
-            rights.id = -1;
-            db->insert(rights);
+            rights.user_id = users[0];
+            rights.project_id = projects[0];
+            auto ids = db->select(&project_user_right::id,
+                    where(c(&project_user_right::user_id)    == users[0]
+                       && c(&project_user_right::project_id) == projects[0]));
+
+            if(ids.size() == 1)
+            {
+                rights.id = ids[0];
+                db->replace(rights);
+            }
+            else
+            {
+                rights.id = -1;
+                db->insert(rights);
+            }
+
+            db.commit();
+
+            return true;
         }
 
-        db.commit();
-        return true;
+        return false;
     }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
 
-    return false;
+        return false;
+    }
 }

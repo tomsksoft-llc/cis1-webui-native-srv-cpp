@@ -62,13 +62,23 @@ handle_result webhooks_handler::operator()(
     ctx.username = username;
     ctx.api_access_key = user->api_access_key.value();
 
-    if(auto project_rights
-            = rights_.check_project_right(ctx.username, project);
-            !((!project_rights)
-            || (project_rights && project_rights.value().write)))
+    std::error_code ec;
+
+    auto project_rights
+            = rights_.check_project_right(ctx.username, project, ec);
+
+    if(ec)
+    {
+        ctx.res_status = beast::http::status::internal_server_error;
+
+        return handle_result::error;
+    }
+
+    if(project_rights && !project_rights.value().write)
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
+
         return handle_result::error;
     }
 
