@@ -51,9 +51,9 @@ std::optional<bool> rights_manager::check_user_permission(
 
         return false;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -92,9 +92,9 @@ std::optional<project_user_right> rights_manager::check_project_right(
 
         return std::nullopt;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -144,9 +144,9 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
 
         return result;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return {};
     }
@@ -196,9 +196,9 @@ bool rights_manager::set_user_project_permissions(
 
         return false;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return false;
     }

@@ -35,12 +35,12 @@ std::unique_ptr<database_wrapper> database_wrapper::create(
                     admin_credentials->email,
                     admin_credentials->pass);
         }
-        
+
         return db;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return nullptr;
     }

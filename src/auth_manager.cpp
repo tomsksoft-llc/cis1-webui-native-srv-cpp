@@ -76,9 +76,9 @@ std::optional<std::string> auth_manager::authenticate(
 
         return std::nullopt;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -119,9 +119,9 @@ std::optional<std::string> auth_manager::authenticate(
 
         return std::nullopt;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -145,9 +145,9 @@ bool auth_manager::has_user(
 
         return false;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return false;
     }
@@ -181,9 +181,9 @@ bool auth_manager::change_group(
 
         return false;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return false;
     }
@@ -210,9 +210,9 @@ std::optional<std::string> auth_manager::get_group(
 
         return std::nullopt;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -254,9 +254,9 @@ std::optional<std::string> auth_manager::generate_api_key(
 
         return std::nullopt;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -282,9 +282,9 @@ std::optional<std::string> auth_manager::get_api_key(
 
         return std::nullopt;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -311,9 +311,9 @@ bool auth_manager::remove_api_key(
 
         return false;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return false;
     }
@@ -351,9 +351,9 @@ bool auth_manager::change_pass(
 
         return false;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return false;
     }
@@ -366,9 +366,9 @@ std::vector<user> auth_manager::get_users(
     {
         return db_.get().get_all<user>();
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return {};
     }
@@ -414,9 +414,9 @@ std::optional<user_info> auth_manager::get_user_info(
                 std::get<3>(users[0]),
                 key};
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return std::nullopt;
     }
@@ -459,9 +459,9 @@ std::vector<user_info> auth_manager::get_user_infos(
 
         return result;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return {};
     }
@@ -482,9 +482,9 @@ bool auth_manager::delete_token(
 
         return true;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return false;
     }
@@ -519,9 +519,9 @@ bool auth_manager::add_user(
 
         return false;
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return false;
     }
