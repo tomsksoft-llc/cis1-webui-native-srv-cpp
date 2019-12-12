@@ -22,7 +22,14 @@ struct user_credentials
     std::string pass;
 };
 
-void parse_args(
+enum class action
+{
+    run,
+    version,
+    error,
+};
+
+action parse_args(
         int argc,
         char* argv[],
         configuration_manager& config,
