@@ -8,9 +8,14 @@
 
 #include "init.h"
 #include "application.h"
+#include "version.h"
 
 int main(int argc, char* argv[])
 {
+    std::cout << "CIS1 WebUI started.\nVersion: "
+              << cis_current_version << " "
+              << git_sha1 << std::endl;
+
     std::error_code ec;
 
     auto config = std::make_unique<configuration_manager>();

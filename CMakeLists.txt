@@ -101,7 +101,17 @@ add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 
 add_library(${PROJECT_NAME}_impl STATIC ${${PROJECT_NAME}_SRC})
 
-add_executable(${PROJECT_NAME} src/main.cpp)
+set(PRE_CONFIGURE_FILE "include/version.h.in")
+set(POST_CONFIGURE_FILE "include/version.h")
+set(PROJECT_VERSION_FILE "version.txt")
+include(cmake/scripts/version_watcher.cmake)
+
+add_executable(
+    ${PROJECT_NAME}
+    ${POST_CONFIGURE_FILE}
+    src/main.cpp)
+
+add_dependencies(${PROJECT_NAME} check_git_repository)
 
 set_property(TARGET ${PROJECT_NAME}_impl PROPERTY CXX_STANDARD 17)
 set_property(TARGET ${PROJECT_NAME} PROPERTY CXX_STANDARD 17)

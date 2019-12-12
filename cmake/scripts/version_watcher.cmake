@@ -1,8 +1,7 @@
-# git_watcher.cmake
-#
 # License: MIT
-# Source: https://raw.githubusercontent.com/andrew-hardin/cmake-git-version-tracking/master/git_watcher.cmake
-
+# Original source: https://raw.githubusercontent.com/andrew-hardin/cmake-git-version-tracking/master/git_watcher.cmake
+# Original author: Andrew Hardin
+# Changes: Mokin Innokentiy
 
 # This file defines the functions and targets needed to monitor
 # the state of a git repo. If the state changes (e.g. a commit is made),
@@ -16,7 +15,11 @@
 #   POST_CONFIGURE_FILE (REQUIRED)
 #   -- The path to the configured PRE_CONFIGURE_FILE.
 #
-#   GIT_STATE_FILE (OPTIONAL)
+#   PROJECT_VERSION_FILE (OPTIONAL)
+#   -- The path to the file with version string
+#      If not set cmake project version will be used
+#
+#   VERSION_STATE_FILE (OPTIONAL)
 #   -- The path to the file used to store the previous build's git state.
 #      Defaults to the current binary directory.
 #
@@ -62,7 +65,8 @@ endmacro()
 
 CHECK_REQUIRED_VARIABLE(PRE_CONFIGURE_FILE)
 CHECK_REQUIRED_VARIABLE(POST_CONFIGURE_FILE)
-CHECK_OPTIONAL_VARIABLE(GIT_STATE_FILE "${CMAKE_BINARY_DIR}/git-state")
+CHECK_OPTIONAL_VARIABLE(PROJECT_VERSION_FILE "")
+CHECK_OPTIONAL_VARIABLE(VERSION_STATE_FILE "${CMAKE_BINARY_DIR}/version-state")
 CHECK_OPTIONAL_VARIABLE(GIT_WORKING_DIR "${CMAKE_SOURCE_DIR}")
 
 # Check the optional git variable.
@@ -82,6 +86,7 @@ function(GitStateChangedAction _state_as_list)
     LIST(GET _state_as_list 0 GIT_RETRIEVED_STATE)
     LIST(GET _state_as_list 1 GIT_HEAD_SHA1)
     LIST(GET _state_as_list 2 GIT_IS_DIRTY)
+    LIST(GET _state_as_list 3 CURRENT_VERSION)
     configure_file("${PRE_CONFIGURE_FILE}" "${POST_CONFIGURE_FILE}" @ONLY)
 endfunction()
 
@@ -109,6 +114,16 @@ function(GetGitState _working_dir _state)
         set(_hashvar "GIT-NOTFOUND")
     endif()
 
+    # Get preconf hash
+    file(MD5 ${PRE_CONFIGURE_FILE} _pre_conf_file_hash)
+
+    # Get project version
+    if(NOT ${PROJECT_VERSION_FILE} EQUAL "")
+        file(STRINGS ${PROJECT_VERSION_FILE} _project_version)
+    else()
+        set(_project_version ${CMAKE_PROJECT_VERSION})
+    endif()
+
     # Get whether or not the working tree is dirty.
     execute_process(COMMAND
         "${GIT_EXECUTABLE}" status --porcelain
@@ -129,7 +144,13 @@ function(GetGitState _working_dir _state)
     endif()
 
     # Return a list of our variables to the parent scope.
-    set(${_state} ${_success} ${_hashvar} ${_dirty} PARENT_SCOPE)
+    set(${_state}
+        ${_success}
+        ${_hashvar}
+        ${_dirty}
+        ${_project_version}
+        ${_pre_conf_file_hash}
+        PARENT_SCOPE)
 endfunction()
 
 
@@ -150,8 +171,8 @@ function(CheckGit _working_dir _state_changed _state)
     set(${_state} ${state} PARENT_SCOPE)
 
     # Check if the state has changed compared to the backup on disk.
-    if(EXISTS "${GIT_STATE_FILE}")
-        file(READ "${GIT_STATE_FILE}" OLD_HEAD_CONTENTS)
+    if(EXISTS "${VERSION_STATE_FILE}")
+        file(READ "${VERSION_STATE_FILE}" OLD_HEAD_CONTENTS)
         if(OLD_HEAD_CONTENTS STREQUAL "${state}")
             # State didn't change.
             set(${_state_changed} "false" PARENT_SCOPE)
@@ -162,7 +183,7 @@ function(CheckGit _working_dir _state_changed _state)
     # The state has changed.
     # We need to update the state file on disk.
     # Future builds will compare their state to this file.
-    file(WRITE "${GIT_STATE_FILE}" "${state}")
+    file(WRITE "${VERSION_STATE_FILE}" "${state}")
     set(${_state_changed} "true" PARENT_SCOPE)
 endfunction()
 
@@ -183,9 +204,10 @@ function(SetupGitMonitoring)
             -D_BUILD_TIME_CHECK_GIT=TRUE
             -DGIT_WORKING_DIR=${GIT_WORKING_DIR}
             -DGIT_EXECUTABLE=${GIT_EXECUTABLE}
-            -DGIT_STATE_FILE=${GIT_STATE_FILE}
+            -DVERSION_STATE_FILE=${VERSION_STATE_FILE}
             -DPRE_CONFIGURE_FILE=${PRE_CONFIGURE_FILE}
             -DPOST_CONFIGURE_FILE=${POST_CONFIGURE_FILE}
+            -DPROJECT_VERSION_FILE=${PROJECT_VERSION_FILE}
             -P "${CMAKE_CURRENT_LIST_FILE}")
 endfunction()
 
@@ -195,6 +217,12 @@ endfunction()
 # Description: primary entry-point to the script. Functions are selected based
 #              on whether it's configure or build time.
 function(Main)
+    if(NOT EXISTS ${PRE_CONFIGURE_FILE})
+        message(FATAL_ERROR "Preconfigure file doesn't exists")
+    endif()
+    if(NOT ${PROJECT_VERSION_FILE} EQUAL "" AND NOT EXISTS ${PROJECT_VERSION_FILE})
+        message(FATAL_ERROR "Project version file doesn't exists")
+    endif()
     if(_BUILD_TIME_CHECK_GIT)
         # Check if the repo has changed.
         # If so, run the change action.
