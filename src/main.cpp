@@ -12,8 +12,7 @@
 
 void print_version()
 {
-    std::cout << "Version: "
-              << cis_current_version;
+    std::cout << cis_current_version;
 
     if(git_retreived_state)
     {
@@ -49,7 +48,9 @@ int main(int argc, char* argv[])
         case action::run:
         {
             std::cout << "Starting CIS1 WebUI..." << std::endl;
-            
+
+            std::cout << "Version: ";
+
             print_version();
 
             boost::asio::io_context ioc;

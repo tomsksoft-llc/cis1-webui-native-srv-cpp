@@ -125,6 +125,7 @@ std::shared_ptr<http_router> make_http_router(
 }
 
 std::shared_ptr<websocket_router> make_ws_router(
+        configuration_manager& config_,
         cis::cis_manager& cis_,
         auth_manager& auth_manager_,
         rights_manager& rights_manager_)
@@ -302,6 +303,12 @@ std::shared_ptr<websocket_router> make_ws_router(
             [&cis_](auto&& ...args){
                     wsh::session_unsubscribe(
                             cis_,
+                            std::forward<decltype(args)>(args)...);
+            });
+    dispatcher.add_event_handler<ws::dto::system_version_info>(
+            [&config_](auto&& ...args){
+                    wsh::get_system_version(
+                            config_,
                             std::forward<decltype(args)>(args)...);
             });
 
@@ -513,6 +520,7 @@ std::optional<application> application::create(
                     *download_handler,
                     *webhooks_handler),
             make_ws_router(
+                    *config,
                     *cis,
                     *auth_manager_,
                     *rights_manager_));
