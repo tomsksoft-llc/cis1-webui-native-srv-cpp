@@ -23,25 +23,32 @@ void token(
         const dto::auth_token& req,
         cis1::proto_utils::transaction tr)
 {
-    auto username = authentication_handler.authenticate(req.token);
+    std::error_code ec;
+
+    auto username = authentication_handler.authenticate(req.token, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
 
     if(username)
     {
         ctx.username = username.value();
         ctx.active_token = req.token;
 
-        auto group = authentication_handler.get_group(ctx.username);
+        auto group = authentication_handler.get_group(ctx.username, ec);
 
-        if(group)
+        if(!group || ec)
         {
-            dto::auth_login_pass_success res;
-            res.token = req.token;
-            res.group = group.value();
-
-            return tr.send(res);
+            return tr.send_error("Internal error.");
         }
 
-        return tr.send_error("Internal error.");
+        dto::auth_login_pass_success res;
+        res.token = req.token;
+        res.group = group.value();
+
+        return tr.send(res);
     }
 
     dto::auth_error_wrong_credentials err;

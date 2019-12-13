@@ -23,7 +23,14 @@ void logout(
         const dto::auth_logout& req,
         cis1::proto_utils::transaction tr)
 {
-    auto username = authentication_handler.authenticate(req.token);
+    std::error_code ec;
+
+    auto username = authentication_handler.authenticate(req.token, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
 
     if(username && username.value() == ctx.username)
     {
@@ -34,7 +41,12 @@ void logout(
             ctx.username.clear();
         }
 
-        authentication_handler.delete_token(req.token);
+        authentication_handler.delete_token(req.token, ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         dto::auth_logout_success res;
 

@@ -205,9 +205,9 @@ void cis_manager::create_project(
 
         db.commit();
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return;
     }
@@ -234,9 +234,9 @@ void cis_manager::remove_project(
 
         db.commit();
     }
-    catch(...)
+    catch(const std::system_error& e)
     {
-        ec = cis::error_code::database_error;
+        ec = e.code();
 
         return;
     }

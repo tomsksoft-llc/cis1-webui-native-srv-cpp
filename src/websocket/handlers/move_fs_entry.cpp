@@ -39,16 +39,30 @@ void move_fs_entry(
         return tr.send_error(err, "Invalid path.");
     }
 
-    if(auto path_rights = get_path_rights(ctx, rights, old_path);
-            path_rights && !path_rights.value().write)
+    std::error_code ec;
+
+    auto path_rights = get_path_rights(ctx, rights, old_path, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    if(path_rights && !path_rights.value().write)
     {
         dto::user_permissions_error_access_denied err;
 
         return tr.send_error(err, "Action not permitted.");
     }
 
-    if(auto path_rights = get_path_rights(ctx, rights, new_path);
-            path_rights && !path_rights.value().write)
+    path_rights = get_path_rights(ctx, rights, new_path, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    if(path_rights && !path_rights.value().write)
     {
         dto::user_permissions_error_access_denied err;
 
@@ -57,7 +71,6 @@ void move_fs_entry(
 
     auto& fs = cis_manager.fs();
 
-    std::error_code ec;
     fs.move_entry(old_path, new_path, ec);
 
     if(ec)

@@ -465,9 +465,15 @@ std::optional<application> application::create(
 
     auto cis_app = std::make_shared<cis1::cwu::tcp_server>(ioc);
 
-    auto db = std::make_unique<database::database_wrapper>(
-            *(config->get_entry<std::filesystem::path>("db_root", ec)) / "db.sqlite",
-            config->get_entry<user_credentials>("admin_credentials", ec));
+    auto db = database::database_wrapper::create(
+            *(config->get_entry<std::filesystem::path>("db_root")) / "db.sqlite",
+            config->get_entry<user_credentials>("admin_credentials"),
+            ec);
+
+    if(ec)
+    {
+        return std::nullopt;
+    }
 
     config->remove_entry("admin_credentials");
 

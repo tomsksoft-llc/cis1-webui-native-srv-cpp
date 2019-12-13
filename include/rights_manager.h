@@ -28,16 +28,24 @@ public:
 
     std::optional<bool> check_user_permission(
             const std::string& username,
-            const std::string& permission_name) const;
+            const std::string& permission_name,
+            std::error_code& ec) const override;
+
     std::optional<database::project_user_right> check_project_right(
             const std::string& username,
-            const std::string& project) const;
+            const std::string& project,
+            std::error_code& ec) const override;
+
     std::map<std::string, project_rights> get_permissions(
-            const std::string& username) const;
+            const std::string& username,
+            std::error_code& ec) const override;
+
     bool set_user_project_permissions(
             const std::string& user,
             const std::string& project,
-            database::project_user_right rights);
+            database::project_user_right rights,
+            std::error_code& ec) override;
+
 private:
     boost::asio::io_context& ioc_;
     database::database_wrapper& db_;

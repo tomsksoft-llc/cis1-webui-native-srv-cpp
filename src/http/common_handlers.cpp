@@ -20,7 +20,17 @@ handle_result handle_authenticate(
 {
     if(const auto& cookies = ctx.cookies; cookies.count("token"))
     {
-        auto username = authentication_handler.authenticate(cookies.at("token"));
+        std::error_code ec;
+
+        auto username = authentication_handler.authenticate(cookies.at("token"), ec);
+
+        if(ec)
+        {
+            ctx.res_status = boost::beast::http::status::internal_server_error;
+
+            return handle_result::error;
+        }
+
         if(username)
         {
             ctx.username = username.value();

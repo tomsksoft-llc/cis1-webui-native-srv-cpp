@@ -32,7 +32,15 @@ void get_build_info(
             req.job,
             req.build);
 
-    auto perm = rights.check_project_right(ctx.username, req.project);
+    std::error_code ec;
+
+    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value().write : true;
 
     if(build != nullptr && permitted)

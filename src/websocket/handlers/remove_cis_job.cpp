@@ -27,7 +27,15 @@ void remove_cis_job(
 {
     auto job = cis_manager.get_job_info(req.project, req.job);
 
-    auto perm = rights.check_project_right(ctx.username, req.project);
+    std::error_code ec;
+
+    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(job != nullptr && permitted)
