@@ -8,6 +8,18 @@
 
 #include "init.h"
 #include "application.h"
+#include "version.h"
+
+void print_version()
+{
+    std::cout << cis_current_version;
+
+    if(git_retreived_state)
+    {
+        std::cout << " " << git_sha1
+                  << (git_is_dirty ? " dirty" : "") << std::endl;
+    }
+}
 
 #ifdef __linux__
 #include <signal.h>
@@ -25,47 +37,80 @@ int main(int argc, char* argv[])
 
     auto config = std::make_unique<configuration_manager>();
 
-    parse_args(argc, argv, *config, ec);
+    if(git_retreived_state)
+    {
+        config->add_entry("git/sha1", std::string{git_sha1});
+        config->add_entry("git/dirty", git_is_dirty);
+    }
+
+    config->add_entry("cis/version", std::string{cis_current_version});
+
+    auto act = parse_args(argc, argv, *config, ec);
     if(ec)
     {
-        std::cout << "Can't parse params: "
-                  << ec.message() << std::endl;
+        std::cout << ec.message() << std::endl;
 
         return EXIT_FAILURE;
     }
 
-    boost::asio::io_context ioc;
+    switch(act)
+    {
+        case action::run:
+        {
+            std::cout << "Starting CIS1 WebUI..." << std::endl;
 
-    boost::asio::signal_set signals(
-            ioc,
-            SIGINT,
-            SIGTERM);
+            std::cout << "Version: ";
 
-    signals.async_wait(
-            [&ioc]( const beast::error_code& /*error*/,
-                    int /*signal*/)
+            print_version();
+
+            boost::asio::io_context ioc;
+
+            boost::asio::signal_set signals(
+                    ioc,
+                    SIGINT,
+                    SIGTERM);
+
+            signals.async_wait(
+                    [&ioc]( const beast::error_code& /*error*/,
+                            int /*signal*/)
+                    {
+                        ioc.stop();
+                    });
+
+            auto app_opt = application::create(ioc, std::move(config), ec);
+            if(ec)
             {
-                ioc.stop();
-            });
+                std::cout << "Can't create WebUI instance: "
+                          << ec.message() << std::endl;
 
-    auto app_opt = application::create(ioc, std::move(config), ec);
-    if(ec)
-    {
-        std::cout << "Can't create WebUI instance: "
-                  << ec.message() << std::endl;
+                return EXIT_FAILURE;
+            }
+            auto& app = app_opt.value();
 
-        return EXIT_FAILURE;
+            try
+            {
+                app.run();
+            }
+            catch(...)
+            {
+                std::cout << "App crashed due to unhandled exception." << std::endl;
+
+                return EXIT_FAILURE;
+            }
+
+            return EXIT_SUCCESS;
+        }
+        case action::version:
+        {
+            print_version();
+
+            return EXIT_SUCCESS;
+        }
+        default:
+        {
+            std::cout << "Bad programm state." << std::endl;
+
+            return EXIT_FAILURE;
+        }
     }
-    auto& app = app_opt.value();
-
-	try
-	{
-        app.run();
-	}
-	catch(...)
-	{
-        std::cout << "App crashed due to unhandled exception." << std::endl;
-	}
-
-    return EXIT_SUCCESS;
 }

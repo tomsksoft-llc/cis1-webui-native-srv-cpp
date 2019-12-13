@@ -17,6 +17,7 @@ namespace cis
 enum class error_code
 {
     ok,
+    too_many_args,
     cant_parse_config_ini,
     incorrect_environment,
     cant_run_http_listener,

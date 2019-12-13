@@ -23,6 +23,9 @@ std::string error_category::message(int ev) const
         case error_code::ok:
             return "OK";
 
+        case error_code::too_many_args:
+            return "Too many arguments";
+
         case error_code::cant_parse_config_ini:
             return "Can't parse config.ini";
 
