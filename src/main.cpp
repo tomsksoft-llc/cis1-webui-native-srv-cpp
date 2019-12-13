@@ -9,8 +9,18 @@
 #include "init.h"
 #include "application.h"
 
+#ifdef __linux__
+#include <signal.h>
+#endif
+
 int main(int argc, char* argv[])
 {
+
+#ifdef __linux__
+    signal(SIGTTOU, SIG_IGN);
+    signal(SIGTTIN, SIG_IGN);
+#endif
+
     std::error_code ec;
 
     auto config = std::make_unique<configuration_manager>();
