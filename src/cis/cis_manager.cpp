@@ -29,6 +29,7 @@ cis_manager::cis_manager(
         database::database_wrapper& db)
     : ioc_(ioc)
     , config_(config)
+    , db_(db)
     , fs_(  *config_.get_entry<std::filesystem::path>("cis_root")
                     / cis::projects,
             4,
@@ -69,6 +70,44 @@ cis_manager::cis_manager(
     {
         throw load_config_error("Can't load cis.conf");
     }
+
+    refresh_projects();
+}
+
+void cis_manager::refresh_projects()
+{
+    auto tr = db_.make_transaction();
+
+    using namespace sqlite_orm;
+
+    tr->update_all(set(c(&database::project::deleted) = true));
+
+    for(auto it = fs().begin(); it != fs().end(); ++it)
+    {
+        if(project::is_entry(it))
+        {
+            auto project_name = it->path().filename().generic_string();
+
+            auto projects = tr->get_all<database::project>(
+                    where(c(&database::project::name) == project_name));
+
+            if(projects.size() == 0)
+            {
+                tr->insert(
+                        database::project{
+                                -1,
+                                project_name});
+            }
+            else if(projects.size() == 1)
+            {
+                auto old_project = projects[0];
+                old_project.deleted = false;
+                tr->update(old_project);
+            }
+        }
+    }
+
+    tr.commit();
 }
 
 bool cis_manager::refresh(const std::filesystem::path& path)
@@ -126,6 +165,81 @@ cis_manager::project_list_t cis_manager::get_project_list()
     }
 
     return list;
+}
+
+void cis_manager::create_project(
+        const std::string& project_name,
+        std::error_code& ec)
+{
+    fs().create_directory(
+            std::filesystem::path{"/"} / project_name,
+            ec);
+
+    if(ec)
+    {
+        return;
+    }
+
+    try
+    {
+        using namespace sqlite_orm;
+
+        auto db = db_.make_transaction();
+
+        auto projects = db->get_all<database::project>(
+                where(c(&database::project::name) == project_name));
+
+        if(projects.size() == 0)
+        {
+            db->insert(
+                    database::project{
+                            -1,
+                            project_name});
+        }
+        else if(projects.size() == 1)
+        {
+            auto old_project = projects[0];
+            old_project.deleted = false;
+            db->update(old_project);
+        }
+
+        db.commit();
+    }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
+
+        return;
+    }
+}
+
+void cis_manager::remove_project(
+        const project_info_t& project,
+        std::error_code& ec)
+{
+    auto project_name = project->dir_entry().path().filename().generic_string();
+    project->iterator().remove();
+
+    fs().root().invalidate();
+
+    try
+    {
+        using namespace sqlite_orm;
+
+        auto db = db_.make_transaction();
+
+        db->update_all(
+                set(c(&database::project::deleted) = true),
+                where(c(&database::project::name) == project_name));
+
+        db.commit();
+    }
+    catch(...)
+    {
+        ec = cis::error_code::database_error;
+
+        return;
+    }
 }
 
 cis_manager::project_info_t cis_manager::get_project_info(

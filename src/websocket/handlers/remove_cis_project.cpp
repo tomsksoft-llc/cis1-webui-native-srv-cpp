@@ -32,24 +32,18 @@ void remove_cis_project(
 
     if(project != nullptr && permitted)
     {
-        auto project_path =
-                std::filesystem::path{"/"} / req.project;
+        std::error_code ec;
 
-        auto& fs = cis_manager.fs();
-
-        if(auto it = fs.find(project_path); it != fs.end())
+        cis_manager.remove_project(project, ec);
+        
+        if(ec)
         {
-            it.remove();
-
-            dto::cis_project_remove_success res;
-
-            return tr.send(res);
+            return tr.send_error("Internal error.");
         }
 
-        dto::cis_project_error_doesnt_exist err;
-        err.project = req.project;
+        dto::cis_project_remove_success res;
 
-        return tr.send_error(err, "Project doesn't exists.");
+        return tr.send(res);
     }
 
     if(!permitted)
