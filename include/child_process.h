@@ -132,6 +132,10 @@ private:
                     {
                         write_buffer(pipe);
                     }
+                    else
+                    {
+                        pipe->close();
+                    }
                 });
     }
 };
