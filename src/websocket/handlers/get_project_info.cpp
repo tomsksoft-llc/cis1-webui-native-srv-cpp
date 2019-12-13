@@ -29,7 +29,15 @@ void get_project_info(
 {
     auto project = cis_manager.get_project_info(req.project);
 
-    auto perm = rights.check_project_right(ctx.username, req.project);
+    std::error_code ec;
+
+    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(project != nullptr && permitted)
@@ -42,9 +50,9 @@ void get_project_info(
                     meta::overloaded{
                         [&](const std::shared_ptr<fs_entry_interface>& entry)
                         {
-                                return make_dir_entry(
-                                        cis_manager.fs().root().path(),
-                                        *entry);
+                            return make_dir_entry(
+                                    cis_manager.fs().root().path(),
+                                    *entry);
                         },
                         [&](const std::shared_ptr<job_interface>& job)
                         {

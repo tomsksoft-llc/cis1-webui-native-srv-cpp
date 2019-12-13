@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/add_cis_job.h"
 
 #include "websocket/dto/cis_job_add_success.h"
@@ -20,7 +28,15 @@ void add_cis_job(
 {
     auto project = cis_manager.get_project_info(req.project);
 
-    auto perm = rights.check_project_right(ctx.username, req.project);
+    std::error_code ec;
+
+    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value().write : true;
 
     if(project != nullptr && permitted)

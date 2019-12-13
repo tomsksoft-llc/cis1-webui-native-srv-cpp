@@ -28,19 +28,34 @@ handle_result download_handler::operator()(
 {
     if(req.method() == beast::http::verb::get)
     {
-        if(auto project_rights
-                = rights_.check_project_right(ctx.username, project);
-                !((!project_rights)
-                || (project_rights && project_rights.value().write)))
+        std::error_code ec;
+
+        auto project_rights
+                = rights_.check_project_right(ctx.username, project, ec);
+
+        if(ec)
         {
-            ctx.res_status = beast::http::status::forbidden;
+            ctx.res_status = beast::http::status::internal_server_error;
+
             return handle_result::error;
         }
-        std::filesystem::path p("/");
+
+        if(project_rights && !project_rights.value().write)
+        {
+            ctx.res_status = beast::http::status::forbidden;
+
+            return handle_result::error;
+        }
+
+        std::filesystem::path p{"/"};
+
         p = p / project / file;
+
         return files_.single_file(req, ctx, reader, queue, p.string());
     }
+
     ctx.res_status = beast::http::status::not_found;
+
     return handle_result::error;
 }
 

@@ -23,11 +23,23 @@ void remove_api_key(
         const dto::user_api_key_remove& req,
         cis1::proto_utils::transaction tr)
 {
-    if(ctx.username == req.username
-        || (!ctx.username.empty()
-        && authentication_handler.get_group(ctx.username).value() == "admin"))
+    if(ctx.username.empty())
     {
-        auto result = authentication_handler.remove_api_key(req.username);
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
+    }
+
+    std::error_code ec;
+
+    auto remove = [&]()
+    {
+        auto result = authentication_handler.remove_api_key(req.username, ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         if(!result)
         {
@@ -37,6 +49,23 @@ void remove_api_key(
         dto::user_api_key_remove_success res;
 
         return tr.send(res);
+    };
+
+    if(ctx.username == req.username)
+    {
+        return remove();
+    }
+
+    auto group = authentication_handler.get_group(ctx.username, ec);
+
+    if(!group || ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    if(group.value() == "admin")
+    {
+        return remove();
     }
 
     dto::user_permissions_error_access_denied err;

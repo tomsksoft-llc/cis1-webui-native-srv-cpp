@@ -24,8 +24,8 @@ class queued_websocket_session
 public:
     using request_handler_t = std::function<void(
             bool,
-            boost::asio::const_buffer, 
-            size_t, 
+            boost::asio::const_buffer,
+            size_t,
             std::shared_ptr<cis1::proto_utils::queue_interface>)>;
 
     static void accept_handler(

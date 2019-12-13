@@ -44,7 +44,7 @@ struct detail
                     make_column("user_email", &user::email, unique()),
                     make_column("user_pass", &user::pass),
                     make_column("user_group_id", &user::group_id, default_value(1)),
-                    foreign_key(&user::group_id).references(&group::id).on_delete.set_default()), 
+                    foreign_key(&user::group_id).references(&group::id).on_delete.set_default()),
                 make_table("projects",
                     make_column("project_id", &project::id, autoincrement(), primary_key()),
                     make_column("project_name", &project::name, unique()),
@@ -121,15 +121,21 @@ private:
 
 class database_wrapper
 {
-public:
-    database_wrapper(
-            const std::filesystem::path& path,
-            user_credentials* admin_credentials);
+protected:
+    struct private_constructor_delegate_t;
 
-    void init(
-            const std::string& username,
-            const std::string& email,
-            const std::string& password);
+public:
+    static std::unique_ptr<database_wrapper> create(
+            const std::filesystem::path& path,
+            user_credentials* admin_credentials,
+            std::error_code& ec);
+
+    template <class... Args>
+    database_wrapper(
+            const private_constructor_delegate_t&,
+            Args&&... args)
+        : database_wrapper(std::forward<Args>(args)...)
+    {}
 
     decltype(detail::make_database(""))& get();
 
@@ -137,8 +143,22 @@ public:
 
     void sync();
 
+protected:
+    struct private_constructor_delegate_t
+    {
+        explicit private_constructor_delegate_t();
+    };
+
 private:
     decltype(detail::make_database("")) db_;
+
+    database_wrapper(
+            const std::filesystem::path& path);
+
+    void init(
+            const std::string& username,
+            const std::string& email,
+            const std::string& password);
 };
 
 } // namespace database

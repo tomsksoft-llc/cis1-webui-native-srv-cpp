@@ -24,6 +24,7 @@ enum class error_code
     cant_resolve_address,
     cant_open_file,
     cant_cast_config_entry,
+    database_error,
 };
 
 std::error_code make_error_code(error_code ec);

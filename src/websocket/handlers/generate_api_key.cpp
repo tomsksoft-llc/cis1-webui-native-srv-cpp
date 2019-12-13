@@ -23,11 +23,23 @@ void generate_api_key(
         const dto::user_api_key_generate& req,
         cis1::proto_utils::transaction tr)
 {
-    if(ctx.username == req.username
-        || (!ctx.username.empty()
-        && authentication_handler.get_group(ctx.username).value() == "admin"))
+    if(ctx.username.empty())
     {
-        auto api_key = authentication_handler.generate_api_key(req.username);
+        dto::user_permissions_error_access_denied err;
+
+        return tr.send_error(err, "Action not permitted.");
+    }
+
+    std::error_code ec;
+
+    auto generate = [&]()
+    {
+        auto api_key = authentication_handler.generate_api_key(req.username, ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         if(!api_key)
         {
@@ -38,6 +50,23 @@ void generate_api_key(
         res.api_key = api_key.value();
 
         return tr.send(res);
+    };
+
+    if(ctx.username == req.username)
+    {
+        return generate();
+    }
+
+    auto group = authentication_handler.get_group(ctx.username, ec);
+
+    if(!group || ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    if(group.value() == "admin")
+    {
+        return generate();
     }
 
     dto::user_permissions_error_access_denied err;

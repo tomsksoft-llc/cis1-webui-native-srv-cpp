@@ -47,8 +47,13 @@ void list_projects(
 
                         bool permitted = false;
 
-                        if(auto perm = rights.check_project_right(ctx.username, entry.name);
-                                (perm.has_value() && perm.value().read) || !perm.has_value())
+                        std::error_code ec;
+
+                        auto perm = rights.check_project_right(ctx.username, entry.name, ec);
+
+                        //ignore ec
+
+                        if((perm.has_value() && perm.value().read) || !perm.has_value())
                         {
                             permitted = true;
                         }

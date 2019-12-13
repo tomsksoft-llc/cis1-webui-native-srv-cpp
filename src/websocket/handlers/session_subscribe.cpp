@@ -46,7 +46,7 @@ public:
         res.session_id = session_id_;
 
         tr_.send(res);
-        
+
         unsubscribe();
     }
 
@@ -56,7 +56,7 @@ public:
         res.session_id = session_id_;
 
         tr_.send(res);
-        
+
         unsubscribe();
     }
 

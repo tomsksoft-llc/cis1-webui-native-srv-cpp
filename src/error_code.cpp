@@ -44,6 +44,9 @@ std::string error_category::message(int ev) const
         case error_code::cant_cast_config_entry:
             return "Can't cast config entry";
 
+        case error_code::database_error:
+            return "Database error";
+
         default:
             return "(unrecognized error)";
     }

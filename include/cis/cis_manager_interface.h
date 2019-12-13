@@ -50,6 +50,8 @@ struct cis_manager_interface
 
     virtual ~cis_manager_interface() = default;
 
+    virtual void refresh_projects() = 0;
+
     virtual bool refresh(const std::filesystem::path& path) = 0;
 
     virtual bool remove(const std::filesystem::path& path) = 0;
@@ -67,6 +69,14 @@ struct cis_manager_interface
     virtual project_list_t get_project_list() = 0;
 
     using project_info_t = std::shared_ptr<project_interface>;
+
+    virtual void create_project(
+            const std::string& project_name,
+            std::error_code& ec) = 0;
+
+    virtual void remove_project(
+            const project_info_t& project,
+            std::error_code& ec) = 0;
 
     virtual project_info_t get_project_info(
             const std::string& project_name) = 0;
