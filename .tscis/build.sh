@@ -23,13 +23,3 @@ fi
 cp bin/* $cis_base_dir/jobs/$job_name/$build_number/artifacts
 
 cp $cis_base_dir/jobs/$job_name/shared_srcs/example_config.ini $cis_base_dir/jobs/$job_name/$build_number/artifacts/
-
-echo "Packing artigacts..."
-
-cd $cis_base_dir/jobs/$job_name/$build_number/artifacts
-
-VER="$full_version.$build_number"
-
-echo $VER > $cis_base_dir/jobs/$job_name/$build_number/artifacts/build_version.txt
-
-tar -czf ../artifacts.tgz *
