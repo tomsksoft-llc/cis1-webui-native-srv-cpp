@@ -23,3 +23,5 @@ fi
 cp bin/* $cis_base_dir/jobs/$job_name/$build_number/artifacts
 
 cp $cis_base_dir/jobs/$job_name/shared_srcs/example_config.ini $cis_base_dir/jobs/$job_name/$build_number/artifacts/
+
+cd ..
