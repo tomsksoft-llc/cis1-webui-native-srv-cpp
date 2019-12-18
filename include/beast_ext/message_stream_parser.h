@@ -49,7 +49,7 @@ private:
 
     std::string_view::const_iterator tr_begin() const;
     std::string_view::const_iterator tr_end() const;
-    
+
     void tr_reset();
     char tr_get_char();
     bool tr_next();

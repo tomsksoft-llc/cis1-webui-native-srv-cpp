@@ -1,3 +1,11 @@
+/*
+ *    TomskSoft CIS1 WebUI
+ *
+ *   (c) 2019 TomskSoft LLC
+ *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *
+ */
+
 #include "websocket/handlers/remove_cis_project.h"
 
 #include "websocket/dto/cis_project_remove_success.h"
@@ -19,29 +27,31 @@ void remove_cis_project(
 {
     auto project = cis_manager.get_project_info(req.project);
 
-    auto perm = rights.check_project_right(ctx.username, req.project);
+    std::error_code ec;
+
+    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value().read : true;
 
     if(project != nullptr && permitted)
     {
-        auto project_path =
-                std::filesystem::path{"/"} / req.project;
+        std::error_code ec;
 
-        auto& fs = cis_manager.fs();
+        cis_manager.remove_project(project, ec);
 
-        if(auto it = fs.find(project_path); it != fs.end())
+        if(ec)
         {
-            it.remove();
-
-            dto::cis_project_remove_success res;
-
-            return tr.send(res);
+            return tr.send_error("Internal error.");
         }
 
-        dto::cis_project_error_doesnt_exist err;
-        err.project = req.project;
+        dto::cis_project_remove_success res;
 
-        return tr.send_error(err, "Project doesn't exists.");
+        return tr.send(res);
     }
 
     if(!permitted)

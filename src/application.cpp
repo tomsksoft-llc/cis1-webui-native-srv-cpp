@@ -125,6 +125,7 @@ std::shared_ptr<http_router> make_http_router(
 }
 
 std::shared_ptr<websocket_router> make_ws_router(
+        configuration_manager& config_,
         cis::cis_manager& cis_,
         auth_manager& auth_manager_,
         rights_manager& rights_manager_)
@@ -304,6 +305,12 @@ std::shared_ptr<websocket_router> make_ws_router(
                             cis_,
                             std::forward<decltype(args)>(args)...);
             });
+    dispatcher.add_event_handler<ws::dto::system_version_info>(
+            [&config_](auto&& ...args){
+                    wsh::get_system_version(
+                            config_,
+                            std::forward<decltype(args)>(args)...);
+            });
 
     std::function <http::handle_result(
         beast::http::request<beast::http::empty_body>& req,
@@ -465,9 +472,15 @@ std::optional<application> application::create(
 
     auto cis_app = std::make_shared<cis1::cwu::tcp_server>(ioc);
 
-    auto db = std::make_unique<database::database_wrapper>(
-            *(config->get_entry<std::filesystem::path>("db_root", ec)) / "db.sqlite",
-            config->get_entry<user_credentials>("admin_credentials", ec));
+    auto db = database::database_wrapper::create(
+            *(config->get_entry<std::filesystem::path>("db_root")) / "db.sqlite",
+            config->get_entry<user_credentials>("admin_credentials"),
+            ec);
+
+    if(ec)
+    {
+        return std::nullopt;
+    }
 
     config->remove_entry("admin_credentials");
 
@@ -513,6 +526,7 @@ std::optional<application> application::create(
                     *download_handler,
                     *webhooks_handler),
             make_ws_router(
+                    *config,
                     *cis,
                     *auth_manager_,
                     *rights_manager_));
@@ -520,7 +534,7 @@ std::optional<application> application::create(
     auto endpoint = resolve_endpoint(
             ioc,
             *(config->get_entry<std::string>("public_address", ec)),
-            *(config->get_entry<unsigned short>("public_port", ec)),
+            *(config->get_entry<uint16_t>("public_port", ec)),
             ec);
 
     if(ec)
@@ -544,7 +558,7 @@ std::optional<application> application::create(
     endpoint = resolve_endpoint(
             ioc,
             *(config->get_entry<std::string>("cis_address", ec)),
-            *(config->get_entry<unsigned short>("cis_port", ec)),
+            *(config->get_entry<uint16_t>("cis_port", ec)),
             ec);
 
     if(ec)

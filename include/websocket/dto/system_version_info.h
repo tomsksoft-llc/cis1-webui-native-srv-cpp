@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <string>
-
 #include "tpl_reflect/meta_converter.h"
 
 namespace websocket
@@ -18,21 +16,16 @@ namespace websocket
 namespace dto
 {
 
-struct cis_project_add
+struct system_version_info
 {
-    std::string project;
-
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<cis_project_add>()
+        return make_meta_converter<system_version_info>()
                 .set_name(
-                        CT_STRING("cis"),
-                        CT_STRING("project"),
-                        CT_STRING("add"))
-                .add_field(
-                        CT_STRING("project"),
-                        ptr_v<&cis_project_add::project>{})
+                        CT_STRING("system"),
+                        CT_STRING("version"),
+                        CT_STRING("info"))
                 .done();
     }
 };

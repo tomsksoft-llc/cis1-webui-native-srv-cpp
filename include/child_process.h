@@ -132,6 +132,10 @@ private:
                     {
                         write_buffer(pipe);
                     }
+                    else
+                    {
+                        pipe->close();
+                    }
                 });
     }
 };
@@ -193,7 +197,7 @@ private:
         cb_(target);
     }
 };
-    
+
 class line_reader
     : public std::enable_shared_from_this<line_reader>
 {
@@ -207,8 +211,14 @@ public:
         read_line(pipe);
     }
 
+    const std::string& last_line()
+    {
+        return last_line_;
+    }
+
 private:
     boost::asio::streambuf buffer_;
+    std::string last_line_;
     std::function<void(const std::string&)> cb_;
 
     void read_line(std::shared_ptr<boost::process::async_pipe> pipe)
@@ -227,9 +237,9 @@ private:
                     }
 
                     std::istream stream(&buffer_);
-                    std::string result;
-                    std::getline(stream, result);
-                    cb_(result);
+                    last_line_.clear();
+                    std::getline(stream, last_line_);
+                    cb_(last_line_);
 
                     if(pipe->is_open())
                     {

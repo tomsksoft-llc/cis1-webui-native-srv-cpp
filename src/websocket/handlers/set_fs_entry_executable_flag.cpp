@@ -37,8 +37,16 @@ void set_fs_entry_executable_flag(
         return tr.send_error(err, "Invalid path.");
     }
 
-    if(auto path_rights = get_path_rights(ctx, rights, path);
-            path_rights && !path_rights.value().write)
+    std::error_code ec;
+
+    auto path_rights = get_path_rights(ctx, rights, path, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    if(path_rights && !path_rights.value().write)
     {
         dto::user_permissions_error_access_denied err;
 

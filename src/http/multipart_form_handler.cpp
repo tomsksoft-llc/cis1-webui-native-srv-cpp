@@ -32,10 +32,19 @@ handle_result multipart_form_handler::upload(
         && req[beast::http::field::content_type].find(
                 "multipart/form-data") == 0)
     {
-        if(auto project_rights
-                = rights_.check_project_right(ctx.username, project);
-                !((!project_rights)
-                || (project_rights && project_rights.value().write)))
+        std::error_code ec;
+
+        auto project_rights
+                = rights_.check_project_right(ctx.username, project, ec);
+
+        if(ec)
+        {
+            ctx.res_status = beast::http::status::internal_server_error;
+
+            return handle_result::error;
+        }
+
+        if(project_rights && !project_rights.value().write)
         {
             ctx.res_status = beast::http::status::forbidden;
 
@@ -89,10 +98,19 @@ handle_result multipart_form_handler::replace(
         && req[beast::http::field::content_type].find(
                 "multipart/form-data") == 0)
     {
-        if(auto project_rights
-                = rights_.check_project_right(ctx.username, project);
-                !((!project_rights)
-                || (project_rights && project_rights.value().write)))
+        std::error_code ec;
+
+        auto project_rights
+                = rights_.check_project_right(ctx.username, project, ec);
+
+        if(ec)
+        {
+            ctx.res_status = beast::http::status::internal_server_error;
+
+            return handle_result::error;
+        }
+
+        if(project_rights && !project_rights.value().write)
         {
             ctx.res_status = beast::http::status::forbidden;
 

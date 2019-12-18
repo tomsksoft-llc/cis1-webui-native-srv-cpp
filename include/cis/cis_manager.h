@@ -38,6 +38,8 @@ public:
 
     cis_manager(const cis_manager&) = delete;
 
+    void refresh_projects() override;
+
     bool refresh(const std::filesystem::path& path) override;
 
     bool remove(const std::filesystem::path& path) override;
@@ -50,6 +52,14 @@ public:
 
     project_info_t get_project_info(
             const std::string& project_name) override;
+
+    void create_project(
+            const std::string& project_name,
+            std::error_code& ec) override;
+
+    void remove_project(
+            const project_info_t& project,
+            std::error_code& ec) override;
 
     job_info_t get_job_info(
             const std::string& project_name,
@@ -116,6 +126,7 @@ private:
     boost::asio::io_context& ioc_;
     configuration_manager& config_;
     fs_cache fs_;
+    database::database_wrapper& db_;
     executables execs_;
     session_manager session_manager_;
 

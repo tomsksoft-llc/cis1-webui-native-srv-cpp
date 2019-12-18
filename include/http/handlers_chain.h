@@ -31,22 +31,22 @@ public:
             boost::beast::http::request<boost::beast::http::empty_body>;
 
     using queue_t = net::http_session::queue;
-    
+
     using context_t = request_context;
-    
+
     using handler_t =
             std::function<handle_result(
                     request_header_t&,
                     context_t&,
                     net::http_session::request_reader&,
                     queue_t&)>;
-    
+
     using ws_handler_t =
             std::function<handle_result(
                     request_header_t&,
                     context_t&,
                     tcp::socket&)>;
-    
+
     using error_handler_t =
             std::function<void(
                     request_header_t&,
@@ -58,18 +58,18 @@ public:
     void append_handler(const handler_t& handler);
 
     void append_ws_handler(const ws_handler_t& handler);
-   
+
     void set_error_handler(const error_handler_t& handler);
-    
+
     void listen(
             const boost::asio::ip::tcp::endpoint& ep,
             std::error_code& ec);
-    
+
     void handle_header(
             request_header_t& req,
             net::http_session::request_reader& reader,
             net::http_session::queue& queue) const;
-    
+
     void handle_upgrade(
             tcp::socket&& socket,
             request_header_t&& req,

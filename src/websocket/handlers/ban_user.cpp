@@ -25,22 +25,42 @@ void ban_user(
         const dto::user_auth_ban& req,
         cis1::proto_utils::transaction tr)
 {
+    std::error_code ec;
 
-    if(!authentication_handler.has_user(req.username))
+    auto user_exists = authentication_handler.has_user(req.username, ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    if(!user_exists)
     {
         dto::user_auth_error_user_not_found err;
 
         return tr.send_error(err, "Invalid username.");
     }
 
-    auto perm = rights.check_user_permission(ctx.username, "users.change_group");
+    auto perm = rights.check_user_permission(ctx.username, "users.change_group", ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
     auto permitted = perm.has_value() ? perm.value() : false;
 
     if(permitted)
     {
         authentication_handler.change_group(
                 req.username,
-                "disabled");
+                "disabled",
+                ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
 
         dto::user_auth_ban_success res;
 

@@ -23,10 +23,18 @@ void change_pass(
         const dto::user_auth_change_pass& req,
         cis1::proto_utils::transaction tr)
 {
+    std::error_code ec;
+
     bool ok = authentication_handler.change_pass(
             ctx.username,
             req.old_password,
-            req.new_password);
+            req.new_password,
+            ec);
+
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
 
     if(!ok)
     {

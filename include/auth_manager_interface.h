@@ -32,48 +32,62 @@ struct auth_manager_interface
 
     virtual std::optional<std::string> authenticate(
             const std::string& username,
-            const std::string& pass) = 0;
+            const std::string& pass,
+            std::error_code& ec) = 0;
 
     virtual std::optional<std::string> authenticate(
-            const std::string& token) = 0;
+            const std::string& token,
+            std::error_code& ec) = 0;
 
     virtual bool has_user(
-            const std::string& username) const = 0;
+            const std::string& username,
+            std::error_code& ec) const = 0;
 
     virtual bool change_group(
             const std::string& username,
-            const std::string& groupname) = 0;
+            const std::string& groupname,
+            std::error_code& ec) = 0;
 
     virtual std::optional<std::string> get_group(
-            const std::string& username) const = 0;
+            const std::string& username,
+            std::error_code& ec) const = 0;
 
     virtual std::optional<std::string> generate_api_key(
-            const std::string& name) = 0;
+            const std::string& name,
+            std::error_code& ec) = 0;
 
     virtual std::optional<std::string> get_api_key(
-            const std::string& name) = 0;
+            const std::string& name,
+            std::error_code& ec) = 0;
 
     virtual bool remove_api_key(
-            const std::string& name) = 0;
+            const std::string& name,
+            std::error_code& ec) = 0;
 
     virtual bool change_pass(
             const std::string& user,
             const std::string& old_pass,
-            const std::string& new_pass) = 0;
+            const std::string& new_pass,
+            std::error_code& ec) = 0;
 
     virtual std::optional<user_info> get_user_info(
-            const std::string& username) const = 0;
+            const std::string& username,
+            std::error_code& ec) const = 0;
 
-    virtual std::vector<database::user> get_users() const = 0;
+    virtual std::vector<database::user> get_users(
+            std::error_code& ec) const = 0;
 
-    virtual std::vector<user_info> get_user_infos() const = 0;
+    virtual std::vector<user_info> get_user_infos(
+            std::error_code& ec) const = 0;
 
     virtual bool delete_token(
-            const std::string& token) = 0;
+            const std::string& token,
+            std::error_code& ec) = 0;
 
     virtual bool add_user(
             const std::string& username,
             const std::string& pass,
-            const std::string& email) = 0;
+            const std::string& email,
+            std::error_code& ec) = 0;
 
 };

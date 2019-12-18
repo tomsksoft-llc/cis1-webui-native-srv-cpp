@@ -1,5 +1,3 @@
-#pragma once
-
 /*
  *    TomskSoft CIS1 WebUI
  *
@@ -7,6 +5,8 @@
  *   (c) Mokin Innokentiy [mia@tomsksoft.com]
  *
  */
+
+#pragma once
 
 #include <boost/beast.hpp>
 
