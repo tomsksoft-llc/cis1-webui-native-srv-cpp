@@ -14,6 +14,8 @@
 #include "websocket/dto/fs_entry_list_success.h"
 
 #include "path_utils.h"
+#include "cis/cis_structs.h"
+#include "websocket/handlers/utils/make_dir_entry.h"
 
 namespace websocket
 {
@@ -59,32 +61,12 @@ void list_directory(
     {
         dto::fs_entry_list_success res;
 
-        for(auto& file : it)
+        for(auto itt = it.begin(); itt != it.end(); ++itt)
         {
-            dto::fs_entry entry;
+            cis::fs_entry_ref entry(itt);
 
-            entry.name = file.path().filename();
-
-            auto relative_path = file.path().lexically_relative(
-                    cis_manager.fs().root().path());
-
-            auto path = ("/" / relative_path)
-                    .generic_string();
-
-            entry.path = path;
-
-            entry.link = "/download" + path;
-
-            if(file.is_directory())
-            {
-                entry.metainfo = dto::fs_entry::directory_info{};
-            }
-            else if(file.is_regular_file())
-            {
-                entry.metainfo = dto::fs_entry::file_info{};
-            }
-
-            res.entries.push_back(entry);
+            res.entries.push_back(
+                    make_dir_entry(fs.root().path(), entry));
         }
 
         return tr.send(res);
