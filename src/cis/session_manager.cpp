@@ -8,14 +8,20 @@
 
 #include "cis/session_manager.h"
 
+#include "cis/session.h"
+#include "cis/offline_session.h"
+
 namespace cis
 {
 
-session_manager::session_manager(boost::asio::io_context& ctx)
+session_manager::session_manager(
+        boost::asio::io_context& ctx,
+        const std::filesystem::path& sessions_root)
     : ctx_(ctx)
+    , sessions_root_(sessions_root)
 {}
 
-std::shared_ptr<session> session_manager::connect(
+std::shared_ptr<session_interface> session_manager::connect(
         const std::string& session_id)
 {
     if(auto it = sessions_.find(session_id); it != sessions_.end())
@@ -36,6 +42,8 @@ std::shared_ptr<session> session_manager::connect(
 
                             sessions_.erase(session_id);
                         });
+
+        s->init_timer();
 
         auto [res, success] = sessions_.emplace(
                 session_id,
@@ -62,6 +70,32 @@ void session_manager::subscribe(
             subscriber->set_session(session);
         }
     }
+    else if(std::error_code ec;
+            std::filesystem::exists(
+                    sessions_root_ / (session_id + ".combined.log"),
+                    ec)
+         && !ec)
+    {
+        auto s = std::shared_ptr<offline_session>(
+                        new offline_session(
+                                sessions_root_,
+                                session_id),
+                        [&, session_id](offline_session* s)
+                        {
+                            delete s;
+
+                            sessions_.erase(session_id);
+                        });
+
+        auto [res, success] = sessions_.emplace(
+                session_id,
+                s);
+
+        s->subscribe(ws_session_id, subscriber);
+        subscriber->set_session(s);
+
+        assert(success);
+    }
     else
     {
         auto s = std::shared_ptr<session>(
@@ -72,6 +106,8 @@ void session_manager::subscribe(
 
                             sessions_.erase(session_id);
                         });
+
+        s->init_timer();
 
         auto [res, success] = sessions_.emplace(
                 session_id,

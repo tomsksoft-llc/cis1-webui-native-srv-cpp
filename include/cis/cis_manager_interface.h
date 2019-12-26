@@ -122,7 +122,7 @@ struct cis_manager_interface
     virtual list_cron_task_t list_cron(
             const std::string& mask) = 0;
 
-    virtual std::shared_ptr<session> connect_to_session(
+    virtual std::shared_ptr<session_interface> connect_to_session(
             const std::string& session_id) = 0;
 
     virtual void subscribe_to_session(

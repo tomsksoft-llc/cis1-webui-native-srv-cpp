@@ -383,7 +383,7 @@ void init_cis_app(
 {
     struct session_context
     {
-        std::shared_ptr<cis::session> session = nullptr;
+        std::shared_ptr<cis::session_interface> session = nullptr;
     };
 
     cis1::proto_utils::event_dispatcher<session_context&> dispatcher;

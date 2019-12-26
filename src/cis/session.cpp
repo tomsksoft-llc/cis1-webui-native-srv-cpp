@@ -15,13 +15,17 @@ session::session(boost::asio::io_context& ctx)
     : timer_(
             ctx,
             (std::chrono::steady_clock::time_point::max)())
+{}
+
+void session::init_timer()
 {
     timer_.expires_after(std::chrono::seconds(5));
     timer_.async_wait(
-            std::bind(
-                    &session::on_timer,
-                    this,
-                    std::placeholders::_1));
+            [&, self = shared_from_this()](
+                    const boost::system::error_code& ec)
+            {
+                on_timer(ec);
+            });
 }
 
 void session::establish()

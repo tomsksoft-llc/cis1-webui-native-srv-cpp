@@ -8,6 +8,8 @@
 
 #include "websocket/handlers/session_subscribe.h"
 
+#include <regex>
+
 #include "websocket/dto/cis_session_log_entry.h"
 #include "websocket/dto/cis_session_not_established.h"
 #include "websocket/dto/cis_session_closed.h"
@@ -17,6 +19,14 @@ namespace websocket
 
 namespace handlers
 {
+
+const char* const message_regex_expr =
+        R"(\s+action=\")"
+        R"(([a-z_]+))"
+        R"(\"\s+)"
+        R"((.*))";
+
+const std::regex message_regex(message_regex_expr);
 
 class subscriber
     : public cis::subscriber_interface
@@ -35,7 +45,17 @@ public:
 
         res.session_id = session_id_;
         res.time = dto.time;
-        res.message = dto.message;
+
+        if(     std::smatch smatch;
+                std::regex_match(dto.message, smatch, message_regex))
+        {
+            res.action = smatch[1];
+            res.message = smatch[2];
+        }
+        else
+        {
+            res.message = dto.message;
+        }
 
         return tr_.send(res);
     }
@@ -70,7 +90,7 @@ public:
         }
     }
 
-    void set_session(std::shared_ptr<cis::session> session)
+    void set_session(std::shared_ptr<cis::session_interface> session)
     {
         session_ = session;
     }
@@ -83,7 +103,7 @@ public:
 private:
     std::string session_id_;
     cis1::proto_utils::transaction tr_;
-    std::shared_ptr<cis::session> session_ = nullptr;
+    std::shared_ptr<cis::session_interface> session_ = nullptr;
     uint32_t subscribe_id_;
 };
 
