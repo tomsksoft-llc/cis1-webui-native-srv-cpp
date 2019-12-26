@@ -99,7 +99,7 @@ public:
     list_cron_task_t list_cron(
             const std::string& mask) override;
 
-    std::shared_ptr<session> connect_to_session(
+    std::shared_ptr<session_interface> connect_to_session(
             const std::string& session_id) override;
 
     void subscribe_to_session(

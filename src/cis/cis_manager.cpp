@@ -34,7 +34,8 @@ cis_manager::cis_manager(
                     / cis::projects,
             4,
             std::chrono::seconds(5))
-    , session_manager_(ioc)
+    , session_manager_(ioc, *config_.get_entry<std::filesystem::path>("cis_root")
+                   / cis::sessions)
 {
     //assert that config is correct
     assert(config_.get_entry<std::filesystem::path>(
@@ -538,7 +539,7 @@ cis_manager::list_cron_task_t cis_manager::list_cron(const std::string& mask)
             ioc_.get_executor()};
 }
 
-std::shared_ptr<session> cis_manager::connect_to_session(
+std::shared_ptr<session_interface> cis_manager::connect_to_session(
         const std::string& session_id)
 {
     return session_manager_.connect(session_id);

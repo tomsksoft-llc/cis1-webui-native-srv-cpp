@@ -22,6 +22,7 @@ struct cis_session_log_entry
 {
     std::string session_id;
     std::chrono::time_point<std::chrono::system_clock> time;
+    std::string action;
     std::string message;
 
     static constexpr auto get_converter()
@@ -38,6 +39,9 @@ struct cis_session_log_entry
                 .add_field(
                         CT_STRING("time"),
                         ptr_v<&cis_session_log_entry::time>())
+                .add_field(
+                        CT_STRING("action"),
+                        ptr_v<&cis_session_log_entry::action>{})
                 .add_field(
                         CT_STRING("message"),
                         ptr_v<&cis_session_log_entry::message>{})
