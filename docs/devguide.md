@@ -16,22 +16,22 @@
 
 ## Backwards compatibility
 
-WebSocket protocol and all HTTP paths (like file download links) must be backward compatible at least in one major version.
+The WebSocket protocol and all HTTP paths (such as file download links) must be backward compatible at least in one major version.
 
 ## Contributing
 
 Follow [the GitHub pull request workflow](https://guides.github.com/introduction/flow/): fork, branch, commit, pull request, automated tests, review, merge.
 
 * Do PR only to dev branch.
-* Every PR must have issue associated with it.
-* Try to write smaller commits, that do exactly one thing.
-* Commit message should briefly describe changes in code.
-* Try to cover your code with unit tests.
-* For extra code-health changes, either file a separate issue, or make it a separate PR that can be easily reviewed.
-* Add reviewer to pull request.
+* Every PR must have an issue associated with it.
+* Try writing smaller commits that do one particular thing only.
+* Commit message should briefly describe the code changes.
+* Try covering your code with unit tests.
+* For extra code-health changes, either submit a separate issue or make it a separate PR that can be easily reviewed.
+* Add reviewer to the pull request.
 
-Code style for C++ code can be found on [this](https://github.com/tomsksoft-llc/cis1-webui-native-srv-cpp/wiki/Codestyle "C++ CodeStyle") wiki-page.
+The code style for the C++ code can be found on [this](https://github.com/tomsksoft-llc/cis1-webui-native-srv-cpp/wiki/Codestyle "C++ CodeStyle") wiki-page.
 
 ## External libraries
 
-External libraries usage is allowed, but you should check license compatibility.
+Using external libraries is allowed, but you should check the license compatibility first.
