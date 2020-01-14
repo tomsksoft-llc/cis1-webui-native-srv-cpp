@@ -363,7 +363,10 @@ cis_manager::run_job_task_t cis_manager::run_job(
                                 it.invalidate();
                             }
 
-                            on_session_started(session_id);
+                            if(on_session_started)
+                            {
+                                on_session_started(session_id);
+                            }
                         },
                         [   &,
                             on_session_finished = std::move(on_session_finished)
