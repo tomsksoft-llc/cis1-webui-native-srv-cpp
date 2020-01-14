@@ -355,7 +355,7 @@ void webhooks_handler::finish(
                 file_path,
                 ev);
 
-        make_async_chain(boost::asio::system_executor{})
+        make_async_chain(queue.get_executor())
             .then(cis_.run_job(
                         project,
                         job,
