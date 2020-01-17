@@ -11,6 +11,8 @@
 #include <sstream>
 #include <iomanip>
 #include <fstream>
+#include <map>
+#include <string>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -22,6 +24,40 @@
 
 namespace http
 {
+
+const std::map<std::string, webhooks_handler::hook_event, std::less<>> github_mapping =
+{
+    {"ping", webhooks_handler::hook_event::ping},
+    {"push", webhooks_handler::hook_event::push},
+    {"issues", webhooks_handler::hook_event::issue},
+    {"pull_request", webhooks_handler::hook_event::merge_request},
+    {"gollum", webhooks_handler::hook_event::wiki_page},
+};
+
+const std::map<std::string, webhooks_handler::hook_event, std::less<>> gitlab_mapping =
+{
+    {"Push Hook", webhooks_handler::hook_event::push},
+    {"Tag Push Hook", webhooks_handler::hook_event::tag_push},
+    {"Issue Hook", webhooks_handler::hook_event::issue},
+    {"Note Hook", webhooks_handler::hook_event::note},
+    {"Merge Request Hook", webhooks_handler::hook_event::merge_request},
+    {"Wiki Page Hook", webhooks_handler::hook_event::wiki_page},
+    {"Pipeline Hook", webhooks_handler::hook_event::pipeline},
+    {"Job Hook", webhooks_handler::hook_event::build},
+};
+
+const std::map<std::string, webhooks_handler::hook_event, std::less<>> plain_mapping =
+{
+    {"ping", webhooks_handler::hook_event::ping},
+    {"push", webhooks_handler::hook_event::push},
+    {"tag_push", webhooks_handler::hook_event::tag_push},
+    {"issue", webhooks_handler::hook_event::issue},
+    {"note", webhooks_handler::hook_event::note},
+    {"merge_request", webhooks_handler::hook_event::merge_request},
+    {"wiki_page", webhooks_handler::hook_event::wiki_page},
+    {"pipeline", webhooks_handler::hook_event::pipeline},
+    {"build", webhooks_handler::hook_event::build},
+};
 
 webhooks_handler::webhooks_handler(
         auth_manager& auth,
@@ -155,20 +191,24 @@ handle_result webhooks_handler::handle_github_headers(
     }
 
     hook_event ev = hook_event::unknown;
-    if(event_it->value() == "push")
+    if(auto mapping_it = github_mapping.find(event_it->value());
+            mapping_it != github_mapping.end())
     {
-        ev = hook_event::push;
-    }
-    else if(event_it->value() == "ping")
-    {
-        ev = hook_event::ping;
+        ev = mapping_it->second;
     }
 
     std::string signature{signature_it->value().substr(5, std::string::npos)};
 
     reader.async_read_body<beast::http::string_body>(
             [](beast::http::request<beast::http::string_body>& req){},
-            [&, ctx, project, job, ev, signature, query_string](
+            [&,
+            ctx,
+            project,
+            job,
+            raw_event = std::string(event_it->value()),
+            ev,
+            signature,
+            query_string](
                     beast::http::request<
                             beast::http::string_body>&& req,
                     const boost::beast::error_code& /*ec*/,
@@ -181,6 +221,7 @@ handle_result webhooks_handler::handle_github_headers(
                         project,
                         job,
                         query_string,
+                        raw_event,
                         ev,
                         signature);
             });
@@ -210,14 +251,21 @@ handle_result webhooks_handler::handle_gitlab_headers(
     }
 
     hook_event ev = hook_event::unknown;
-    if(event_it->value() == "Push Hook")
+    if(auto mapping_it = gitlab_mapping.find(event_it->value());
+            mapping_it != gitlab_mapping.end())
     {
-        ev = hook_event::push;
+        ev = mapping_it->second;
     }
 
     reader.async_read_body<beast::http::string_body>(
             [](beast::http::request<beast::http::string_body>& req){},
-            [&, ctx, project, job, ev, query_string](
+            [&,
+            ctx,
+            project,
+            job,
+            raw_event = std::string(event_it->value()),
+            ev,
+            query_string](
                     beast::http::request<
                             beast::http::string_body>&& req,
                     const boost::beast::error_code& /*ec*/,
@@ -230,6 +278,7 @@ handle_result webhooks_handler::handle_gitlab_headers(
                         project,
                         job,
                         query_string,
+                        raw_event,
                         ev);
             });
 
@@ -260,18 +309,21 @@ handle_result webhooks_handler::handle_plain_headers(
     }
 
     hook_event ev = hook_event::unknown;
-    if(event_it->value() == "push")
+    if(auto mapping_it = plain_mapping.find(event_it->value());
+            mapping_it != plain_mapping.end())
     {
-        ev = hook_event::push;
-    }
-    else if(event_it->value() == "ping")
-    {
-        ev = hook_event::ping;
+        ev = mapping_it->second;
     }
 
     reader.async_read_body<beast::http::string_body>(
             [](beast::http::request<beast::http::string_body>& req){},
-            [&, ctx, project, job, ev, query_string](
+            [&,
+            ctx,
+            project,
+            job,
+            raw_event = std::string(event_it->value()),
+            ev,
+            query_string](
                     beast::http::request<
                             beast::http::string_body>&& req,
                     const boost::beast::error_code& /*ec*/,
@@ -284,6 +336,7 @@ handle_result webhooks_handler::handle_plain_headers(
                         project,
                         job,
                         query_string,
+                        raw_event,
                         ev);
             });
 
@@ -298,6 +351,7 @@ void webhooks_handler::handle_github_signature(
         const std::string& project,
         const std::string& job,
         const std::string& query_string,
+        const std::string& raw_event,
         hook_event ev,
         const std::string& signature)
 {
@@ -332,7 +386,15 @@ void webhooks_handler::handle_github_signature(
         queue.send(std::move(res));
     }
 
-    finish(std::move(req), ctx, queue, project, job, query_string, ev);
+    finish(
+            std::move(req),
+            ctx,
+            queue,
+            project,
+            job,
+            query_string,
+            raw_event,
+            ev);
 }
 
 void webhooks_handler::finish(
@@ -342,6 +404,7 @@ void webhooks_handler::finish(
         const std::string& project,
         const std::string& job,
         const std::string& query_string,
+        const std::string& raw_event,
         hook_event ev)
 {
     if(ev != hook_event::ping)
@@ -353,6 +416,7 @@ void webhooks_handler::finish(
                 job,
                 query_string,
                 file_path,
+                raw_event,
                 ev);
 
         make_async_chain(queue.get_executor())
@@ -412,13 +476,41 @@ const char* webhooks_handler::ev_to_string(hook_event ev)
 {
     switch(ev)
     {
+        case hook_event::ping:
+        {
+            return "ping";
+        }
         case hook_event::push:
         {
             return "push";
         }
-        case hook_event::ping:
+        case hook_event::tag_push:
         {
-            return "ping";
+            return "tag_push";
+        }
+        case hook_event::issue:
+        {
+            return "issue";
+        }
+        case hook_event::note:
+        {
+            return "note";
+        }
+        case hook_event::merge_request:
+        {
+            return "merge_request";
+        }
+        case hook_event::wiki_page:
+        {
+            return "wiki_page";
+        }
+        case hook_event::pipeline:
+        {
+            return "pipeline";
+        }
+        case hook_event::build:
+        {
+            return "build";
         }
         case hook_event::unknown:
         [[fallthrough]];
@@ -434,6 +526,7 @@ std::vector<std::string> webhooks_handler::prepare_params(
         const std::string& job,
         const std::string& query_string,
         const std::filesystem::path& body_file,
+        const std::string& raw_event,
         hook_event ev)
 {
     std::vector<std::string> result;
@@ -468,6 +561,10 @@ std::vector<std::string> webhooks_handler::prepare_params(
         else if(param.name == "webhook_event_type")
         {
             result[i] = ev_to_string(ev);
+        }
+        else if(param.name == "webhook_raw_event_type")
+        {
+            result[i] = raw_event;
         }
         ++i;
     }
