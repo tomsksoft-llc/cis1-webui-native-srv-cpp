@@ -52,7 +52,9 @@ offline_session::offline_session(
 
 void offline_session::establish()
 {
-    //TODO err somehow
+    //may happen if session_id of new session equals session_id of old session
+    //shouldn't happen in real world
+    //may cause unfroseen consequences
 }
 
 void offline_session::log(const cis1::cwu::log_entry& dto)
