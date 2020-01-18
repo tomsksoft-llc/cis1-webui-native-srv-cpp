@@ -24,6 +24,7 @@ struct cis_build_info_success
 {
     std::string status;
     std::optional<int> exit_code;
+    std::optional<std::string> session_id;
     std::optional<std::string> date;
     std::vector<fs_entry> fs_entries;
 
@@ -42,6 +43,9 @@ struct cis_build_info_success
                 .add_field(
                         CT_STRING("exit_code"),
                         ptr_v<&cis_build_info_success::exit_code>{})
+                .add_field(
+                        CT_STRING("session_id"),
+                        ptr_v<&cis_build_info_success::session_id>{})
                 .add_field(
                         CT_STRING("date"),
                         ptr_v<&cis_build_info_success::date>{})

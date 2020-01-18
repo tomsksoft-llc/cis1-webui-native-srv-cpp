@@ -21,9 +21,9 @@ namespace handlers
 {
 
 const char* const message_regex_expr =
-        R"(\s+action=\")"
+        R"(\s*action=\")"
         R"(([a-z_]+))"
-        R"(\"\s+)"
+        R"(\"\s*)"
         R"((.*))";
 
 const std::regex message_regex(message_regex_expr);
