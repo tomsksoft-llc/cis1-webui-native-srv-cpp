@@ -14,6 +14,8 @@
 #include "websocket/handlers/utils/make_dir_entry.h"
 #include "cis/cis_structs.h"
 
+#include "websocket/handlers/utils/unpack_build_info.h"
+
 namespace websocket
 {
 
@@ -47,9 +49,7 @@ void get_build_info(
     {
         auto& info = build->get_info();
 
-        dto::cis_build_info_success res;
-        res.status = info.status ? info.status.value() : -1;
-        res.date = info.date ? info.date.value() : "";
+        auto res = utils::unpack_build_info<dto::cis_build_info_success>(info);
 
         for(auto it  = build->get_files().begin();
                  it != build->get_files().end();

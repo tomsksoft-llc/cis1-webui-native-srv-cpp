@@ -22,8 +22,9 @@ namespace dto
 
 struct cis_build_info_success
 {
-    int32_t status;
-    std::string date;
+    std::string status;
+    std::optional<int> exit_code;
+    std::optional<std::string> date;
     std::vector<fs_entry> fs_entries;
 
     static constexpr auto get_converter()
@@ -38,6 +39,9 @@ struct cis_build_info_success
                 .add_field(
                         CT_STRING("status"),
                         ptr_v<&cis_build_info_success::status>{})
+                .add_field(
+                        CT_STRING("exit_code"),
+                        ptr_v<&cis_build_info_success::exit_code>{})
                 .add_field(
                         CT_STRING("date"),
                         ptr_v<&cis_build_info_success::date>{})

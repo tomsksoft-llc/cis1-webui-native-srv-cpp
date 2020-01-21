@@ -13,6 +13,7 @@
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 
 #include "websocket/handlers/utils/make_dir_entry.h"
+#include "websocket/handlers/utils/unpack_build_info.h"
 
 namespace websocket
 {
@@ -67,9 +68,8 @@ void get_job_info(
 
                             auto& info = build->get_info();
 
-                            entry.metainfo = dto::fs_entry::build_info{
-                                    info.status,
-                                    info.date};
+                            entry.metainfo =
+                                    utils::unpack_build_info<dto::fs_entry::build_info>(info);
 
                             return entry;
                         }
