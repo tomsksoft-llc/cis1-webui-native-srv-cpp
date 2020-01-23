@@ -40,7 +40,8 @@ public:
     cis_job(boost::asio::io_context& ioc,
             const webui_config& webui,
             const std::filesystem::path& cis_root,
-            const std::string& startjob_exec);
+            const std::string& startjob_exec,
+            const std::string& username);
 
     void run(
             const std::string& project_name,

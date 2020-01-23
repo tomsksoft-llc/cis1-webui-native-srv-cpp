@@ -87,7 +87,8 @@ void run_job(
 
                             tr.send(res);
                         },
-                        [](const std::string& session_id){}))
+                        [](const std::string& session_id){},
+                        ctx.username))
                 .then(  [tr](const cis::execution_info& info)
                         {
                             dto::cis_job_finished res;
