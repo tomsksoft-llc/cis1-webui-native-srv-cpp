@@ -8,8 +8,6 @@
 
 #include "websocket/handlers/session_subscribe.h"
 
-#include <regex>
-
 #include "websocket/dto/cis_session_log_entry.h"
 #include "websocket/dto/cis_session_not_established.h"
 #include "websocket/dto/cis_session_closed.h"
@@ -19,14 +17,6 @@ namespace websocket
 
 namespace handlers
 {
-
-const char* const message_regex_expr =
-        R"(\s*action=\")"
-        R"(([a-z_]+))"
-        R"(\"\s*)"
-        R"((.*))";
-
-const std::regex message_regex(message_regex_expr);
 
 class subscriber
     : public cis::subscriber_interface
@@ -44,18 +34,9 @@ public:
         dto::cis_session_log_entry res;
 
         res.session_id = session_id_;
+        res.action = dto.action;
+        res.message = dto.message;
         res.time = dto.time;
-
-        if(     std::smatch smatch;
-                std::regex_match(dto.message, smatch, message_regex))
-        {
-            res.action = smatch[1];
-            res.message = smatch[2];
-        }
-        else
-        {
-            res.message = dto.message;
-        }
 
         return tr_.send(res);
     }
