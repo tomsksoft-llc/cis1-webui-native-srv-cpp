@@ -14,7 +14,9 @@ const char* const combined_log_regex_expr =
         R"((\d{1,8}))"                              //ppid
         R"(\s+\|\s+)"                               //delimeter
         R"((\d{1,8}))"                              //pid
-        R"(\s+\|)"                                  //delimeter
+        R"(\s+\|\s+)"                               //delimeter
+        R"(([a-z_]+))"                              //action
+        R"(\s+\|\s+)"                               //delimeter
         R"((.*))";                                  //message
 
 const std::regex combined_log_regex(combined_log_regex_expr);
@@ -43,7 +45,9 @@ offline_session::offline_session(
             entry.time = std::chrono::system_clock::from_time_t(
                     std::mktime(&t));
 
-            entry.message = smatch[4];
+            entry.action = smatch[4];
+
+            entry.message = smatch[5];
 
             log(entry);
         }
