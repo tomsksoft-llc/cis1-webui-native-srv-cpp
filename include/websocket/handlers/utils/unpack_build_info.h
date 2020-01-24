@@ -29,6 +29,7 @@ T unpack_build_info(const build_interface::info& info)
                         : "failed")
                 : "in_progress",
             info.status,
+            info.exit_message,
             info.session_id,
             info.date};
 }
