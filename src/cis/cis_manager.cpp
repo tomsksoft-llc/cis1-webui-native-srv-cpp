@@ -335,6 +335,7 @@ cis_manager::run_job_task_t cis_manager::run_job(
     return {[&,
             job = cis_job(
                     ioc_,
+                    fs(),
                     webui_config{
                             *config_.get_entry<std::string>("public_address"),
                             *config_.get_entry<uint16_t>("public_port"),

@@ -61,6 +61,7 @@ struct fs_entry
     {
         std::optional<std::string> status;
         std::optional<int> exit_code;
+        std::optional<std::string> exit_message;
         std::optional<std::string> session_id;
         std::optional<std::string> date;
 
@@ -79,6 +80,9 @@ struct fs_entry
                     .add_field(
                             CT_STRING("exit_code"),
                             ptr_v<&build_info::exit_code>{})
+                    .add_field(
+                            CT_STRING("exit_message"),
+                            ptr_v<&build_info::exit_message>{})
                     .add_field(
                             CT_STRING("session_id"),
                             ptr_v<&build_info::session_id>{})

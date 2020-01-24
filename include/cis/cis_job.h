@@ -14,6 +14,7 @@
 #include <boost/asio.hpp>
 
 #include "child_process.h"
+#include "fs_cache.h"
 
 namespace cis
 {
@@ -22,6 +23,7 @@ struct execution_info
 {
     bool success;
     std::optional<int> exit_code;
+    std::optional<std::string> exit_message;
     std::optional<std::string> session_id;
 };
 
@@ -38,6 +40,7 @@ class cis_job
 {
 public:
     cis_job(boost::asio::io_context& ioc,
+            fs_cache& fs,
             const webui_config& webui,
             const std::filesystem::path& cis_root,
             const std::string& startjob_exec,
@@ -58,10 +61,13 @@ public:
     std::optional<std::string> session_id();
 
 private:
+    fs_cache& fs_;
     std::shared_ptr<line_reader> reader_ = nullptr;
     std::shared_ptr<async_buffer_writer> writer_ = nullptr;
     std::shared_ptr<child_process> cp_ = nullptr;
+    std::optional<std::string> project_job_;
     std::optional<std::string> session_id_;
+    std::optional<std::string> build_;
     std::function<void(const std::string&)> session_started_cb_;
     std::function<void(const std::string&)> session_finished_cb_;
     std::function<void(const execution_info&)> job_finished_cb_;

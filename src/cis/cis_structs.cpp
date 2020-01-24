@@ -305,6 +305,23 @@ build::build(const fs_iterator& it)
             info_.date = session_id.substr(0, 19);
         }
     }
+
+    if(auto exit_message_it = it_.find("exitmessage.txt");
+            exit_message_it != it_.end()
+            && exit_message_it->is_regular_file())
+    {
+        std::ifstream exit_message_file(exit_message_it->path());
+        std::string exit_message;
+        exit_message_file.seekg(0, std::ios::end);
+        exit_message.reserve(exit_message_file.tellg());
+        exit_message_file.seekg(0, std::ios::beg);
+
+        exit_message.assign(
+                (std::istreambuf_iterator<char>(exit_message_file)),
+                std::istreambuf_iterator<char>());
+
+        info_.exit_message = exit_message;
+    }
 }
 
 const build::info& build::get_info()

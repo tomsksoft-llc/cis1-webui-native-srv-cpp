@@ -20,6 +20,7 @@ struct cis_job_finished
 {
     std::string status;
     int32_t exit_code;
+    std::optional<std::string> exit_message;
     std::optional<std::string> session_id;
 
     static constexpr auto get_converter()
@@ -36,6 +37,9 @@ struct cis_job_finished
                 .add_field(
                         CT_STRING("exit_code"),
                         ptr_v<&cis_job_finished::exit_code>{})
+                .add_field(
+                        CT_STRING("exit_message"),
+                        ptr_v<&cis_job_finished::exit_message>{})
                 .add_field(
                         CT_STRING("session_id"),
                         ptr_v<&cis_job_finished::session_id>{})

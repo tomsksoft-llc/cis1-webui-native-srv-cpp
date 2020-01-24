@@ -94,8 +94,12 @@ void run_job(
                             if(info.success && info.exit_code)
                             {
                                 dto::cis_job_finished res;
+                                res.status =
+                                        info.exit_code.value() == 0
+                                        ? "success"
+                                        : "failed";
                                 res.exit_code = info.exit_code.value();
-                                res.status = res.exit_code == 0 ? "success" : "failed";
+                                res.exit_message = info.exit_message;
                                 res.session_id = info.session_id;
 
                                 tr.send(res);
