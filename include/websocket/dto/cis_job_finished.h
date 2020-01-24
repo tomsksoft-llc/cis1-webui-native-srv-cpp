@@ -18,7 +18,7 @@ namespace dto
 
 struct cis_job_finished
 {
-    bool success;
+    std::string status;
     int32_t exit_code;
     std::string session_id;
 
@@ -31,8 +31,8 @@ struct cis_job_finished
                         CT_STRING("job"),
                         CT_STRING("finished"))
                 .add_field(
-                        CT_STRING("success"),
-                        ptr_v<&cis_job_finished::success>{})
+                        CT_STRING("status"),
+                        ptr_v<&cis_job_finished::status>{})
                 .add_field(
                         CT_STRING("exit_code"),
                         ptr_v<&cis_job_finished::exit_code>{})
