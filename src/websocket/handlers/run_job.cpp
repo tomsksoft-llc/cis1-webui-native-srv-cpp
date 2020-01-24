@@ -91,11 +91,14 @@ void run_job(
                         ctx.username))
                 .then(  [tr](const cis::execution_info& info)
                         {
-                            dto::cis_job_finished res;
-                            res.success = info.success;
-                            res.exit_code = info.exit_code;
+                            if(info.success)
+                            {
+                                dto::cis_job_finished res;
+                                res.exit_code = info.exit_code;
+                                res.status = res.exit_code == 0 ? "success" : "failed";
 
-                            tr.send(res);
+                                tr.send(res);
+                            }
                         })
                 .run();
         }
