@@ -21,7 +21,7 @@ namespace cis
 struct execution_info
 {
     bool success;
-    int exit_code;
+    std::optional<int> exit_code;
     std::optional<std::string> session_id;
 };
 
