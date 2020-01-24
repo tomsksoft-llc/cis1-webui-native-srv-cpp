@@ -20,7 +20,7 @@ struct cis_job_finished
 {
     std::string status;
     int32_t exit_code;
-    std::string session_id;
+    std::optional<std::string> session_id;
 
     static constexpr auto get_converter()
     {
