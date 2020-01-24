@@ -83,7 +83,8 @@ public:
             std::function<
                     void(const std::string&)> on_session_started,
             std::function<
-                    void(const std::string&)> on_session_finished) override;
+                    void(const std::string&)> on_session_finished,
+            const std::string& username) override;
 
     add_cron_task_t add_cron(
             const std::string& project_name,
@@ -98,7 +99,7 @@ public:
     list_cron_task_t list_cron(
             const std::string& mask) override;
 
-    std::shared_ptr<session> connect_to_session(
+    std::shared_ptr<session_interface> connect_to_session(
             const std::string& session_id) override;
 
     void subscribe_to_session(

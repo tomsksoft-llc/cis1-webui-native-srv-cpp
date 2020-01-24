@@ -12,10 +12,11 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <filesystem>
 
 #include <cis1_proto_utils/transaction.h>
 
-#include "session.h"
+#include "session_interface.h"
 
 namespace cis
 {
@@ -23,9 +24,12 @@ namespace cis
 class session_manager
 {
 public:
-    session_manager(boost::asio::io_context& ctx);
+    session_manager(
+            boost::asio::io_context& ctx,
+            const std::filesystem::path& sessions_root);
 
-    std::shared_ptr<session> connect(const std::string& session_id);
+    std::shared_ptr<session_interface> connect(
+            const std::string& session_id);
 
     void subscribe(
             const std::string& session_id,
@@ -40,7 +44,8 @@ public:
 
 private:
     boost::asio::io_context& ctx_;
-    std::map<std::string, std::weak_ptr<session>> sessions_;
+    std::filesystem::path sessions_root_;
+    std::map<std::string, std::weak_ptr<session_interface>> sessions_;
 };
 
 } // namespace cis

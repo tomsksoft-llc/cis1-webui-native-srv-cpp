@@ -65,6 +65,7 @@ set(${PROJECT_NAME}_SRC
     src/cis/cis_structs.cpp
     src/cis/session_manager.cpp
     src/cis/session.cpp
+    src/cis/offline_session.cpp
     src/cis/cis_manager.cpp
 
     src/exceptions/base_cis_srv_exception.cpp

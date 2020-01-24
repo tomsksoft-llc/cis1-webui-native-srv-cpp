@@ -18,9 +18,10 @@ namespace dto
 
 struct cis_job_finished
 {
-    bool success;
+    std::string status;
     int32_t exit_code;
-    std::string session_id;
+    std::optional<std::string> exit_message;
+    std::optional<std::string> session_id;
 
     static constexpr auto get_converter()
     {
@@ -31,11 +32,14 @@ struct cis_job_finished
                         CT_STRING("job"),
                         CT_STRING("finished"))
                 .add_field(
-                        CT_STRING("success"),
-                        ptr_v<&cis_job_finished::success>{})
+                        CT_STRING("status"),
+                        ptr_v<&cis_job_finished::status>{})
                 .add_field(
                         CT_STRING("exit_code"),
                         ptr_v<&cis_job_finished::exit_code>{})
+                .add_field(
+                        CT_STRING("exit_message"),
+                        ptr_v<&cis_job_finished::exit_message>{})
                 .add_field(
                         CT_STRING("session_id"),
                         ptr_v<&cis_job_finished::session_id>{})

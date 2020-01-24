@@ -32,6 +32,20 @@ public:
         plain,
     };
 
+    enum class hook_event
+    {
+        ping,
+        push,
+        tag_push,
+        issue,
+        note,
+        merge_request,
+        wiki_page,
+        pipeline,
+        build,
+        unknown,
+    };
+
     webhooks_handler(
             auth_manager& auth,
             rights_manager& rights,
@@ -48,13 +62,6 @@ public:
             const std::string& escaped_query_string,
             api api_provider);
 private:
-    enum class hook_event
-    {
-        ping,
-        push,
-        unknown,
-    };
-
     auth_manager& auth_;
     rights_manager& rights_;
     cis::cis_manager_interface& cis_;
@@ -93,6 +100,7 @@ private:
             const std::string& project,
             const std::string& job,
             const std::string& query_string,
+            const std::string& raw_event,
             hook_event ev,
             const std::string& signature);
 
@@ -103,6 +111,7 @@ private:
             const std::string& project,
             const std::string& job,
             const std::string& query_string,
+            const std::string& raw_event,
             hook_event ev);
 
     std::filesystem::path save_body(std::string_view body);
@@ -114,6 +123,7 @@ private:
             const std::string& job,
             const std::string& query_string,
             const std::filesystem::path& body_file,
+            const std::string& raw_event,
             hook_event ev);
 };
 

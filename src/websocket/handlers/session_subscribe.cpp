@@ -34,8 +34,9 @@ public:
         dto::cis_session_log_entry res;
 
         res.session_id = session_id_;
-        res.time = dto.time;
+        res.action = dto.action;
         res.message = dto.message;
+        res.time = dto.time;
 
         return tr_.send(res);
     }
@@ -70,7 +71,7 @@ public:
         }
     }
 
-    void set_session(std::shared_ptr<cis::session> session)
+    void set_session(std::shared_ptr<cis::session_interface> session)
     {
         session_ = session;
     }
@@ -83,7 +84,7 @@ public:
 private:
     std::string session_id_;
     cis1::proto_utils::transaction tr_;
-    std::shared_ptr<cis::session> session_ = nullptr;
+    std::shared_ptr<cis::session_interface> session_ = nullptr;
     uint32_t subscribe_id_;
 };
 

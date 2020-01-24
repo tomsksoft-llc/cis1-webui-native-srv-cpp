@@ -87,14 +87,23 @@ void run_job(
 
                             tr.send(res);
                         },
-                        [](const std::string& session_id){}))
+                        [](const std::string& session_id){},
+                        ctx.username))
                 .then(  [tr](const cis::execution_info& info)
                         {
-                            dto::cis_job_finished res;
-                            res.success = info.success;
-                            res.exit_code = info.exit_code;
+                            if(info.success && info.exit_code)
+                            {
+                                dto::cis_job_finished res;
+                                res.status =
+                                        info.exit_code.value() == 0
+                                        ? "success"
+                                        : "failed";
+                                res.exit_code = info.exit_code.value();
+                                res.exit_message = info.exit_message;
+                                res.session_id = info.session_id;
 
-                            tr.send(res);
+                                tr.send(res);
+                            }
                         })
                 .run();
         }

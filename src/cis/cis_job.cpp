@@ -18,9 +18,12 @@ namespace cis
 
 cis_job::cis_job(
         boost::asio::io_context& ioc,
+        fs_cache& fs,
         const webui_config& webui,
         const std::filesystem::path& cis_root,
-        const std::string& startjob_exec)
+        const std::string& startjob_exec,
+        const std::string& username)
+    : fs_(fs)
 {
     auto env = boost::this_process::environment();
 
@@ -29,6 +32,7 @@ cis_job::cis_job(
     env["webui_public_port"] = std::to_string(webui.public_port);
     env["webui_internal_address"] = webui.internal_address;
     env["webui_internal_port"] = std::to_string(webui.internal_port);
+    env["webui_username"] = username;
 
     cp_ = std::make_shared<child_process>(
             ioc,
@@ -59,22 +63,55 @@ void cis_job::run(
     reader_ = std::make_shared<line_reader>(
             [
             &,
-            got_session_id = false
+            line = 0u
             ](const std::string& str) mutable
             {
-                if(!got_session_id && session_started_cb_)
+                if(line == 0u && session_started_cb_)
                 {
                     session_started_cb_(str);
 
                     session_id_ = str;
-
-                    got_session_id = true;
                 }
+
+                if(line == 1u)
+                {
+                    static const std::regex startjob_status_line_regex(
+                            R"(session_id=)"
+                            R"((.+))"
+                            R"(\s)"
+                            R"(action=)"
+                            R"((.+))"
+                            R"(\s)"
+                            R"(job_name=)"
+                            R"((.+))"
+                            R"(\s)"
+                            R"(build_dir=)"
+                            R"((.+))"
+                            R"(\s)"
+                            R"(pid=)"
+                            R"((.+))"
+                            R"(\s)"
+                            R"(ppid=)"
+                            R"((.+))");
+
+                    if(std::smatch match;
+                       std::regex_match(
+                                str,
+                                match,
+                                startjob_status_line_regex))
+                    {
+                        build_ = match[4];
+                    }
+                }
+
+                ++line;
             });
 
     std::vector<std::string> args;
 
-    args.push_back({path_cat(project_name, "/" + job_name)});
+    project_job_ = path_cat(project_name, "/" + job_name);
+
+    args.push_back({project_job_.value()});
 
     if(force)
     {
@@ -117,10 +154,38 @@ void cis_job::run(
 
                         if(job_finished_cb_)
                         {
+                            std::optional<std::string> exit_message_opt;
+
+                            if(project_job_ && build_)
+                            {
+                                auto exit_message_path = std::filesystem::path{"/"}
+                                                       / project_job_.value()
+                                                       / build_.value()
+                                                       / "exitmessage.txt";
+
+                                if(auto exit_message_it = fs_.find(exit_message_path);
+                                        exit_message_it != fs_.end()
+                                        && exit_message_it->is_regular_file())
+                                {
+                                    std::ifstream exit_message_file(exit_message_it->path());
+                                    std::string exit_message;
+                                    exit_message_file.seekg(0, std::ios::end);
+                                    exit_message.reserve(exit_message_file.tellg());
+                                    exit_message_file.seekg(0, std::ios::beg);
+
+                                    exit_message.assign(
+                                            (std::istreambuf_iterator<char>(exit_message_file)),
+                                            std::istreambuf_iterator<char>());
+
+                                    exit_message_opt = exit_message;
+                                }
+                            }
+
                             job_finished_cb_(
                                     {
                                         true,
                                         exit_code ? *exit_code : -1,
+                                        exit_message_opt,
                                         session_id_
                                     });
                         }
@@ -134,7 +199,7 @@ void cis_job::run(
                             session_finished_cb_(session_id_.value());
                         }
 
-                        job_finished_cb_({false, -1, std::nullopt});
+                        job_finished_cb_({false, -1, std::nullopt, std::nullopt});
 
                         job_finished_cb_ = {};
                     }));

@@ -85,6 +85,8 @@ struct build_interface
     struct info
     {
         std::optional<int> status;
+        std::optional<std::string> exit_message;
+        std::optional<std::string> session_id;
         std::optional<std::string> date;
     };
 

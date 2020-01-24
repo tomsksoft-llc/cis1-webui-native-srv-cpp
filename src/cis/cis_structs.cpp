@@ -290,18 +290,37 @@ build::build(const fs_iterator& it)
         info_.status = exitcode;
     }
 
-    if(auto session_id = it_.find("session_id.txt");
-            session_id != it_.end()
-            && session_id->is_regular_file())
+    if(auto session_id_it = it_.find("session_id.txt");
+            session_id_it != it_.end()
+            && session_id_it->is_regular_file())
     {
-        std::ifstream session_id_file(session_id->path());
-        std::string date;
-        session_id_file >> date;
+        std::ifstream session_id_file(session_id_it->path());
+        std::string session_id;
+        session_id_file >> session_id;
 
-        if(date.length() > 19)
+        info_.session_id = session_id;
+
+        if(session_id.length() > 19)
         {
-            info_.date = date.substr(0, 19);
+            info_.date = session_id.substr(0, 19);
         }
+    }
+
+    if(auto exit_message_it = it_.find("exitmessage.txt");
+            exit_message_it != it_.end()
+            && exit_message_it->is_regular_file())
+    {
+        std::ifstream exit_message_file(exit_message_it->path());
+        std::string exit_message;
+        exit_message_file.seekg(0, std::ios::end);
+        exit_message.reserve(exit_message_file.tellg());
+        exit_message_file.seekg(0, std::ios::beg);
+
+        exit_message.assign(
+                (std::istreambuf_iterator<char>(exit_message_file)),
+                std::istreambuf_iterator<char>());
+
+        info_.exit_message = exit_message;
     }
 }
 
