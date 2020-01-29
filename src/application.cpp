@@ -475,6 +475,7 @@ std::optional<application> application::create(
     auto db = database::database_wrapper::create(
             *(config->get_entry<std::filesystem::path>("db_root")) / "db.sqlite",
             config->get_entry<user_credentials>("admin_credentials"),
+            config->get_entry<user_credentials>("guest_credentials"),
             ec);
 
     if(ec)

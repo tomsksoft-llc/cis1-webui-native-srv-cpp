@@ -128,6 +128,7 @@ public:
     static std::unique_ptr<database_wrapper> create(
             const std::filesystem::path& path,
             user_credentials* admin_credentials,
+            user_credentials* guest_credentials,
             std::error_code& ec);
 
     template <class... Args>
@@ -156,9 +157,8 @@ private:
             const std::filesystem::path& path);
 
     void init(
-            const std::string& username,
-            const std::string& email,
-            const std::string& password);
+            user_credentials *admin_credentials,
+            user_credentials *guest_credentials);
 };
 
 } // namespace database
