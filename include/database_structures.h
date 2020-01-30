@@ -74,4 +74,13 @@ struct project_user_right
     bool execute;
 };
 
+struct projects_group_right
+{
+    intmax_t id;
+    intmax_t group_id;
+    bool read;
+    bool write;
+    bool execute;
+};
+
 } // namespace database
