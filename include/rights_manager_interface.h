@@ -47,8 +47,12 @@ struct rights_manager_interface
             database::project_user_right rights,
             std::error_code& ec) = 0;
 
+    virtual std::optional<database::projects_group_right> get_group_projects_permissions(
+            intmax_t group_id,
+            std::error_code& ec) const = 0;
+
     virtual bool set_group_projects_permissions(
             intmax_t group_id,
             const project_rights& rights,
-            std::error_code& ec) = 0;
+            std::error_code& ec) const = 0;
 };

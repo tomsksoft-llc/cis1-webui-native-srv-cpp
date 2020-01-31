@@ -204,10 +204,35 @@ bool rights_manager::set_user_project_permissions(
     }
 }
 
+std::optional<database::projects_group_right>
+rights_manager::get_group_projects_permissions(
+        intmax_t group_id,
+        std::error_code& ec) const
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        const auto rights = db->get_all<projects_group_right>(
+                where(c(&projects_group_right::group_id) == group_id));
+
+        db.commit();
+        return rights.size()
+               == 1
+               ? std::make_optional<projects_group_right>(rights[0])
+               : std::nullopt;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+        return std::nullopt;
+    }
+}
+
 bool rights_manager::set_group_projects_permissions(
         intmax_t group_id,
         const project_rights& rights,
-        std::error_code& ec)
+        std::error_code& ec) const
 {
     try
     {
