@@ -203,3 +203,47 @@ bool rights_manager::set_user_project_permissions(
         return false;
     }
 }
+
+bool rights_manager::set_group_projects_permissions(
+        intmax_t group_id,
+        const project_rights& rights,
+        std::error_code& ec)
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        projects_group_right group_rights{-1,
+                                          group_id,
+                                          rights.read,
+                                          rights.write,
+                                          rights.execute};
+
+        auto ids = db->select(&projects_group_right::id,
+                              where(c(&projects_group_right::group_id) == group_id));
+
+        if(ids.size() == 1)
+        {
+            group_rights.id = ids[0];
+            db->replace(group_rights);
+        }
+        else if(ids.empty())
+        {
+            //the group_rights.id is -1 already
+            db->insert(group_rights);
+        }
+        else
+        {
+            // there should be no other rows for the group
+            return false;
+        }
+
+        db.commit();
+        return true;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+        return false;
+    }
+}

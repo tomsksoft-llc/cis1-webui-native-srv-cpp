@@ -80,6 +80,10 @@ struct auth_manager_interface
     virtual std::vector<user_info> get_user_infos(
             std::error_code& ec) const = 0;
 
+    virtual std::optional<database::group> get_group_info(
+            const std::string& group_name,
+            std::error_code& ec) const = 0;
+
     virtual bool delete_token(
             const std::string& token,
             std::error_code& ec) = 0;

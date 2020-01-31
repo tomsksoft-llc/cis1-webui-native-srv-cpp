@@ -44,3 +44,4 @@
 #include "handlers/remove_cis_build.h"
 #include "handlers/set_fs_entry_executable_flag.h"
 #include "handlers/get_system_version.h"
+#include "handlers/set_group_projects_permissions.h"

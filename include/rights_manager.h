@@ -46,6 +46,11 @@ public:
             database::project_user_right rights,
             std::error_code& ec) override;
 
+    bool set_group_projects_permissions(
+            intmax_t group_id,
+            const project_rights& rights,
+            std::error_code& ec);
+
 private:
     boost::asio::io_context& ioc_;
     database::database_wrapper& db_;
