@@ -51,11 +51,11 @@ public:
             database::project_user_right rights,
             std::error_code& ec) final;
 
-    std::optional<database::projects_group_right> get_group_projects_permissions(
+    std::optional<database::group_default_rights> get_group_default_permissions(
             intmax_t group_id,
             std::error_code& ec) const final;
 
-    bool set_group_projects_permissions(
+    bool set_group_default_permissions(
             intmax_t group_id,
             const project_rights& rights,
             std::error_code& ec) const final;

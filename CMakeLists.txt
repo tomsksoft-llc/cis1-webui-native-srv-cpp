@@ -53,8 +53,8 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/remove_cis_build.cpp
     src/websocket/handlers/set_fs_entry_executable_flag.cpp
     src/websocket/handlers/get_system_version.cpp
-    src/websocket/handlers/set_group_projects_permissions.cpp
-    src/websocket/handlers/get_group_projects_permissions.cpp
+    src/websocket/handlers/set_group_default_permissions.cpp
+    src/websocket/handlers/get_group_default_permissions.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 

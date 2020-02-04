@@ -6,20 +6,20 @@
  *
  */
 
-#include "websocket/handlers/get_group_projects_permissions.h"
+#include "websocket/handlers/get_group_default_permissions.h"
 
 #include "websocket/dto/group_error_doesnt_exist.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
-#include "websocket/dto/group_projects_permissions_get_success.h"
+#include "websocket/dto/group_default_permissions_get_success.h"
 
 namespace websocket::handlers
 {
 
-void get_group_projects_permissions(
+void get_group_default_permissions(
         auth_manager_interface& authentication_handler,
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::group_projects_permissions_get& req,
+        const dto::group_default_permissions_get& req,
         cis1::proto_utils::transaction tr)
 {
     std::error_code ec;
@@ -47,17 +47,16 @@ void get_group_projects_permissions(
     }
 
     const auto group_id = opt_group_info->id;
-    const auto permissions = rights.get_group_projects_permissions(group_id, ec);
+    const auto permissions = rights.get_group_default_permissions(group_id, ec);
     if(!permissions || ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    //    dto::group_projects_permissions_set_success res;
-    dto::group_projects_permissions_get_success res{req.group,
-                                                    permissions->read,
-                                                    permissions->write,
-                                                    permissions->execute};
+    dto::group_default_permissions_get_success res{req.group,
+                                                   permissions->read,
+                                                   permissions->write,
+                                                   permissions->execute};
     return tr.send(res);
 }
 

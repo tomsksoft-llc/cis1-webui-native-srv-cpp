@@ -149,7 +149,7 @@ std::optional<project_rights> rights_manager::check_project_right(
             return std::nullopt;
         }
 
-        auto rights = get_group_projects_permissions(groups[0], ec);
+        auto rights = get_group_default_permissions(groups[0], ec);
         if(!rights || ec)
         {
             return std::nullopt;
@@ -269,8 +269,8 @@ bool rights_manager::set_user_project_permissions(
     }
 }
 
-std::optional<database::projects_group_right>
-rights_manager::get_group_projects_permissions(
+std::optional<database::group_default_rights>
+rights_manager::get_group_default_permissions(
         intmax_t group_id,
         std::error_code& ec) const
 {
@@ -278,13 +278,13 @@ rights_manager::get_group_projects_permissions(
     {
         auto db = db_.make_transaction();
 
-        const auto rights = db->get_all<projects_group_right>(
-                where(c(&projects_group_right::group_id) == group_id));
+        const auto rights = db->get_all<group_default_rights>(
+                where(c(&group_default_rights::group_id) == group_id));
 
         db.commit();
         return rights.size()
                == 1
-               ? std::make_optional<projects_group_right>(rights[0])
+               ? std::make_optional<group_default_rights>(rights[0])
                : std::nullopt;
     }
     catch(const std::system_error& e)
@@ -294,7 +294,7 @@ rights_manager::get_group_projects_permissions(
     }
 }
 
-bool rights_manager::set_group_projects_permissions(
+bool rights_manager::set_group_default_permissions(
         intmax_t group_id,
         const project_rights& rights,
         std::error_code& ec) const
@@ -303,14 +303,14 @@ bool rights_manager::set_group_projects_permissions(
     {
         auto db = db_.make_transaction();
 
-        projects_group_right group_rights{-1,
+        group_default_rights group_rights{-1,
                                           group_id,
                                           rights.read,
                                           rights.write,
                                           rights.execute};
 
-        auto ids = db->select(&projects_group_right::id,
-                              where(c(&projects_group_right::group_id) == group_id));
+        auto ids = db->select(&group_default_rights::id,
+                              where(c(&group_default_rights::group_id) == group_id));
 
         if(ids.size() == 1)
         {

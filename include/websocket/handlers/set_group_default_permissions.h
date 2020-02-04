@@ -14,16 +14,16 @@
 #include "rights_manager_interface.h"
 #include "auth_manager_interface.h"
 
-#include "websocket/dto/group_projects_permissions_get.h"
+#include "websocket/dto/group_default_permissions_set.h"
 
 namespace websocket::handlers
 {
 
-void get_group_projects_permissions(
+void set_group_default_permissions(
         auth_manager_interface& authentication_handler,
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::group_projects_permissions_get& req,
+        const dto::group_default_permissions_set& req,
         cis1::proto_utils::transaction tr);
 
 } // namespace websocket::handlers

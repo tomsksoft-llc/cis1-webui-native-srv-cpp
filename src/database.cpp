@@ -129,7 +129,7 @@ void database_wrapper::init(
 
     db.commit();
 
-    db->insert(projects_group_right{
+    db->insert(group_default_rights{
             -1,
             user_group_id,
             true, // read
@@ -137,7 +137,7 @@ void database_wrapper::init(
             true // execute
     });
 
-    db->insert(projects_group_right{
+    db->insert(group_default_rights{
             -1,
             admin_group_id,
             true, // read
@@ -145,7 +145,7 @@ void database_wrapper::init(
             true // execute
     });
 
-    db->insert(projects_group_right{
+    db->insert(group_default_rights{
             -1,
             guest_group_id,
             true, // read

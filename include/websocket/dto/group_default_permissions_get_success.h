@@ -11,7 +11,7 @@
 namespace websocket::dto
 {
 
-struct group_projects_permissions_get_success
+struct group_default_permissions_get_success
 {
     std::string group;
     bool read;
@@ -21,25 +21,25 @@ struct group_projects_permissions_get_success
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<group_projects_permissions_get_success>()
+        return make_meta_converter<group_default_permissions_get_success>()
                 .set_name(
                         CT_STRING("group"),
-                        CT_STRING("projects"),
+                        CT_STRING("default"),
                         CT_STRING("permissions"),
                         CT_STRING("get"),
                         CT_STRING("success"))
                 .add_field(
                         CT_STRING("group"),
-                        ptr_v<&group_projects_permissions_get_success::group>{})
+                        ptr_v<&group_default_permissions_get_success::group>{})
                 .add_field(
                         CT_STRING("read"),
-                        ptr_v<&group_projects_permissions_get_success::read>{})
+                        ptr_v<&group_default_permissions_get_success::read>{})
                 .add_field(
                         CT_STRING("write"),
-                        ptr_v<&group_projects_permissions_get_success::write>{})
+                        ptr_v<&group_default_permissions_get_success::write>{})
                 .add_field(
                         CT_STRING("execute"),
-                        ptr_v<&group_projects_permissions_get_success::execute>{})
+                        ptr_v<&group_default_permissions_get_success::execute>{})
                 .done();
     }
 };

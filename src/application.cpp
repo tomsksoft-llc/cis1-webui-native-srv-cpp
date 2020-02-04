@@ -276,13 +276,13 @@ std::shared_ptr<websocket_router> make_ws_router(
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::group_projects_permissions_get>(
-            std::bind(&wsh::get_group_projects_permissions,
+    dispatcher.add_event_handler<ws::dto::group_default_permissions_get>(
+            std::bind(&wsh::get_group_default_permissions,
                       std::ref(auth_manager_),
                       std::ref(rights_manager_),
                       _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::group_projects_permissions_set>(
-            std::bind(&wsh::set_group_projects_permissions,
+    dispatcher.add_event_handler<ws::dto::group_default_permissions_set>(
+            std::bind(&wsh::set_group_default_permissions,
                       std::ref(auth_manager_),
                       std::ref(rights_manager_),
                       _1, _2, _3));
