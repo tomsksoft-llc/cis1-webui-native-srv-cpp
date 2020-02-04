@@ -15,6 +15,7 @@
 
 #include "rights_manager_interface.h"
 #include "database_structures.h"
+#include "request_context.h"
 
 struct project_rights
 {
@@ -28,12 +29,17 @@ struct rights_manager_interface
     virtual ~rights_manager_interface() = default;
 
     virtual std::optional<bool> check_user_permission(
-            const std::string& username,
+            const request_context::cln_info_holder& cln_info,
             const std::string& permission_name,
             std::error_code& ec) const = 0;
 
-    virtual std::optional<database::project_user_right> check_project_right(
+    virtual std::optional<database::project_user_right> get_project_user_right(
             const std::string& username,
+            const std::string& project,
+            std::error_code& ec) const = 0;
+
+    virtual std::optional<project_rights> check_project_right(
+            const request_context::cln_info_holder& cln_info,
             const std::string& project,
             std::error_code& ec) const = 0;
 

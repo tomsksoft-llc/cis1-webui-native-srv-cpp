@@ -25,7 +25,7 @@ void get_user_permissions(
 {
     std::error_code ec;
 
-    auto perm = rights.check_user_permission(ctx.username, "users.permissions", ec);
+    auto perm = rights.check_user_permission(ctx.cln_info, "users.permissions", ec);
 
     if(ec)
     {

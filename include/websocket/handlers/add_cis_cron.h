@@ -48,15 +48,14 @@ void add_cis_cron(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+    auto perm = rights.check_project_right(ctx.cln_info, req.project, ec);
 
     if(ec)
     {
         return handle.send_error("Internal error.");
     }
 
-    auto permitted =
-            perm.has_value() ? (perm.value().execute && perm.value().write) : true;
+    auto permitted = perm && perm.value().write && perm.value().execute;
 
     if(job != nullptr && permitted)
     {

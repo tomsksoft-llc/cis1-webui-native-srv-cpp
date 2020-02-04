@@ -31,14 +31,14 @@ void get_project_info(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+    auto perm = rights.check_project_right(ctx.cln_info, req.project, ec);
 
     if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    auto permitted = perm.has_value() ? perm.value().read : true;
+    auto permitted = perm && perm.value().read;
 
     if(project != nullptr && permitted)
     {

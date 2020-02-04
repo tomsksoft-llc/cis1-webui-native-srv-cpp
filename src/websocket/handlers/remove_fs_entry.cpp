@@ -46,7 +46,7 @@ void remove_fs_entry(
         return tr.send_error("Internal error.");
     }
 
-    if(path_rights && !path_rights.value().write)
+    if(!path_rights || !path_rights.value().write)
     {
         dto::user_permissions_error_access_denied err;
 

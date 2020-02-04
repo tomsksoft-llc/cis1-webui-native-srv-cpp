@@ -31,7 +31,7 @@ handle_result download_handler::operator()(
         std::error_code ec;
 
         auto project_rights
-                = rights_.check_project_right(ctx.username, project, ec);
+                = rights_.check_project_right(ctx.cln_info, project, ec);
 
         if(ec)
         {
@@ -40,7 +40,7 @@ handle_result download_handler::operator()(
             return handle_result::error;
         }
 
-        if(project_rights && !project_rights.value().write)
+        if(!project_rights || !project_rights.value().write)
         {
             ctx.res_status = beast::http::status::forbidden;
 

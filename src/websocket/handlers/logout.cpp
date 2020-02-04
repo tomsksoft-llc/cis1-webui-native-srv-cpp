@@ -8,6 +8,8 @@
 
 #include "websocket/handlers/logout.h"
 
+#include <tpl_helpers/overloaded.h>
+
 #include "websocket/dto/auth_logout_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"
 
@@ -32,30 +34,35 @@ void logout(
         return tr.send_error("Internal error.");
     }
 
-    if(username && username.value() == ctx.username)
+    const auto credentials_correct
+            = std::visit(
+                    meta::overloaded{
+                            [&username, &req](const request_context::user_info& cln_ctx)
+                            {
+                                return username
+                                       && username.value() == cln_ctx.username
+                                       && req.token == cln_ctx.active_token;
+                            },
+                            [](const request_context::guest_info& cln_ctx)
+                            {
+                                return false;
+                            }},
+                    ctx.cln_info);
+
+    if(!credentials_correct)
     {
-        if(req.token == ctx.active_token)
-        {
-            //TODO clean subs?
-            ctx.active_token.clear();
-            ctx.username.clear();
-        }
-
-        authentication_handler.delete_token(req.token, ec);
-
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
-
-        dto::auth_logout_success res;
-
-        return tr.send(res);
+        dto::auth_error_wrong_credentials err;
+        return tr.send_error(err, "Invalid token.");
     }
 
-    dto::auth_error_wrong_credentials err;
+    authentication_handler.delete_token(req.token, ec);
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
 
-    return tr.send_error(err, "Invalid token.");
+    dto::auth_logout_success res;
+    return tr.send(res);
 }
 
 } // namespace handlers

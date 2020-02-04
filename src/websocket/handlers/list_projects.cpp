@@ -49,7 +49,7 @@ void list_projects(
 
                         std::error_code ec;
 
-                        auto perm = rights.check_project_right(ctx.username, entry.name, ec);
+                        auto perm = rights.check_project_right(ctx.cln_info, entry.name, ec);
 
                         //ignore ec
 

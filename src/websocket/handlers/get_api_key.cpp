@@ -8,6 +8,8 @@
 
 #include "websocket/handlers/get_api_key.h"
 
+#include <tpl_helpers/overloaded.h>
+
 #include "websocket/dto/user_api_key_get_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 
@@ -23,12 +25,24 @@ void get_api_key(
         const dto::user_api_key_get& req,
         cis1::proto_utils::transaction tr)
 {
-    if(ctx.username.empty())
+    const auto opt_ctx_username = std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info& ctx) -> std::optional<std::string>
+                    { return ctx.username; },
+                    [](const request_context::guest_info& ctx) -> std::optional<std::string>
+                    { return std::nullopt; }
+            },
+            ctx.cln_info
+    );
+
+    if(!opt_ctx_username)
     {
         dto::user_permissions_error_access_denied err;
 
         return tr.send_error(err, "Action not permitted.");
     }
+
+    const auto &ctx_username = opt_ctx_username.value();
 
     std::error_code ec;
 
@@ -52,12 +66,12 @@ void get_api_key(
         return tr.send(res);
     };
 
-    if(ctx.username == req.username)
+    if(ctx_username == req.username)
     {
         return get();
     }
 
-    auto group = authentication_handler.get_group(ctx.username, ec);
+    auto group = authentication_handler.get_group(ctx_username, ec);
 
     if(!group || ec)
     {

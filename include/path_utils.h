@@ -15,7 +15,7 @@
 
 bool validate_path(const std::filesystem::path& path);
 
-std::optional<database::project_user_right> get_path_rights(
+std::optional<project_rights> get_path_rights(
         request_context& ctx,
         rights_manager_interface& rights,
         const std::filesystem::path& path,

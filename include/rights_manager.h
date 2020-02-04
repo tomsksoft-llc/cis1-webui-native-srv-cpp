@@ -27,13 +27,18 @@ public:
             database::database_wrapper& db);
 
     std::optional<bool> check_user_permission(
-            const std::string& username,
+            const request_context::cln_info_holder& cln_info,
             const std::string& permission_name,
             std::error_code& ec) const final;
 
-    std::optional<database::project_user_right> check_project_right(
+    std::optional<database::project_user_right> get_project_user_right(
             const std::string& username,
             const std::string& project,
+            std::error_code& ec) const final;
+
+    std::optional<project_rights> check_project_right(
+            const request_context::cln_info_holder& cln_info,
+            const std::string& projectname,
             std::error_code& ec) const final;
 
     std::map<std::string, project_rights> get_permissions(

@@ -38,14 +38,22 @@ void run_job(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+    auto perm = rights.check_project_right(ctx.cln_info, req.project, ec);
 
     if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    auto permitted = perm.has_value() ? perm.value().execute : true;
+    auto permitted = perm && perm.value().execute;
+
+    const auto username = std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info& ctx) { return ctx.username; },
+                    [](const request_context::guest_info& ctx) { return std::string{}; }
+            },
+            ctx.cln_info
+    );
 
     if(job != nullptr && permitted)
     {
@@ -88,7 +96,7 @@ void run_job(
                             tr.send(res);
                         },
                         [](const std::string& session_id){},
-                        ctx.username))
+                        username))
                 .then(  [tr](const cis::execution_info& info)
                         {
                             if(info.success && info.exit_code)

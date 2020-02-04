@@ -8,6 +8,8 @@
 
 #include "rights_manager.h"
 
+#include "tpl_helpers/overloaded.h"
+
 using namespace database;
 using namespace sqlite_orm;
 
@@ -19,10 +21,17 @@ rights_manager::rights_manager(
 {}
 
 std::optional<bool> rights_manager::check_user_permission(
-        const std::string& username,
+        const request_context::cln_info_holder& cln_info,
         const std::string& permission_name,
         std::error_code& ec) const
 {
+    const auto username = std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info& ctx) { return ctx.username; },
+                    [](const request_context::guest_info& ctx) { return ctx.guestname; }
+            },
+            cln_info);
+
     try
     {
         auto db = db_.make_transaction();
@@ -59,7 +68,7 @@ std::optional<bool> rights_manager::check_user_permission(
     }
 }
 
-std::optional<project_user_right> rights_manager::check_project_right(
+std::optional<project_user_right> rights_manager::get_project_user_right(
         const std::string& username,
         const std::string& projectname,
         std::error_code& ec) const
@@ -96,6 +105,62 @@ std::optional<project_user_right> rights_manager::check_project_right(
     {
         ec = e.code();
 
+        return std::nullopt;
+    }
+}
+
+std::optional<project_rights> rights_manager::check_project_right(
+        const request_context::cln_info_holder& cln_info,
+        const std::string& projectname,
+        std::error_code& ec) const
+{
+    const auto username = std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info& ctx) { return ctx.username; },
+                    [](const request_context::guest_info& ctx) { return ctx.guestname; }
+            },
+            cln_info);
+
+    try
+    {
+        auto project_right = get_project_user_right(username, projectname, ec);
+
+        if(project_right && !ec)
+        {
+            const auto rights = project_right.value();
+            return project_rights{rights.read, rights.write, rights.execute};
+        }
+
+        ec.clear();
+
+        auto db = db_.make_transaction();
+
+        // there is no a project right within the project_user_rights table
+        // try to load a projects rights for a user's group
+
+        auto groups = db->select(
+                &user::group_id,
+                where(c(&user::name) == username));
+
+        db.commit();
+
+        if(groups.size() != 1)
+        {
+            return std::nullopt;
+        }
+
+        auto rights = get_group_projects_permissions(groups[0], ec);
+        if(!rights || ec)
+        {
+            return std::nullopt;
+        }
+
+        const auto rights_val = rights.value();
+        return project_rights{rights_val.read, rights_val.write, rights_val.execute};
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
         return std::nullopt;
     }
 }

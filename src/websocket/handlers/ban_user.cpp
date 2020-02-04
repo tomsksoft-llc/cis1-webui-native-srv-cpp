@@ -41,7 +41,7 @@ void ban_user(
         return tr.send_error(err, "Invalid username.");
     }
 
-    auto perm = rights.check_user_permission(ctx.username, "users.change_group", ec);
+    const auto perm = rights.check_user_permission(ctx.cln_info, "users.change_group", ec);
 
     if(ec)
     {

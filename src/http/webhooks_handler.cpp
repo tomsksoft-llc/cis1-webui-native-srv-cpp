@@ -104,11 +104,19 @@ handle_result webhooks_handler::operator()(
         return handle_result::error;
     }
 
-    ctx.username = username;
-    ctx.api_access_key = user->api_access_key.value();
+    const std::string active_token = std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info& ctx) { return ctx.active_token; },
+                    [](const request_context::guest_info&) { return std::string{}; }
+            },
+            ctx.cln_info);
+
+    ctx.cln_info = request_context::user_info{username,
+                                              active_token,
+                                              user->api_access_key.value()};
 
     auto project_rights
-            = rights_.check_project_right(ctx.username, project, ec);
+            = rights_.check_project_right(ctx.cln_info, project, ec);
 
     if(ec)
     {
@@ -117,7 +125,7 @@ handle_result webhooks_handler::operator()(
         return handle_result::error;
     }
 
-    if(project_rights && !project_rights.value().write)
+    if(!project_rights || !project_rights.value().write)
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
@@ -238,11 +246,19 @@ handle_result webhooks_handler::handle_gitlab_headers(
         const std::string& job,
         const std::string& query_string)
 {
+    const auto api_access_key = std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info& ctx) { return ctx.api_access_key; },
+                    [](const request_context::guest_info& ctx) { return std::string{}; }
+            },
+            ctx.cln_info
+    );
+
     auto signature_it = req.find("X-Gitlab-Token");
     auto event_it = req.find("X-Gitlab-Event");
     if(signature_it == req.end()
             || event_it == req.end()
-            || signature_it->value() != ctx.api_access_key)
+            || signature_it->value() != api_access_key)
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
@@ -294,13 +310,20 @@ handle_result webhooks_handler::handle_plain_headers(
         const std::string& job,
         const std::string& query_string)
 {
-    auto signature_it = req.find("X-Plain-Token");
+    const auto api_access_key = std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info& ctx) { return ctx.api_access_key; },
+                    [](const request_context::guest_info& ctx) { return std::string{}; }
+            },
+            ctx.cln_info
+    );
 
+    auto signature_it = req.find("X-Plain-Token");
     auto event_it = req.find("X-Plain-Event");
 
     if(signature_it == req.end()
             || event_it == req.end()
-            || signature_it->value() != ctx.api_access_key)
+            || signature_it->value() != api_access_key)
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
@@ -357,9 +380,12 @@ void webhooks_handler::handle_github_signature(
 {
     openssl::hmac hmac;
 
+    auto* cln_info = std::get_if<request_context::user_info>(&ctx.cln_info);
+    assert(cln_info != nullptr);
+
     hmac.set_secret_key(
-            reinterpret_cast<unsigned char*>(ctx.api_access_key.data()),
-            ctx.api_access_key.length());
+            reinterpret_cast<unsigned char*>(cln_info->api_access_key.data()),
+            cln_info->api_access_key.length());
 
     auto result = hmac.calc_digest(
             reinterpret_cast<unsigned char*>(req.body().data()),
@@ -419,6 +445,13 @@ void webhooks_handler::finish(
                 raw_event,
                 ev);
 
+        const std::string username = std::visit(
+                meta::overloaded{
+                        [](const request_context::user_info& ctx) { return ctx.username; },
+                        [](const request_context::guest_info&) { return std::string{}; }
+                },
+                ctx.cln_info);
+
         make_async_chain(queue.get_executor())
             .then(cis_.run_job(
                         project,
@@ -427,7 +460,7 @@ void webhooks_handler::finish(
                         params,
                         {},
                         {},
-                        ctx.username))
+                        username))
             .then([file_path](auto&&...)
                         {
                             std::error_code ec;
