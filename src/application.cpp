@@ -151,6 +151,11 @@ std::shared_ptr<websocket_router> make_ws_router(
             std::bind(&wsh::change_pass,
                     std::ref(auth_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::user_auth_add>(
+            std::bind(&wsh::add_user,
+                      std::ref(auth_manager_),
+                      std::ref(rights_manager_),
+                      _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::user_list>(
             std::bind(&wsh::list_users,
                 std::ref(auth_manager_),

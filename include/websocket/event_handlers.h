@@ -46,3 +46,4 @@
 #include "handlers/get_system_version.h"
 #include "handlers/get_group_default_permissions.h"
 #include "handlers/set_group_default_permissions.h"
+#include "handlers/add_user.h"

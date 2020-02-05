@@ -121,6 +121,12 @@ void database_wrapper::init(
             admin_group_id,
             (intmax_t)db->last_insert_rowid()});
 
+    db->insert(permission{-1, "users.add"});
+    db->insert(group_permission{
+            -1,
+            admin_group_id,
+            (intmax_t)db->last_insert_rowid()});
+
     db->insert(permission{-1, "groups.projects.permissions"});
     db->insert(group_permission{
             -1,

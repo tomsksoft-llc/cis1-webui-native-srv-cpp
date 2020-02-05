@@ -55,6 +55,7 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/get_system_version.cpp
     src/websocket/handlers/set_group_default_permissions.cpp
     src/websocket/handlers/get_group_default_permissions.cpp
+    src/websocket/handlers/add_user.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 

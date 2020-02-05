@@ -34,7 +34,7 @@ void ban_user(
         return tr.send_error("Internal error.");
     }
 
-    if(!user_exists)
+    if(!user_exists || req.username == "guest")
     {
         dto::user_auth_error_user_not_found err;
 
