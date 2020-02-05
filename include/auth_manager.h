@@ -44,7 +44,7 @@ public:
 
     bool has_email(
             const std::string& email,
-            std::error_code& ec) const;
+            std::error_code& ec) const final;
 
     bool change_group(
             const std::string& username,
