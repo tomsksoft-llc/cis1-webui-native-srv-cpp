@@ -118,7 +118,7 @@ private:
 
     const char* ev_to_string(hook_event ev);
 
-    std::vector<std::string> prepare_params(
+    std::vector<std::pair<std::string, std::string>> prepare_params(
             const std::string& project,
             const std::string& job,
             const std::string& query_string,

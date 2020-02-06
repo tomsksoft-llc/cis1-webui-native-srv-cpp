@@ -53,7 +53,7 @@ void run_job(
     if(job != nullptr && permitted)
     {
         auto& job_params = job->get_params();
-        std::vector<std::string> param_values;
+        std::vector<std::pair<std::string, std::string>> param_values;
         param_values.reserve(job_params.size());
 
         for(auto& param : job_params)
@@ -67,11 +67,11 @@ void run_job(
                     return tr.send_error(err, "Invalid params.");
                 }
 
-                param_values.push_back(param.default_value);
+                param_values.push_back({param.name, param.default_value});
             }
             else
             {
-                param_values.push_back(params[param.name]);
+                param_values.push_back({param.name, params[param.name]});
             }
         }
 
