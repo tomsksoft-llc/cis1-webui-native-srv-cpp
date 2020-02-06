@@ -8,8 +8,6 @@
 
 #include "rights_manager.h"
 
-#include "tpl_helpers/overloaded.h"
-
 using namespace database;
 using namespace sqlite_orm;
 
@@ -21,16 +19,11 @@ rights_manager::rights_manager(
 {}
 
 std::optional<bool> rights_manager::check_user_permission(
-        const request_context::cln_info_holder& cln_info,
+        const request_context::client_info_holder& cln_info,
         const std::string& permission_name,
         std::error_code& ec) const
 {
-    const auto username = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) { return ctx.username; },
-                    [](const request_context::guest_info& ctx) { return ctx.guestname; }
-            },
-            cln_info);
+    const auto username = request_context::user_or_guest_name(cln_info);
 
     try
     {
@@ -110,16 +103,11 @@ std::optional<project_user_right> rights_manager::get_project_user_right(
 }
 
 std::optional<project_rights> rights_manager::check_project_right(
-        const request_context::cln_info_holder& cln_info,
+        const request_context::client_info_holder& cln_info,
         const std::string& projectname,
         std::error_code& ec) const
 {
-    const auto username = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) { return ctx.username; },
-                    [](const request_context::guest_info& ctx) { return ctx.guestname; }
-            },
-            cln_info);
+    const auto username = request_context::user_or_guest_name(cln_info);
 
     try
     {

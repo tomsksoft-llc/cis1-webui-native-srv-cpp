@@ -27,7 +27,7 @@ public:
             database::database_wrapper& db);
 
     std::optional<bool> check_user_permission(
-            const request_context::cln_info_holder& cln_info,
+            const request_context::client_info_holder& cln_info,
             const std::string& permission_name,
             std::error_code& ec) const final;
 
@@ -37,7 +37,7 @@ public:
             std::error_code& ec) const final;
 
     std::optional<project_rights> check_project_right(
-            const request_context::cln_info_holder& cln_info,
+            const request_context::client_info_holder& cln_info,
             const std::string& projectname,
             std::error_code& ec) const final;
 

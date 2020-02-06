@@ -24,7 +24,7 @@ void get_group_default_permissions(
 {
     std::error_code ec;
 
-    const auto perm = rights.check_user_permission(ctx.cln_info, "groups.projects.permissions", ec);
+    const auto perm = rights.check_user_permission(ctx.client_info, "groups.projects.permissions", ec);
 
     if(ec)
     {

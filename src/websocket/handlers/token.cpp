@@ -38,7 +38,7 @@ void token(
         return tr.send_error(err, "Invalid token.");
     }
 
-    ctx.cln_info = request_context::user_info{username.value(), req.token};
+    ctx.client_info = request_context::user_info{username.value(), req.token};
 
     auto group = authentication_handler.get_group(username.value(), ec);
     if(!group || ec)

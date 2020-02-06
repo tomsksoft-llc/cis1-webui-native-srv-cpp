@@ -35,7 +35,7 @@ handle_result multipart_form_handler::upload(
         std::error_code ec;
 
         auto project_rights
-                = rights_.check_project_right(ctx.cln_info, project, ec);
+                = rights_.check_project_right(ctx.client_info, project, ec);
 
         if(ec)
         {
@@ -101,7 +101,7 @@ handle_result multipart_form_handler::replace(
         std::error_code ec;
 
         auto project_rights
-                = rights_.check_project_right(ctx.cln_info, project, ec);
+                = rights_.check_project_right(ctx.client_info, project, ec);
 
         if(ec)
         {

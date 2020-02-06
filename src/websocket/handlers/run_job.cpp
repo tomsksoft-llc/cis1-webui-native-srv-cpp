@@ -38,7 +38,7 @@ void run_job(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.cln_info, req.project, ec);
+    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
 
     if(ec)
     {
@@ -47,13 +47,7 @@ void run_job(
 
     auto permitted = perm && perm.value().execute;
 
-    const auto username = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) { return ctx.username; },
-                    [](const request_context::guest_info& ctx) { return std::string{}; }
-            },
-            ctx.cln_info
-    );
+    const auto username = request_context::username_or_empty(ctx.client_info);
 
     if(job != nullptr && permitted)
     {

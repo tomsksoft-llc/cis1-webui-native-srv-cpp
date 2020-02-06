@@ -6,7 +6,6 @@
  *
  */
 
-#include <tpl_helpers/overloaded.h>
 #include "websocket/handlers/change_pass.h"
 
 #include "websocket/dto/user_auth_error_pass_doesnt_match.h"
@@ -26,15 +25,7 @@ void change_pass(
 {
     std::error_code ec;
 
-    const auto username = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) -> std::optional<std::string>
-                    { return ctx.username; },
-                    [](const request_context::guest_info& ctx) -> std::optional<std::string>
-                    { return std::nullopt; }
-            },
-            ctx.cln_info
-    );
+    const auto username = request_context::username(ctx.client_info);
 
     if(!username)
     {

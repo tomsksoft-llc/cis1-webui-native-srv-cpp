@@ -30,7 +30,7 @@ struct rights_manager_interface
     virtual ~rights_manager_interface() = default;
 
     virtual std::optional<bool> check_user_permission(
-            const request_context::cln_info_holder& cln_info,
+            const request_context::client_info_holder& cln_info,
             const std::string& permission_name,
             std::error_code& ec) const = 0;
 
@@ -40,7 +40,7 @@ struct rights_manager_interface
             std::error_code& ec) const = 0;
 
     virtual std::optional<project_rights> check_project_right(
-            const request_context::cln_info_holder& cln_info,
+            const request_context::client_info_holder& cln_info,
             const std::string& project,
             std::error_code& ec) const = 0;
 

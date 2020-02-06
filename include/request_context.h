@@ -29,11 +29,19 @@ struct request_context
         const std::string guestname = "guest";
     };
 
-    using cln_info_holder =  std::variant<guest_info, user_info>;
+    using client_info_holder = std::variant<guest_info, user_info>;
 
-    // authorized user's info
-    // not null if the client has been authorized else nullopt
-    cln_info_holder cln_info = guest_info{};
+    static std::optional<std::string> username(const client_info_holder& client_info);
+
+    static std::string user_or_guest_name(const client_info_holder& client_info);
+
+    static std::string username_or_empty(const client_info_holder& client_info);
+
+    static std::string active_token_or_empty(const client_info_holder& client_info);
+
+    static std::string api_access_key_or_empty(const client_info_holder& client_info);
+
+    client_info_holder client_info = guest_info{};
     uint64_t session_id;
     std::map<std::string, std::string> cookies;
     std::map<std::string, std::any> other;

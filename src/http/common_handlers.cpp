@@ -33,7 +33,7 @@ handle_result handle_authenticate(
 
         if(username)
         {
-            ctx.cln_info = request_context::user_info{username.value()};
+            ctx.client_info = request_context::user_info{username.value()};
         }
     }
     return handle_result::next;

@@ -36,7 +36,7 @@ void get_build_info(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.cln_info, req.project, ec);
+    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
 
     if(ec)
     {

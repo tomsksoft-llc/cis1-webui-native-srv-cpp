@@ -104,19 +104,15 @@ handle_result webhooks_handler::operator()(
         return handle_result::error;
     }
 
-    const std::string active_token = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) { return ctx.active_token; },
-                    [](const request_context::guest_info&) { return std::string{}; }
-            },
-            ctx.cln_info);
+    const std::string active_token
+            = request_context::active_token_or_empty(ctx.client_info);
 
-    ctx.cln_info = request_context::user_info{username,
-                                              active_token,
-                                              user->api_access_key.value()};
+    ctx.client_info = request_context::user_info{username,
+                                                 active_token,
+                                                 user->api_access_key.value()};
 
     auto project_rights
-            = rights_.check_project_right(ctx.cln_info, project, ec);
+            = rights_.check_project_right(ctx.client_info, project, ec);
 
     if(ec)
     {
@@ -246,13 +242,7 @@ handle_result webhooks_handler::handle_gitlab_headers(
         const std::string& job,
         const std::string& query_string)
 {
-    const auto api_access_key = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) { return ctx.api_access_key; },
-                    [](const request_context::guest_info& ctx) { return std::string{}; }
-            },
-            ctx.cln_info
-    );
+    const auto api_access_key = request_context::api_access_key_or_empty(ctx.client_info);
 
     auto signature_it = req.find("X-Gitlab-Token");
     auto event_it = req.find("X-Gitlab-Event");
@@ -310,13 +300,7 @@ handle_result webhooks_handler::handle_plain_headers(
         const std::string& job,
         const std::string& query_string)
 {
-    const auto api_access_key = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) { return ctx.api_access_key; },
-                    [](const request_context::guest_info& ctx) { return std::string{}; }
-            },
-            ctx.cln_info
-    );
+    const auto api_access_key = request_context::api_access_key_or_empty(ctx.client_info);
 
     auto signature_it = req.find("X-Plain-Token");
     auto event_it = req.find("X-Plain-Event");
@@ -380,7 +364,7 @@ void webhooks_handler::handle_github_signature(
 {
     openssl::hmac hmac;
 
-    auto* cln_info = std::get_if<request_context::user_info>(&ctx.cln_info);
+    auto* cln_info = std::get_if<request_context::user_info>(&ctx.client_info);
     assert(cln_info != nullptr);
 
     hmac.set_secret_key(
@@ -445,12 +429,7 @@ void webhooks_handler::finish(
                 raw_event,
                 ev);
 
-        const std::string username = std::visit(
-                meta::overloaded{
-                        [](const request_context::user_info& ctx) { return ctx.username; },
-                        [](const request_context::guest_info&) { return std::string{}; }
-                },
-                ctx.cln_info);
+        const std::string username = request_context::username_or_empty(ctx.client_info);
 
         make_async_chain(queue.get_executor())
             .then(cis_.run_job(

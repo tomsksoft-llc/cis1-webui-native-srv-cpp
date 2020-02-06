@@ -24,7 +24,7 @@ void add_user(auth_manager_interface& authentication_handler,
 {
     std::error_code ec;
 
-    const auto perm = rights.check_user_permission(ctx.cln_info, "users.add", ec);
+    const auto perm = rights.check_user_permission(ctx.client_info, "users.add", ec);
     if(ec)
     {
         return tr.send_error("Internal error.");
@@ -78,4 +78,4 @@ void add_user(auth_manager_interface& authentication_handler,
     return tr.send(res);
 }
 
-} // namespace
+} // namespace websocket::handlers

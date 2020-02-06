@@ -28,7 +28,7 @@ std::optional<project_rights> get_path_rights(
         if(path_it != path.end())
         {
             return rights.check_project_right(
-                    ctx.cln_info,
+                    ctx.client_info,
                     path_it->string(),
                     ec);
         }

@@ -31,7 +31,7 @@ handle_result download_handler::operator()(
         std::error_code ec;
 
         auto project_rights
-                = rights_.check_project_right(ctx.cln_info, project, ec);
+                = rights_.check_project_right(ctx.client_info, project, ec);
 
         if(ec)
         {

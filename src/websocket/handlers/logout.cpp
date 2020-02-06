@@ -47,7 +47,7 @@ void logout(
                             {
                                 return false;
                             }},
-                    ctx.cln_info);
+                    ctx.client_info);
 
     if(!credentials_correct)
     {

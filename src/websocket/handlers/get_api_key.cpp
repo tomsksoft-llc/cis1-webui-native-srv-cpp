@@ -8,8 +8,6 @@
 
 #include "websocket/handlers/get_api_key.h"
 
-#include <tpl_helpers/overloaded.h>
-
 #include "websocket/dto/user_api_key_get_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 
@@ -25,15 +23,7 @@ void get_api_key(
         const dto::user_api_key_get& req,
         cis1::proto_utils::transaction tr)
 {
-    const auto opt_ctx_username = std::visit(
-            meta::overloaded{
-                    [](const request_context::user_info& ctx) -> std::optional<std::string>
-                    { return ctx.username; },
-                    [](const request_context::guest_info& ctx) -> std::optional<std::string>
-                    { return std::nullopt; }
-            },
-            ctx.cln_info
-    );
+    const auto opt_ctx_username = request_context::username(ctx.client_info);
 
     if(!opt_ctx_username)
     {

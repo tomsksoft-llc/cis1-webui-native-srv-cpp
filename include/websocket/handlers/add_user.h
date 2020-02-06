@@ -25,4 +25,4 @@ void add_user(auth_manager_interface& authentication_handler,
               const dto::user_auth_add& req,
               cis1::proto_utils::transaction tr);
 
-} // namespace
+} // namespace websocket::handlers
