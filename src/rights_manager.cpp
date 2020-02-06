@@ -313,6 +313,43 @@ bool rights_manager::set_user_project_permissions(
     }
 }
 
+std::vector<std::string> rights_manager::get_user_permissions(
+        const std::string& username,
+        std::error_code& ec) const
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        auto groups = db->select(
+                &user::group_id,
+                where(c(&user::name) == username));
+
+        if(groups.size() != 1)
+        {
+            db.commit();
+            return {};
+        }
+
+        const auto group_id = groups[0];
+
+        const auto permissions
+                = db->select(
+                        &permission::name,
+                        inner_join<group_permission>(
+                                on(c(&group_permission::permission_id) == &permission::id)),
+                        where(c(&group_permission::group_id) == group_id));
+
+        return permissions;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+
+        return {};
+    }
+}
+
 std::optional<database::group_default_rights>
 rights_manager::get_group_default_permissions(
         intmax_t group_id,

@@ -11,6 +11,7 @@
 #include <string>
 #include <map>
 #include <optional>
+#include <vector>
 #include <filesystem>
 
 #include "rights_manager_interface.h"
@@ -52,6 +53,10 @@ struct rights_manager_interface
             const std::string& project,
             database::project_user_right rights,
             std::error_code& ec) = 0;
+
+    virtual std::vector<std::string> get_user_permissions(
+            const std::string& username,
+            std::error_code& ec) const = 0;
 
     virtual std::optional<database::group_default_rights> get_group_default_permissions(
             intmax_t group_id,

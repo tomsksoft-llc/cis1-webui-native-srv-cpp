@@ -51,6 +51,10 @@ public:
             database::project_user_right rights,
             std::error_code& ec) final;
 
+    std::vector<std::string> get_user_permissions(
+            const std::string& username,
+            std::error_code& ec) const final;
+
     std::optional<database::group_default_rights> get_group_default_permissions(
             intmax_t group_id,
             std::error_code& ec) const final;

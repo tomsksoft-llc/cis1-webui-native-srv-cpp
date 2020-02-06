@@ -47,3 +47,4 @@
 #include "handlers/get_group_default_permissions.h"
 #include "handlers/set_group_default_permissions.h"
 #include "handlers/add_user.h"
+#include "handlers/get_user_permissions.h"
