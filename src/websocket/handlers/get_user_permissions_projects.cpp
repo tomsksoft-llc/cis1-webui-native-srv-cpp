@@ -6,9 +6,9 @@
  *
  */
 
-#include "websocket/handlers/get_user_permissions.h"
+#include "websocket/handlers/get_user_permissions_projects.h"
 
-#include "websocket/dto/user_permissions_get_success.h"
+#include "websocket/dto/user_permissions_projects_get_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 
 namespace websocket
@@ -17,10 +17,10 @@ namespace websocket
 namespace handlers
 {
 
-void get_user_permissions(
+void get_user_permissions_projects(
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::user_permissions_get& req,
+        const dto::user_permissions_projects_get& req,
         cis1::proto_utils::transaction tr)
 {
     std::error_code ec;
@@ -36,14 +36,14 @@ void get_user_permissions(
 
     if(permitted)
     {
-        const auto permissions = rights.get_permissions(req.username, ec);
+        const auto permissions = rights.get_projects_permissions(req.username, ec);
 
         if(ec)
         {
             return tr.send_error("Internal error.");
         }
 
-        dto::user_permissions_get_success res;
+        dto::user_permissions_projects_get_success res;
 
         for(auto [project_name, project_rights] : permissions)
         {

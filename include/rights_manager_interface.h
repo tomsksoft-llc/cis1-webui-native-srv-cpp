@@ -43,7 +43,7 @@ struct rights_manager_interface
             const std::string& project,
             std::error_code& ec) const = 0;
 
-    virtual std::map<std::string, project_rights> get_permissions(
+    virtual std::map<std::string, project_rights> get_projects_permissions(
             const std::string& username,
             std::error_code& ec) const = 0;
 

@@ -26,7 +26,7 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/get_build_info.cpp
     src/websocket/handlers/get_job_info.cpp
     src/websocket/handlers/get_project_info.cpp
-    src/websocket/handlers/get_user_permissions.cpp
+    src/websocket/handlers/get_user_permissions_projects.cpp
     src/websocket/handlers/list_cis_cron.cpp
     src/websocket/handlers/list_directory.cpp
     src/websocket/handlers/list_projects.cpp

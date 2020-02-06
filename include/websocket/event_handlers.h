@@ -18,7 +18,7 @@
 #include "handlers/get_build_info.h"
 #include "handlers/get_job_info.h"
 #include "handlers/get_project_info.h"
-#include "handlers/get_user_permissions.h"
+#include "handlers/get_user_permissions_projects.h"
 #include "handlers/list_cis_cron.h"
 #include "handlers/list_directory.h"
 #include "handlers/list_projects.h"

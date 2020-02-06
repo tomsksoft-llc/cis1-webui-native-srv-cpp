@@ -19,7 +19,7 @@ namespace websocket
 namespace dto
 {
 
-struct user_permissions_set
+struct user_permissions_projects_set
 {
     struct permission
     {
@@ -54,17 +54,18 @@ struct user_permissions_set
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_permissions_set>()
+        return make_meta_converter<user_permissions_projects_set>()
                 .set_name(
                         CT_STRING("user"),
                         CT_STRING("permissions"),
+                        CT_STRING("projects"),
                         CT_STRING("set"))
                 .add_field(
                         CT_STRING("username"),
-                        ptr_v<&user_permissions_set::username>{})
+                        ptr_v<&user_permissions_projects_set::username>{})
                 .add_field(
                         CT_STRING("permissions"),
-                        ptr_v<&user_permissions_set::permissions>{})
+                        ptr_v<&user_permissions_projects_set::permissions>{})
                 .done();
     }
 };

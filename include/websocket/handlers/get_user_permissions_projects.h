@@ -13,7 +13,7 @@
 #include "request_context.h"
 #include "rights_manager_interface.h"
 
-#include "websocket/dto/user_permissions_get.h"
+#include "websocket/dto/user_permissions_projects_get.h"
 
 namespace websocket
 {
@@ -21,10 +21,10 @@ namespace websocket
 namespace handlers
 {
 
-void get_user_permissions(
+void get_user_permissions_projects(
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::user_permissions_get& req,
+        const dto::user_permissions_projects_get& req,
         cis1::proto_utils::transaction tr);
 
 } // namespace handlers

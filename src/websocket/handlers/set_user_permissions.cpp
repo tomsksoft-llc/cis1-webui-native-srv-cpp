@@ -8,7 +8,7 @@
 
 #include "websocket/handlers/set_user_permissions.h"
 
-#include "websocket/dto/user_permissions_set_success.h"
+#include "websocket/dto/user_permissions_projects_set_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 
 namespace websocket
@@ -17,10 +17,10 @@ namespace websocket
 namespace handlers
 {
 
-void set_user_permissions(
+void set_user_permissions_projects(
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::user_permissions_set& req,
+        const dto::user_permissions_projects_set& req,
         cis1::proto_utils::transaction tr)
 {
     std::error_code ec;
@@ -50,7 +50,7 @@ void set_user_permissions(
             }
         }
 
-        dto::user_permissions_set_success res;
+        dto::user_permissions_projects_set_success res;
 
         return tr.send(res);
     }

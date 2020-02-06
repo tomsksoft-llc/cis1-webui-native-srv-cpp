@@ -41,7 +41,7 @@ public:
             const std::string& projectname,
             std::error_code& ec) const final;
 
-    std::map<std::string, project_rights> get_permissions(
+    std::map<std::string, project_rights> get_projects_permissions(
             const std::string& username,
             std::error_code& ec) const final;
 
