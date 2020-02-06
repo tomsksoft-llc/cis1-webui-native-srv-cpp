@@ -45,7 +45,7 @@ void cis_job::run(
         const std::string& project_name,
         const std::string& job_name,
         bool force,
-        const std::vector<std::string>& params,
+        const std::vector<std::pair<std::string, std::string>>& params,
         std::function<
                 void(const std::string&)> on_session_started,
         std::function<
@@ -58,7 +58,7 @@ void cis_job::run(
     job_finished_cb_ = on_job_finished;
 
     writer_ = std::make_shared<async_buffer_writer>(
-            make_interactive_args_buffer(params));
+            make_interactive_args_buffer({}));
 
     reader_ = std::make_shared<line_reader>(
             [
@@ -116,6 +116,17 @@ void cis_job::run(
     if(force)
     {
         args.push_back({"--force"});
+    }
+
+    if(!params.empty())
+    {
+        args.push_back({"--params"});
+    }
+
+    for(auto& param : params)
+    {
+        args.push_back(param.first);
+        args.push_back(param.second);
     }
 
     cp_->run(args,

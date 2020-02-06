@@ -522,7 +522,7 @@ const char* webhooks_handler::ev_to_string(hook_event ev)
     }
 }
 
-std::vector<std::string> webhooks_handler::prepare_params(
+std::vector<std::pair<std::string, std::string>> webhooks_handler::prepare_params(
         const std::string& project,
         const std::string& job,
         const std::string& query_string,
@@ -530,7 +530,7 @@ std::vector<std::string> webhooks_handler::prepare_params(
         const std::string& raw_event,
         hook_event ev)
 {
-    std::vector<std::string> result;
+    std::vector<std::pair<std::string, std::string>> result;
 
     auto job_info = cis_.get_job_info(project, job);
     if(job_info == nullptr)
@@ -549,23 +549,23 @@ std::vector<std::string> webhooks_handler::prepare_params(
         if(auto it = query_params.find(param.name);
                 it != query_params.end())
         {
-            result[i] = it->second;
+            result[i] = {param.name, it->second};
         }
         else if(param.name == "webhook_query_string")
         {
-            result[i] = query_string;
+            result[i] = {param.name, query_string};
         }
         else if(param.name == "webhook_request_body")
         {
-            result[i] = body_file.string();
+            result[i] = {param.name, body_file.string()};
         }
         else if(param.name == "webhook_event_type")
         {
-            result[i] = ev_to_string(ev);
+            result[i] = {param.name, ev_to_string(ev)};
         }
         else if(param.name == "webhook_raw_event_type")
         {
-            result[i] = raw_event;
+            result[i] = {param.name, raw_event};
         }
         ++i;
     }

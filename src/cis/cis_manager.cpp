@@ -317,7 +317,7 @@ cis_manager::run_job_task_t cis_manager::run_job(
         const std::string& project_name,
         const std::string& job_name,
         bool force,
-        const std::vector<std::string>& params,
+        const std::vector<std::pair<std::string, std::string>>& params,
         std::function<void(const std::string&)> on_session_started,
         std::function<void(const std::string&)> on_session_finished,
         const std::string& username)
