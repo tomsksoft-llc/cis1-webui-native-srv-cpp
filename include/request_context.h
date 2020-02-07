@@ -41,6 +41,8 @@ struct request_context
 
     static std::string api_access_key_or_empty(const client_info_holder& client_info);
 
+    static bool authorized(const client_info_holder& client_info);
+
     client_info_holder client_info = guest_info{};
     uint64_t session_id;
     std::map<std::string, std::string> cookies;

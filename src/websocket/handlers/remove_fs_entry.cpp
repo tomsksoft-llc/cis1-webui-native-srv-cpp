@@ -12,6 +12,7 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_remove_success.h"
+#include "websocket/dto/auth_error_login_required.h"
 
 #include "path_utils.h"
 
@@ -48,9 +49,9 @@ void remove_fs_entry(
 
     if(!path_rights || !path_rights.value().write)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return tr.send_error(err, "Action not permitted.");
+        return request_context::authorized(ctx.client_info)
+               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
+               : tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     auto remove_result = cis_manager.remove(path);

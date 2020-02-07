@@ -30,7 +30,7 @@ std::string request_context::user_or_guest_name(const client_info_holder& client
                     [](const request_context::user_info& ctx)
                     { return ctx.username; },
                     [](const request_context::guest_info&)
-                    { return std::string{request_context::guest_info::guestname};}
+                    { return std::string{request_context::guest_info::guestname}; }
             },
             client_info
     );
@@ -67,6 +67,19 @@ std::string request_context::api_access_key_or_empty(const client_info_holder& c
                     { return ctx.api_access_key; },
                     [](const request_context::guest_info&)
                     { return std::string{}; }
+            },
+            client_info
+    );
+}
+
+bool request_context::authorized(const client_info_holder& client_info)
+{
+    return std::visit(
+            meta::overloaded{
+                    [](const request_context::user_info&)
+                    { return true; },
+                    [](const request_context::guest_info&)
+                    { return false; }
             },
             client_info
     );

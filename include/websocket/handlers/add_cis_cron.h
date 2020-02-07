@@ -19,6 +19,7 @@
 #include "websocket/dto/cis_cron_add_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
+#include "websocket/dto/auth_error_login_required.h"
 
 #include "websocket/transaction_handle.h"
 #include "cron_utils.h"
@@ -87,9 +88,9 @@ void add_cis_cron(
 
     if(!permitted)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return handle.send_error(err, "Action not permitted.");
+        return request_context::authorized(ctx.client_info)
+               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
+               : tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     dto::cis_job_error_doesnt_exist err;
