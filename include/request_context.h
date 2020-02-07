@@ -26,7 +26,7 @@ struct request_context
 
     struct guest_info
     {
-        const std::string guestname = "guest";
+        static constexpr auto guestname = "guest";
     };
 
     using client_info_holder = std::variant<guest_info, user_info>;

@@ -29,8 +29,8 @@ std::string request_context::user_or_guest_name(const client_info_holder& client
             meta::overloaded{
                     [](const request_context::user_info& ctx)
                     { return ctx.username; },
-                    [](const request_context::guest_info& ctx)
-                    { return ctx.guestname; }
+                    [](const request_context::guest_info&)
+                    { return std::string{request_context::guest_info::guestname};}
             },
             client_info
     );

@@ -63,7 +63,7 @@ void get_user_permissions(auth_manager_interface& authentication_handler,
                             if(requested_username.empty())
                             {
                                 // later we will get permissions for the user with "guest" username
-                                requested_username = ctx.guestname;
+                                requested_username = request_context::guest_info::guestname;
                                 return true;
                             }
 
