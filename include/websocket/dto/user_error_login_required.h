@@ -13,14 +13,14 @@
 namespace websocket::dto
 {
 
-struct auth_error_login_required
+struct user_error_login_required
 {
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<auth_error_login_required>()
+        return make_meta_converter<user_error_login_required>()
                 .set_name(
-                        CT_STRING("auth"),
+                        CT_STRING("user"),
                         CT_STRING("error"),
                         CT_STRING("login_required"))
                 .done();

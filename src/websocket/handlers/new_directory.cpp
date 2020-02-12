@@ -12,7 +12,7 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_cant_create_dir.h"
 #include "websocket/dto/fs_entry_new_dir_success.h"
-#include "websocket/dto/auth_error_login_required.h"
+#include "websocket/dto/user_error_login_required.h"
 
 #include "path_utils.h"
 
@@ -51,7 +51,7 @@ void new_directory(
     {
         return request_context::authorized(ctx.client_info)
                ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::auth_error_login_required{}, "Login required.");
+               : tr.send_error(dto::user_error_login_required{}, "Login required.");
     }
 
     auto& fs = cis_manager.fs();

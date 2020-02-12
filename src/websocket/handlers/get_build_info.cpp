@@ -11,7 +11,7 @@
 #include "websocket/dto/cis_build_info_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_build_error_doesnt_exist.h"
-#include "websocket/dto/auth_error_login_required.h"
+#include "websocket/dto/user_error_login_required.h"
 #include "websocket/handlers/utils/make_dir_entry.h"
 #include "cis/cis_structs.h"
 
@@ -70,7 +70,7 @@ void get_build_info(
     {
         return request_context::authorized(ctx.client_info)
                ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::auth_error_login_required{}, "Login required.");
+               : tr.send_error(dto::user_error_login_required{}, "Login required.");
     }
 
     dto::cis_build_error_doesnt_exist err;

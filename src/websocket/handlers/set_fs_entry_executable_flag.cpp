@@ -12,7 +12,7 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_set_executable_flag_success.h"
-#include "websocket/dto/auth_error_login_required.h"
+#include "websocket/dto/user_error_login_required.h"
 
 #include "path_utils.h"
 
@@ -51,7 +51,7 @@ void set_fs_entry_executable_flag(
     {
         return request_context::authorized(ctx.client_info)
                ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::auth_error_login_required{}, "Login required.");
+               : tr.send_error(dto::user_error_login_required{}, "Login required.");
     }
 
     auto& fs = cis_manager.fs();
