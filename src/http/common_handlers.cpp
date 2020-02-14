@@ -18,11 +18,11 @@ handle_result handle_authenticate(
         net::http_session::request_reader& reader,
         net::http_session::queue& /*queue*/)
 {
-    if(const auto& cookies = ctx.cookies; cookies.count("token"))
+    if(const auto& cookies = ctx.cookies; cookies.count("auth_token"))
     {
         std::error_code ec;
 
-        auto username = authentication_handler.authenticate(cookies.at("token"), ec);
+        auto username = authentication_handler.authenticate(cookies.at("auth_token"), ec);
 
         if(ec)
         {
