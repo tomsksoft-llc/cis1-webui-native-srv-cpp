@@ -141,7 +141,7 @@ std::map<std::string, std::string> parse_cookies(const std::string& cookies)
         {
             continue;
         }
-        result.insert({what[1], what[2]});
+        result.insert({what[1], unescape_uri(what[2])});
 
         start = what[0].second;
         // update flags:
