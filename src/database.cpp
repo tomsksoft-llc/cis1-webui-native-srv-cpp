@@ -19,6 +19,7 @@ database_wrapper::private_constructor_delegate_t::private_constructor_delegate_t
 std::unique_ptr<database_wrapper> database_wrapper::create(
         const std::filesystem::path& path,
         user_credentials* admin_credentials,
+        user_credentials* guest_credentials,
         std::error_code& ec)
 {
     try
@@ -29,11 +30,9 @@ std::unique_ptr<database_wrapper> database_wrapper::create(
 
         db->sync();
 
-        if(admin_credentials != nullptr)
+        if(admin_credentials || guest_credentials)
         {
-            db->init(admin_credentials->name,
-                    admin_credentials->email,
-                    admin_credentials->pass);
+            db->init(admin_credentials, guest_credentials);
         }
 
         return db;
@@ -68,24 +67,41 @@ database_wrapper::make_transaction()
 }
 
 void database_wrapper::init(
-        const std::string& username,
-        const std::string& email,
-        const std::string& password)
+        user_credentials *admin_credentials,
+        user_credentials *guest_credentials)
 {
     auto db = make_transaction();
 
-    db->insert(group{-1, "user"});
-    db->insert(group{-1, "admin"});
+    const auto insert_sys_user_fn
+            = [&db](intmax_t group_id, const user_credentials& credentials)
+            {
+                db->insert(
+                        user{
+                                -1,
+                                group_id,
+                                credentials.name,
+                                credentials.email,
+                                credentials.pass});
+            };
 
+    db->insert(group{-1, "user"});
+    intmax_t user_group_id = db->last_insert_rowid();
+
+    db->insert(group{-1, "admin"});
     intmax_t admin_group_id = db->last_insert_rowid();
 
-    db->insert(
-            user{
-            -1,
-            admin_group_id,
-            username,
-            email,
-            password});
+    db->insert(group{-1, "guest"});
+    intmax_t guest_group_id = db->last_insert_rowid();
+
+    if(admin_credentials)
+    {
+        insert_sys_user_fn(admin_group_id, *admin_credentials);
+    }
+
+    if(guest_credentials)
+    {
+        insert_sys_user_fn(guest_group_id, *guest_credentials);
+    }
 
     db->insert(permission{-1, "users.list"});
     db->insert(group_permission{
@@ -105,7 +121,43 @@ void database_wrapper::init(
             admin_group_id,
             (intmax_t)db->last_insert_rowid()});
 
+    db->insert(permission{-1, "users.add"});
+    db->insert(group_permission{
+            -1,
+            admin_group_id,
+            (intmax_t)db->last_insert_rowid()});
+
+    db->insert(permission{-1, "groups.projects.permissions"});
+    db->insert(group_permission{
+            -1,
+            admin_group_id,
+            (intmax_t)db->last_insert_rowid()});
+
     db.commit();
+
+    db->insert(group_default_rights{
+            -1,
+            user_group_id,
+            true, // read
+            false, // write
+            true // execute
+    });
+
+    db->insert(group_default_rights{
+            -1,
+            admin_group_id,
+            true, // read
+            true, // write
+            true // execute
+    });
+
+    db->insert(group_default_rights{
+            -1,
+            guest_group_id,
+            true, // read
+            false, // write
+            false // execute
+    });
 }
 
 } // namespace database

@@ -25,8 +25,16 @@ void change_pass(
 {
     std::error_code ec;
 
+    const auto username = request_context::username(ctx.client_info);
+
+    if(!username)
+    {
+        dto::user_auth_error_pass_doesnt_match err;
+        return tr.send_error(err, "Invalid password");
+    }
+
     bool ok = authentication_handler.change_pass(
-            ctx.username,
+            username.value(),
             req.old_password,
             req.new_password,
             ec);
@@ -39,12 +47,10 @@ void change_pass(
     if(!ok)
     {
         dto::user_auth_error_pass_doesnt_match err;
-
         return tr.send_error(err, "Invalid password");
     }
 
     dto::user_auth_change_pass_success res;
-
     return tr.send(res);
 }
 

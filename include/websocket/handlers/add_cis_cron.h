@@ -19,6 +19,7 @@
 #include "websocket/dto/cis_cron_add_success.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
+#include "websocket/dto/user_error_login_required.h"
 
 #include "websocket/transaction_handle.h"
 #include "cron_utils.h"
@@ -48,15 +49,14 @@ void add_cis_cron(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
 
     if(ec)
     {
         return handle.send_error("Internal error.");
     }
 
-    auto permitted =
-            perm.has_value() ? (perm.value().execute && perm.value().write) : true;
+    auto permitted = perm && perm.value().write && perm.value().execute;
 
     if(job != nullptr && permitted)
     {
@@ -88,9 +88,9 @@ void add_cis_cron(
 
     if(!permitted)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return handle.send_error(err, "Action not permitted.");
+        return request_context::authorized(ctx.client_info)
+               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
+               : tr.send_error(dto::user_error_login_required{}, "Login required.");
     }
 
     dto::cis_job_error_doesnt_exist err;

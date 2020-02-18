@@ -58,6 +58,13 @@ struct detail
                     make_column("project_user_right_execute", &project_user_right::execute),
                     foreign_key(&project_user_right::project_id).references(&project::id).on_delete.cascade(),
                     foreign_key(&project_user_right::user_id).references(&user::id).on_delete.cascade()),
+                make_table("group_default_rights",
+                    make_column("group_default_right_id", &group_default_rights::id, autoincrement(), primary_key()),
+                    make_column("group_default_right_group_id", &group_default_rights::group_id),
+                    make_column("group_default_right_read", &group_default_rights::read),
+                    make_column("group_default_right_write", &group_default_rights::write),
+                    make_column("group_default_right_execute", &group_default_rights::execute),
+                    foreign_key(&group_default_rights::group_id).references(&group::id).on_delete.cascade()),
                 make_table("tokens",
                     make_column("token_id", &token::id, autoincrement(), primary_key()),
                     make_column("token_user_id", &token::user_id),
@@ -128,6 +135,7 @@ public:
     static std::unique_ptr<database_wrapper> create(
             const std::filesystem::path& path,
             user_credentials* admin_credentials,
+            user_credentials* guest_credentials,
             std::error_code& ec);
 
     template <class... Args>
@@ -156,9 +164,8 @@ private:
             const std::filesystem::path& path);
 
     void init(
-            const std::string& username,
-            const std::string& email,
-            const std::string& password);
+            user_credentials *admin_credentials,
+            user_credentials *guest_credentials);
 };
 
 } // namespace database

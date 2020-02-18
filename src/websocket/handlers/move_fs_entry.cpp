@@ -12,6 +12,7 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_cant_move.h"
 #include "websocket/dto/fs_entry_move_success.h"
+#include "websocket/dto/user_error_login_required.h"
 
 #include "path_utils.h"
 
@@ -28,6 +29,13 @@ void move_fs_entry(
         const dto::fs_entry_move& req,
         cis1::proto_utils::transaction tr)
 {
+    const auto on_not_permitted =
+            [&]()
+            {
+                return request_context::authorized(ctx.client_info)
+                       ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
+                       : tr.send_error(dto::user_error_login_required{}, "Login required.");
+            };
 
     std::filesystem::path old_path(req.old_path);
     std::filesystem::path new_path(req.new_path);
@@ -48,11 +56,9 @@ void move_fs_entry(
         return tr.send_error("Internal error.");
     }
 
-    if(path_rights && !path_rights.value().write)
+    if(!path_rights || !path_rights.value().write)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return tr.send_error(err, "Action not permitted.");
+        return on_not_permitted();
     }
 
     path_rights = get_path_rights(ctx, rights, new_path, ec);
@@ -62,11 +68,9 @@ void move_fs_entry(
         return tr.send_error("Internal error.");
     }
 
-    if(path_rights && !path_rights.value().write)
+    if(!path_rights || !path_rights.value().write)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return tr.send_error(err, "Action not permitted.");
+        return on_not_permitted();
     }
 
     auto& fs = cis_manager.fs();

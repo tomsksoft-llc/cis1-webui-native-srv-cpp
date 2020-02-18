@@ -26,7 +26,7 @@ void list_users(
 {
     std::error_code ec;
 
-    auto perm = rights.check_user_permission(ctx.username, "users.list", ec);
+    auto perm = rights.check_user_permission(ctx.client_info, "users.list", ec);
 
     if(ec)
     {

@@ -13,7 +13,12 @@ bool validate_path(const std::filesystem::path& path)
     return path.root_path() == "/";
 }
 
-std::optional<database::project_user_right> get_path_rights(
+bool validate_path_fragment(const std::string& fragment)
+{
+    return fragment.find("/") == std::string::npos;
+}
+
+std::optional<project_rights> get_path_rights(
         request_context& ctx,
         rights_manager_interface& rights,
         const std::filesystem::path& path,
@@ -28,7 +33,7 @@ std::optional<database::project_user_right> get_path_rights(
         if(path_it != path.end())
         {
             return rights.check_project_right(
-                    ctx.username,
+                    ctx.client_info,
                     path_it->string(),
                     ec);
         }

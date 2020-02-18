@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "tpl_reflect/meta_converter.h"
+#include "path_utils.h"
 
 namespace websocket
 {
@@ -56,10 +57,12 @@ struct cis_job_run
                         CT_STRING("run"))
                 .add_field(
                         CT_STRING("project"),
-                        ptr_v<&cis_job_run::project>{})
+                        ptr_v<&cis_job_run::project>{},
+                        [](auto&&... args){ return validate_path_fragment(std::forward<decltype(args)>(args)...); })
                 .add_field(
                         CT_STRING("job"),
-                        ptr_v<&cis_job_run::job>{})
+                        ptr_v<&cis_job_run::job>{},
+                        [](auto&&... args){ return validate_path_fragment(std::forward<decltype(args)>(args)...); })
                 .add_field(
                         CT_STRING("force"),
                         ptr_v<&cis_job_run::force>{})

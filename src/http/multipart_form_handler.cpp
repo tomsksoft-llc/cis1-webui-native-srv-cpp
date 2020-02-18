@@ -35,7 +35,7 @@ handle_result multipart_form_handler::upload(
         std::error_code ec;
 
         auto project_rights
-                = rights_.check_project_right(ctx.username, project, ec);
+                = rights_.check_project_right(ctx.client_info, project, ec);
 
         if(ec)
         {
@@ -44,7 +44,7 @@ handle_result multipart_form_handler::upload(
             return handle_result::error;
         }
 
-        if(project_rights && !project_rights.value().write)
+        if(!project_rights || !project_rights.value().write)
         {
             ctx.res_status = beast::http::status::forbidden;
 
@@ -101,7 +101,7 @@ handle_result multipart_form_handler::replace(
         std::error_code ec;
 
         auto project_rights
-                = rights_.check_project_right(ctx.username, project, ec);
+                = rights_.check_project_right(ctx.client_info, project, ec);
 
         if(ec)
         {
@@ -110,7 +110,7 @@ handle_result multipart_form_handler::replace(
             return handle_result::error;
         }
 
-        if(project_rights && !project_rights.value().write)
+        if(!project_rights || !project_rights.value().write)
         {
             ctx.res_status = beast::http::status::forbidden;
 

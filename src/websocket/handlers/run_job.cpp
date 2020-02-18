@@ -13,6 +13,7 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 #include "websocket/dto/cis_job_error_invalid_params.h"
+#include "websocket/dto/user_error_login_required.h"
 
 namespace websocket
 {
@@ -38,19 +39,21 @@ void run_job(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
 
     if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    auto permitted = perm.has_value() ? perm.value().execute : true;
+    auto permitted = perm && perm.value().execute;
+
+    const auto username = request_context::username_or_empty(ctx.client_info);
 
     if(job != nullptr && permitted)
     {
         auto& job_params = job->get_params();
-        std::vector<std::string> param_values;
+        std::vector<std::pair<std::string, std::string>> param_values;
         param_values.reserve(job_params.size());
 
         for(auto& param : job_params)
@@ -64,11 +67,11 @@ void run_job(
                     return tr.send_error(err, "Invalid params.");
                 }
 
-                param_values.push_back(param.default_value);
+                param_values.push_back({param.name, param.default_value});
             }
             else
             {
-                param_values.push_back(params[param.name]);
+                param_values.push_back({param.name, params[param.name]});
             }
         }
 
@@ -88,7 +91,7 @@ void run_job(
                             tr.send(res);
                         },
                         [](const std::string& session_id){},
-                        ctx.username))
+                        username))
                 .then(  [tr](const cis::execution_info& info)
                         {
                             if(info.success && info.exit_code)
@@ -113,9 +116,9 @@ void run_job(
 
     if(!permitted)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return tr.send_error(err, "Action not permitted.");
+        return request_context::authorized(ctx.client_info)
+               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
+               : tr.send_error(dto::user_error_login_required{}, "Login required.");
     }
 
     dto::cis_job_error_doesnt_exist err;

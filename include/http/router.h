@@ -21,7 +21,8 @@
 #include "handle_result.h"
 #include "request_context.h"
 #include "response.h"
-#include "url.h"
+#include "request_util.h"
+#include "url/url_parse.h"
 #include "tpl_helpers/tuple_cast.h"
 
 namespace beast = boost::beast;                 // from <boost/beast.hpp>
@@ -52,7 +53,9 @@ public:
 
     handle_result operator()(request_t& req, context_t& ctx, Args... args)
     {
-        std::string target{req.target()}; //TODO: use string_view somehow
+        std::string target{req.target()};
+        target = unescape_uri(target);
+
         for(auto&& [regexp, handler] : routes_)
         {
             std::smatch what;

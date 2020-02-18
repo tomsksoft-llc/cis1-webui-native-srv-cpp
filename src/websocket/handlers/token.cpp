@@ -32,28 +32,25 @@ void token(
         return tr.send_error("Internal error.");
     }
 
-    if(username)
+    if(!username)
     {
-        ctx.username = username.value();
-        ctx.active_token = req.token;
-
-        auto group = authentication_handler.get_group(ctx.username, ec);
-
-        if(!group || ec)
-        {
-            return tr.send_error("Internal error.");
-        }
-
-        dto::auth_login_pass_success res;
-        res.token = req.token;
-        res.group = group.value();
-
-        return tr.send(res);
+        dto::auth_error_wrong_credentials err;
+        return tr.send_error(err, "Invalid token.");
     }
 
-    dto::auth_error_wrong_credentials err;
+    ctx.client_info = request_context::user_info{username.value(), req.token};
 
-    return tr.send_error(err, "Invalid token.");
+    auto group = authentication_handler.get_group(username.value(), ec);
+    if(!group || ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    dto::auth_login_pass_success res;
+    res.token = req.token;
+    res.group = group.value();
+
+    return tr.send(res);
 }
 
 } // namespace handlers

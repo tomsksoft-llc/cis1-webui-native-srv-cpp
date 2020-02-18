@@ -11,6 +11,7 @@
 #include "websocket/dto/cis_project_remove_success.h"
 #include "websocket/dto/cis_project_error_doesnt_exist.h"
 #include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_error_login_required.h"
 
 namespace websocket
 {
@@ -29,14 +30,14 @@ void remove_cis_project(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.username, req.project, ec);
+    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
 
     if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    auto permitted = perm.has_value() ? perm.value().read : true;
+    auto permitted = perm && perm.value().write;
 
     if(project != nullptr && permitted)
     {
@@ -56,9 +57,9 @@ void remove_cis_project(
 
     if(!permitted)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return tr.send_error(err, "Action not permitted.");
+        return request_context::authorized(ctx.client_info)
+               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
+               : tr.send_error(dto::user_error_login_required{}, "Login required.");
     }
 
     dto::cis_project_error_doesnt_exist err;

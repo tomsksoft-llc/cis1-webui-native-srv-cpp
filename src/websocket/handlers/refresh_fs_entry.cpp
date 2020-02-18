@@ -12,6 +12,7 @@
 #include "websocket/dto/user_permissions_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_refresh_success.h"
+#include "websocket/dto/user_error_login_required.h"
 
 #include "path_utils.h"
 
@@ -46,11 +47,11 @@ void refresh_fs_entry(
         return tr.send_error("Internal error.");
     }
 
-    if(path_rights && !path_rights.value().read)
+    if(!path_rights || !path_rights.value().read)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return tr.send_error(err, "Action not permitted.");
+        return request_context::authorized(ctx.client_info)
+               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
+               : tr.send_error(dto::user_error_login_required{}, "Login required.");
     }
 
     auto refresh_result = cis_manager.refresh(path);

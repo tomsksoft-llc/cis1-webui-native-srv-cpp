@@ -1,21 +1,16 @@
 /*
  *    TomskSoft CIS1 WebUI
  *
- *   (c) 2019 TomskSoft LLC
- *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *   (c) 2020 TomskSoft LLC
+ *   (c) Sergey Boyko [bso@tomsksoft.com]
  *
  */
 
 #pragma once
 
-#include <string>
-
 #include "tpl_reflect/meta_converter.h"
 
-namespace websocket
-{
-
-namespace dto
+namespace websocket::dto
 {
 
 struct user_permissions_get
@@ -37,6 +32,4 @@ struct user_permissions_get
     }
 };
 
-} // namespace dto
-
-} // namespace websocket
+} // namespace websocket::dto

@@ -34,14 +34,14 @@ void ban_user(
         return tr.send_error("Internal error.");
     }
 
-    if(!user_exists)
+    if(!user_exists || req.username == "guest")
     {
         dto::user_auth_error_user_not_found err;
 
         return tr.send_error(err, "Invalid username.");
     }
 
-    auto perm = rights.check_user_permission(ctx.username, "users.change_group", ec);
+    const auto perm = rights.check_user_permission(ctx.client_info, "users.change_group", ec);
 
     if(ec)
     {

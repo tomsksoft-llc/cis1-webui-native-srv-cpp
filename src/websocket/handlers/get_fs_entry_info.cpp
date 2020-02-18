@@ -48,7 +48,7 @@ void get_fs_entry_info(
         return tr.send_error("Internal error.");
     }
 
-    if(path_rights && !path_rights.value().read)
+    if(!path_rights || !path_rights.value().read)
     {
         dto::user_permissions_error_access_denied err;
 

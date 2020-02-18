@@ -32,62 +32,70 @@ public:
     std::optional<std::string> authenticate(
             const std::string& username,
             const std::string& pass,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     std::optional<std::string> authenticate(
             const std::string& token,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     bool has_user(
             const std::string& username,
-            std::error_code& ec) const;
+            std::error_code& ec) const final;
+
+    bool has_email(
+            const std::string& email,
+            std::error_code& ec) const final;
 
     bool change_group(
             const std::string& username,
             const std::string& groupname,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     std::optional<std::string> get_group(
             const std::string& username,
-            std::error_code& ec) const;
+            std::error_code& ec) const final;
 
     std::optional<std::string> generate_api_key(
             const std::string& name,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     std::optional<std::string> get_api_key(
             const std::string& name,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     bool remove_api_key(
             const std::string& name,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     bool change_pass(
             const std::string& user,
             const std::string& old_pass,
             const std::string& new_pass,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     std::optional<user_info> get_user_info(
             const std::string& username,
-            std::error_code& ec) const;
+            std::error_code& ec) const final;
 
     std::vector<database::user> get_users(
-            std::error_code& ec) const;
+            std::error_code& ec) const final;
 
     std::vector<user_info> get_user_infos(
-            std::error_code& ec) const;
+            std::error_code& ec) const final;
+
+    std::optional<database::group> get_group_info(
+            const std::string& group_name,
+            std::error_code& ec) const final;
 
     bool delete_token(
             const std::string& token,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     bool add_user(
             const std::string& username,
             const std::string& pass,
             const std::string& email,
-            std::error_code& ec);
+            std::error_code& ec) final;
 
     void cleanup();
 

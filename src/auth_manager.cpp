@@ -153,6 +153,32 @@ bool auth_manager::has_user(
     }
 }
 
+bool auth_manager::has_email(
+        const std::string& email,
+        std::error_code& ec) const
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        auto users_count = db->count<user>(where(c(&user::email) == email));
+
+        if(users_count)
+        {
+            db.commit();
+            return true;
+        }
+
+        return false;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+
+        return false;
+    }
+}
+
 bool auth_manager::change_group(
         const std::string& username,
         const std::string& groupname,
@@ -467,6 +493,33 @@ std::vector<user_info> auth_manager::get_user_infos(
     }
 }
 
+std::optional<database::group> auth_manager::get_group_info(
+        const std::string& group_name,
+        std::error_code& ec) const
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        auto groups = db->select(
+                &group::id,
+                where(c(&group::name) == group_name));
+
+        if(groups.size() != 1)
+        {
+            return std::nullopt;
+        }
+
+        const auto group_id = groups[0];
+        return database::group{group_id, group_name};
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+        return std::nullopt;
+    }
+}
+
 bool auth_manager::delete_token(
         const std::string& token_value,
         std::error_code& ec)
@@ -510,7 +563,7 @@ bool auth_manager::add_user(
                     &group::id,
                     where(c(&group::name) == "user"));
 
-            db->insert(user{-1, group_ids[0], username, pass, email});
+            db->insert(user{-1, group_ids[0], username, email, pass});
 
             db.commit();
 

@@ -27,24 +27,42 @@ public:
             database::database_wrapper& db);
 
     std::optional<bool> check_user_permission(
-            const std::string& username,
+            const request_context::client_info_holder& cln_info,
             const std::string& permission_name,
-            std::error_code& ec) const override;
+            std::error_code& ec) const final;
 
-    std::optional<database::project_user_right> check_project_right(
+    std::optional<database::project_user_right> get_project_user_right(
             const std::string& username,
             const std::string& project,
-            std::error_code& ec) const override;
+            std::error_code& ec) const final;
 
-    std::map<std::string, project_rights> get_permissions(
+    std::optional<project_rights> check_project_right(
+            const request_context::client_info_holder& cln_info,
+            const std::string& projectname,
+            std::error_code& ec) const final;
+
+    std::map<std::string, project_rights> get_projects_permissions(
             const std::string& username,
-            std::error_code& ec) const override;
+            std::error_code& ec) const final;
 
     bool set_user_project_permissions(
             const std::string& user,
             const std::string& project,
             database::project_user_right rights,
-            std::error_code& ec) override;
+            std::error_code& ec) final;
+
+    std::vector<std::string> get_user_permissions(
+            const std::string& username,
+            std::error_code& ec) const final;
+
+    std::optional<database::group_default_rights> get_group_default_permissions(
+            intmax_t group_id,
+            std::error_code& ec) const final;
+
+    bool set_group_default_permissions(
+            intmax_t group_id,
+            const project_rights& rights,
+            std::error_code& ec) const final;
 
 private:
     boost::asio::io_context& ioc_;

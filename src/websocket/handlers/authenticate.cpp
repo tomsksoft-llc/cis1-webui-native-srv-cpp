@@ -37,10 +37,8 @@ void authenticate(
 
     if(token)
     {
-        ctx.username = req.username;
-        ctx.active_token = token.value();
-
-        auto group = authentication_handler.get_group(ctx.username, ec);
+        ctx.client_info = request_context::user_info{req.username, token.value()};
+        auto group = authentication_handler.get_group(req.username, ec);
 
         if(!group || ec)
         {

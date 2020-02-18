@@ -15,7 +15,7 @@ namespace http
 
 const std::regex query_begin_regex(R"rx(^\\??([^=]+)\\=([^&]+))rx");
 const std::regex query_entry_regex(R"rx(\\&([^=]+)\\=([^&]+))rx");
-const std::regex cookies_regex(R"rx((.*?)=(.*?)($|;|,(?! )))rx");
+const std::regex cookies_regex(R"rx((?:\t| )*(.*?)=(.*?)($|;|,(?! )))rx");
 
 unsigned char to_hex(unsigned char ch)
 {
@@ -141,7 +141,7 @@ std::map<std::string, std::string> parse_cookies(const std::string& cookies)
         {
             continue;
         }
-        result.insert({what[1], what[2]});
+        result.insert({what[1], unescape_uri(what[2])});
 
         start = what[0].second;
         // update flags:

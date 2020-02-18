@@ -104,11 +104,15 @@ handle_result webhooks_handler::operator()(
         return handle_result::error;
     }
 
-    ctx.username = username;
-    ctx.api_access_key = user->api_access_key.value();
+    const std::string active_token
+            = request_context::active_token_or_empty(ctx.client_info);
+
+    ctx.client_info = request_context::user_info{username,
+                                                 active_token,
+                                                 user->api_access_key.value()};
 
     auto project_rights
-            = rights_.check_project_right(ctx.username, project, ec);
+            = rights_.check_project_right(ctx.client_info, project, ec);
 
     if(ec)
     {
@@ -117,7 +121,7 @@ handle_result webhooks_handler::operator()(
         return handle_result::error;
     }
 
-    if(project_rights && !project_rights.value().write)
+    if(!project_rights || !project_rights.value().write)
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
@@ -238,11 +242,13 @@ handle_result webhooks_handler::handle_gitlab_headers(
         const std::string& job,
         const std::string& query_string)
 {
+    const auto api_access_key = request_context::api_access_key_or_empty(ctx.client_info);
+
     auto signature_it = req.find("X-Gitlab-Token");
     auto event_it = req.find("X-Gitlab-Event");
     if(signature_it == req.end()
             || event_it == req.end()
-            || signature_it->value() != ctx.api_access_key)
+            || signature_it->value() != api_access_key)
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
@@ -294,13 +300,14 @@ handle_result webhooks_handler::handle_plain_headers(
         const std::string& job,
         const std::string& query_string)
 {
-    auto signature_it = req.find("X-Plain-Token");
+    const auto api_access_key = request_context::api_access_key_or_empty(ctx.client_info);
 
+    auto signature_it = req.find("X-Plain-Token");
     auto event_it = req.find("X-Plain-Event");
 
     if(signature_it == req.end()
             || event_it == req.end()
-            || signature_it->value() != ctx.api_access_key)
+            || signature_it->value() != api_access_key)
     {
         ctx.res_status = beast::http::status::forbidden;
         ctx.error = "Forbidden.";
@@ -357,9 +364,12 @@ void webhooks_handler::handle_github_signature(
 {
     openssl::hmac hmac;
 
+    auto* cln_info = std::get_if<request_context::user_info>(&ctx.client_info);
+    assert(cln_info != nullptr);
+
     hmac.set_secret_key(
-            reinterpret_cast<unsigned char*>(ctx.api_access_key.data()),
-            ctx.api_access_key.length());
+            reinterpret_cast<unsigned char*>(cln_info->api_access_key.data()),
+            cln_info->api_access_key.length());
 
     auto result = hmac.calc_digest(
             reinterpret_cast<unsigned char*>(req.body().data()),
@@ -419,6 +429,8 @@ void webhooks_handler::finish(
                 raw_event,
                 ev);
 
+        const std::string username = request_context::username_or_empty(ctx.client_info);
+
         make_async_chain(queue.get_executor())
             .then(cis_.run_job(
                         project,
@@ -427,7 +439,7 @@ void webhooks_handler::finish(
                         params,
                         {},
                         {},
-                        ctx.username))
+                        username))
             .then([file_path](auto&&...)
                         {
                             std::error_code ec;
@@ -522,7 +534,7 @@ const char* webhooks_handler::ev_to_string(hook_event ev)
     }
 }
 
-std::vector<std::string> webhooks_handler::prepare_params(
+std::vector<std::pair<std::string, std::string>> webhooks_handler::prepare_params(
         const std::string& project,
         const std::string& job,
         const std::string& query_string,
@@ -530,7 +542,7 @@ std::vector<std::string> webhooks_handler::prepare_params(
         const std::string& raw_event,
         hook_event ev)
 {
-    std::vector<std::string> result;
+    std::vector<std::pair<std::string, std::string>> result;
 
     auto job_info = cis_.get_job_info(project, job);
     if(job_info == nullptr)
@@ -549,23 +561,23 @@ std::vector<std::string> webhooks_handler::prepare_params(
         if(auto it = query_params.find(param.name);
                 it != query_params.end())
         {
-            result[i] = it->second;
+            result[i] = {param.name, it->second};
         }
         else if(param.name == "webhook_query_string")
         {
-            result[i] = query_string;
+            result[i] = {param.name, query_string};
         }
         else if(param.name == "webhook_request_body")
         {
-            result[i] = body_file.string();
+            result[i] = {param.name, body_file.string()};
         }
         else if(param.name == "webhook_event_type")
         {
-            result[i] = ev_to_string(ev);
+            result[i] = {param.name, ev_to_string(ev)};
         }
         else if(param.name == "webhook_raw_event_type")
         {
-            result[i] = raw_event;
+            result[i] = {param.name, raw_event};
         }
         ++i;
     }

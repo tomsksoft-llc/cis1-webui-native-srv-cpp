@@ -33,7 +33,7 @@ class Cis1WebUINativeSrvCpp(ConanFile):
                 "cis1_tpl/0.0.3@tomsksoft/cis1",
                 "cis1_cwu_transport/0.0.5@tomsksoft/cis1",
                 "cis1_cwu_protocol/0.0.5@tomsksoft/cis1",
-                "cis1_proto_utils/0.0.5@tomsksoft/cis1",
+                "cis1_proto_utils/0.0.6@tomsksoft/cis1",
                 "croncpp/1.0@tomsksoft/cis1")
 
     def build(self):
