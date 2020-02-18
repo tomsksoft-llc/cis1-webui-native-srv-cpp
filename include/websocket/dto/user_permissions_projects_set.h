@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "tpl_reflect/meta_converter.h"
+#include "path_utils.h"
 
 namespace websocket
 {
@@ -34,7 +35,8 @@ struct user_permissions_projects_set
             return make_meta_converter<permission>()
                     .add_field(
                             CT_STRING("project"),
-                            ptr_v<&permission::project>{})
+                            ptr_v<&permission::project>{},
+                            [](auto&&... args){ return validate_path_fragment(std::forward<decltype(args)>(args)...); })
                     .add_field(
                             CT_STRING("read"),
                             ptr_v<&permission::read>{})
