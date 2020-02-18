@@ -13,6 +13,11 @@ bool validate_path(const std::filesystem::path& path)
     return path.root_path() == "/";
 }
 
+bool validate_path_fragment(const std::string& fragment)
+{
+    return fragment.find("/") == std::string::npos;
+}
+
 std::optional<project_rights> get_path_rights(
         request_context& ctx,
         rights_manager_interface& rights,

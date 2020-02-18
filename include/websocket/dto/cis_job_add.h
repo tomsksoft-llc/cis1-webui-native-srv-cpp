@@ -11,6 +11,7 @@
 #include <string>
 
 #include "tpl_reflect/meta_converter.h"
+#include "path_utils.h"
 
 namespace websocket
 {
@@ -33,10 +34,12 @@ struct cis_job_add
                         CT_STRING("add"))
                 .add_field(
                         CT_STRING("project"),
-                        ptr_v<&cis_job_add::project>{})
+                        ptr_v<&cis_job_add::project>{},
+                        [](auto&&... args){ return validate_path_fragment(std::forward<decltype(args)>(args)...); })
                 .add_field(
                         CT_STRING("job"),
-                        ptr_v<&cis_job_add::job>{})
+                        ptr_v<&cis_job_add::job>{},
+                        [](auto&&... args){ return validate_path_fragment(std::forward<decltype(args)>(args)...); })
                 .done();
     }
 };

@@ -11,6 +11,7 @@
 #include <string>
 
 #include "tpl_reflect/meta_converter.h"
+#include "path_utils.h"
 
 namespace websocket
 {
@@ -34,10 +35,12 @@ struct cis_cron_remove
                         CT_STRING("remove"))
                 .add_field(
                         CT_STRING("project"),
-                        ptr_v<&cis_cron_remove::project>{})
+                        ptr_v<&cis_cron_remove::project>{},
+                        [](auto&&... args){ return validate_path_fragment(std::forward<decltype(args)>(args)...); })
                 .add_field(
                         CT_STRING("job"),
-                        ptr_v<&cis_cron_remove::job>{})
+                        ptr_v<&cis_cron_remove::job>{},
+                        [](auto&&... args){ return validate_path_fragment(std::forward<decltype(args)>(args)...); })
                 .add_field(
                         CT_STRING("cron_expr"),
                         ptr_v<&cis_cron_remove::cron_expr>{})
