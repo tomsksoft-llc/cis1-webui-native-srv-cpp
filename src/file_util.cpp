@@ -10,23 +10,26 @@
 
 namespace beast = boost::beast;
 
-beast::string_view mime_type(beast::string_view path)
+beast::string_view mime_type(const std::filesystem::path &path)
 {
-    using beast::iequals;
-    auto const ext = [&path]
+    const beast::string_view default_mime_type = "application/text";
+
+    if(!path.has_extension())
     {
-        auto const pos = path.rfind(".");
-        if(pos == beast::string_view::npos)
-        {
-            return beast::string_view{};
-        }
-        return path.substr(pos);
-    }();
+        // TODO check shebang
+        return default_mime_type;
+    }
+
+    const beast::string_view ext = path.extension().string();
+
+    using beast::iequals;
     if(iequals(ext, ".htm"))  return "text/html";
     if(iequals(ext, ".html")) return "text/html";
     if(iequals(ext, ".php"))  return "text/html";
     if(iequals(ext, ".css"))  return "text/css";
     if(iequals(ext, ".txt"))  return "text/plain";
+    if(iequals(ext, ".sh"))   return "text/x-shellscript";
+    if(iequals(ext, ".py"))   return "text/x-python";
     if(iequals(ext, ".js"))   return "application/javascript";
     if(iequals(ext, ".json")) return "application/json";
     if(iequals(ext, ".xml"))  return "application/xml";
@@ -43,7 +46,7 @@ beast::string_view mime_type(beast::string_view path)
     if(iequals(ext, ".tif"))  return "image/tiff";
     if(iequals(ext, ".svg"))  return "image/svg+xml";
     if(iequals(ext, ".svgz")) return "image/svg+xml";
-    return "application/text";
+    return default_mime_type;
 }
 
 std::string path_cat(
