@@ -13,9 +13,9 @@
 namespace http
 {
 
-file_handler::file_handler(std::string doc_root, bool ignore_mime)
+file_handler::file_handler(std::string doc_root, bool download /*=false*/)
     : doc_root_(std::move(doc_root))
-    , ignore_mime_(ignore_mime)
+    , download_(download)
 {}
 
 handle_result file_handler::operator()(
@@ -35,6 +35,7 @@ handle_result file_handler::single_file(
         std::string_view path)
 {
         std::string full_path = path_cat(doc_root_, path);
+        std::filesystem::path file_path(full_path);
 
         beast::error_code ec;
         beast::http::file_body::value_type body;
@@ -63,14 +64,17 @@ handle_result file_handler::single_file(
             std::make_tuple(beast::http::status::ok, req.version())};
         res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
 
-        if(!ignore_mime_)
+        res.set(beast::http::field::content_type, mime_type(file_path));
+
+        if(download_)
         {
-            res.set(beast::http::field::content_type, mime_type(full_path));
+            std::stringstream ss;
+            ss << "attachment; filename=" << file_path.filename();
+            res.set(beast::http::field::content_disposition, ss.str());
         }
         else
         {
-            res.set(beast::http::field::content_type,
-                    "application/octet-stream");
+            res.set(beast::http::field::content_disposition, "inline");
         }
 
         res.content_length(size);

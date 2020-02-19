@@ -9,11 +9,12 @@
 #pragma once
 
 #include <string>
+#include <filesystem>
 
 #include <boost/beast.hpp>
 
 boost::beast::string_view mime_type(
-        boost::beast::string_view path);
+        const std::filesystem::path &path);
 
 std::string path_cat(
         boost::beast::string_view base,

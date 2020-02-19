@@ -20,7 +20,7 @@ namespace http
 class file_handler
 {
 public:
-    file_handler(std::string doc_root, bool ignore_mime = false);
+    file_handler(std::string doc_root, bool download = false);
 
     handle_result operator()(
             beast::http::request<beast::http::empty_body>& req,
@@ -42,7 +42,7 @@ public:
             net::http_session::queue& queue);
 private:
     const std::string doc_root_;
-    const bool ignore_mime_;
+    const bool download_;
 };
 
 } // namespace http
