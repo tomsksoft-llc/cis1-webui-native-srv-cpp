@@ -11,6 +11,7 @@
 #include <utility>
 #include <fstream>
 #include <regex>
+#include <cis1_proto_utils/read_istream_kv_str.h>
 
 namespace cis
 {
@@ -179,22 +180,20 @@ job::job(const fs_iterator& it)
         std::ifstream params_file(params->path());
         std::string param;
         std::string default_value;
-        while(params_file.good())
-        {
-            std::getline(params_file, param, '=');
-            std::getline(params_file, default_value, '\n');
-            if(!default_value.empty())
-            {
-                default_value = default_value.substr(
-                        1,
-                        default_value.size() - 2);
-            }
 
-            if(!param.empty())
-            {
-                params_.push_back(job::param{param, default_value});
-            }
-        }
+        std::error_code ec;
+        std::vector<std::pair<std::string, std::string>> job_params;
+
+        const auto decode = true;
+        cis1::proto_utils::read_istream_ordered_kv_str(params_file, job_params, ec, decode);
+
+        std::transform(job_params.begin(),
+                       job_params.end(),
+                       std::back_inserter(params_),
+                       [](const std::pair<std::string, std::string>& key_val)
+                       {
+                           return job::param{key_val.first, key_val.second};
+                       });
     }
 }
 
