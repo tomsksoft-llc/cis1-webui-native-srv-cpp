@@ -188,9 +188,6 @@ action parse_args(
         config.add_entry(
                 "admin_credentials",
                 user_credentials{"admin", "admin@example.com", "1234"});
-        config.add_entry(
-                "guest_credentials",
-                user_credentials{"guest", "" , ""});
     }
 
     return action::run;

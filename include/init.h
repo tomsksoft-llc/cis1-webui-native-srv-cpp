@@ -17,7 +17,6 @@
 
 struct user_credentials
 {
-    std::string name;
     std::string email;
     std::string pass;
 };

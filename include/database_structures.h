@@ -14,32 +14,12 @@
 namespace database
 {
 
-struct group
-{
-    intmax_t id;
-    std::string name;
-};
-
-struct permission
-{
-    intmax_t id;
-    std::string name;
-};
-
-struct group_permission
-{
-    intmax_t id;
-    intmax_t group_id;
-    intmax_t permission_id;
-};
-
 struct user
 {
     intmax_t id;
-    intmax_t group_id;
-    std::string name;
     std::string email;
     std::string pass;
+    bool admin;
 };
 
 struct project
@@ -69,15 +49,6 @@ struct project_user_right
     intmax_t id;
     intmax_t project_id;
     intmax_t user_id;
-    bool read;
-    bool write;
-    bool execute;
-};
-
-struct group_default_rights
-{
-    intmax_t id;
-    intmax_t group_id;
     bool read;
     bool write;
     bool execute;
