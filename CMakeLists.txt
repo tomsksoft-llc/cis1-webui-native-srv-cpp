@@ -18,8 +18,6 @@ set(${PROJECT_NAME}_SRC
 
     src/websocket/handlers/utils/make_dir_entry.cpp
     src/websocket/handlers/authenticate.cpp
-    src/websocket/handlers/ban_user.cpp
-    src/websocket/handlers/change_group.cpp
     src/websocket/handlers/change_pass.cpp
     src/websocket/handlers/generate_api_key.cpp
     src/websocket/handlers/get_api_key.cpp
@@ -42,7 +40,6 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/run_job.cpp
     src/websocket/handlers/set_user_permissions.cpp
     src/websocket/handlers/token.cpp
-    src/websocket/handlers/unban_user.cpp
     src/websocket/handlers/session_subscribe.cpp
     src/websocket/handlers/session_unsubscribe.cpp
     src/websocket/handlers/add_cis_job.cpp
@@ -54,7 +51,6 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/set_fs_entry_executable_flag.cpp
     src/websocket/handlers/get_system_version.cpp
     src/websocket/handlers/set_group_default_permissions.cpp
-    src/websocket/handlers/get_group_default_permissions.cpp
     src/websocket/handlers/add_user.cpp
     src/websocket/handlers/get_user_permissions.cpp
 

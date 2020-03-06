@@ -26,19 +26,13 @@ public:
             boost::asio::io_context& ioc,
             database::database_wrapper& db);
 
-    std::optional<bool> check_user_permission(
-            const request_context::client_info_holder& cln_info,
-            const std::string& permission_name,
+    bool is_admin(
+            const std::string& email,
             std::error_code& ec) const final;
 
-    std::optional<database::project_user_right> get_project_user_right(
-            const std::string& username,
+    std::optional<database::project_user_right> check_project_right(
+            const std::string& email,
             const std::string& project,
-            std::error_code& ec) const final;
-
-    std::optional<project_rights> check_project_right(
-            const request_context::client_info_holder& cln_info,
-            const std::string& projectname,
             std::error_code& ec) const final;
 
     std::map<std::string, project_rights> get_projects_permissions(
@@ -53,10 +47,6 @@ public:
 
     std::vector<std::string> get_user_permissions(
             const std::string& username,
-            std::error_code& ec) const final;
-
-    std::optional<database::group_default_rights> get_group_default_permissions(
-            intmax_t group_id,
             std::error_code& ec) const final;
 
     bool set_group_default_permissions(

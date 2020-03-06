@@ -18,8 +18,8 @@ namespace dto
 
 struct auth_login_pass_success
 {
-    std::string group;
     std::string token;
+    bool admin;
 
     static constexpr auto get_converter()
     {
@@ -30,11 +30,11 @@ struct auth_login_pass_success
                         CT_STRING("login_pass"),
                         CT_STRING("success"))
                 .add_field(
-                        CT_STRING("group"),
-                        ptr_v<&auth_login_pass_success::group>{})
-                .add_field(
                         CT_STRING("token"),
                         ptr_v<&auth_login_pass_success::token>{})
+                .add_field(
+                        CT_STRING("admin"),
+                        ptr_v<&auth_login_pass_success::admin>{})
                 .done();
     }
 };

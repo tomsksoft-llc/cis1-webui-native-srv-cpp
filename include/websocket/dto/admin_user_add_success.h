@@ -1,8 +1,8 @@
 /*
  *    TomskSoft CIS1 WebUI
  *
- *   (c) 2019 TomskSoft LLC
- *   (c) Mokin Innokentiy [mia@tomsksoft.com]
+ *   (c) 2020 TomskSoft LLC
+ *   (c) Sergey Boyko [bso@tomsksoft.com]
  *
  */
 
@@ -10,27 +10,22 @@
 
 #include "tpl_reflect/meta_converter.h"
 
-namespace websocket
+namespace websocket::dto
 {
 
-namespace dto
-{
-
-struct user_auth_ban_success
+struct admin_user_add_success
 {
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_auth_ban_success>()
+        return make_meta_converter<admin_user_add_success>()
                 .set_name(
+                        CT_STRING("admin"),
                         CT_STRING("user"),
-                        CT_STRING("auth"),
-                        CT_STRING("ban"),
+                        CT_STRING("add"),
                         CT_STRING("success"))
                 .done();
     }
 };
 
-} // namespace dto
-
-} // namespace websocket
+} // namespace websocket::dto

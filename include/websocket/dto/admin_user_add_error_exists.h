@@ -13,18 +13,18 @@
 namespace websocket::dto
 {
 
-struct user_auth_add_error_incorrect_credentials
+struct admin_user_add_error_exists
 {
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_auth_add_error_incorrect_credentials>()
+        return make_meta_converter<admin_user_add_error_exists>()
                 .set_name(
+                        CT_STRING("admin"),
                         CT_STRING("user"),
-                        CT_STRING("auth"),
                         CT_STRING("add"),
                         CT_STRING("error"),
-                        CT_STRING("incorrect_credentials"))
+                        CT_STRING("exists"))
                 .done();
     }
 };

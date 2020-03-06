@@ -30,7 +30,7 @@ public:
             database::database_wrapper& db);
 
     std::optional<std::string> authenticate(
-            const std::string& username,
+            const std::string& email,
             const std::string& pass,
             std::error_code& ec) final;
 
@@ -39,24 +39,15 @@ public:
             std::error_code& ec) final;
 
     bool has_user(
-            const std::string& username,
-            std::error_code& ec) const final;
-
-    bool has_email(
             const std::string& email,
             std::error_code& ec) const final;
-
-    bool change_group(
-            const std::string& username,
-            const std::string& groupname,
-            std::error_code& ec) final;
 
     std::optional<std::string> get_group(
             const std::string& username,
             std::error_code& ec) const final;
 
     std::optional<std::string> generate_api_key(
-            const std::string& name,
+            const std::string& email,
             std::error_code& ec) final;
 
     std::optional<std::string> get_api_key(
@@ -68,7 +59,7 @@ public:
             std::error_code& ec) final;
 
     bool change_pass(
-            const std::string& user,
+            const std::string& email,
             const std::string& old_pass,
             const std::string& new_pass,
             std::error_code& ec) final;
@@ -92,9 +83,9 @@ public:
             std::error_code& ec) final;
 
     bool add_user(
-            const std::string& username,
-            const std::string& pass,
             const std::string& email,
+            const std::string& pass,
+            bool admin,
             std::error_code& ec) final;
 
     void cleanup();

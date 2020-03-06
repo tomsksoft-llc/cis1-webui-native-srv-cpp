@@ -20,7 +20,7 @@ namespace dto
 
 struct auth_login_pass
 {
-    std::string username;
+    std::string email;
     std::string pass;
 
     static constexpr auto get_converter()
@@ -31,8 +31,8 @@ struct auth_login_pass
                         CT_STRING("auth"),
                         CT_STRING("login_pass"))
                 .add_field(
-                        CT_STRING("username"),
-                        ptr_v<&auth_login_pass::username>{})
+                        CT_STRING("email"),
+                        ptr_v<&auth_login_pass::email>{})
                 .add_field(
                         CT_STRING("pass"),
                         ptr_v<&auth_login_pass::pass>{})

@@ -19,6 +19,7 @@ namespace handlers
 
 void authenticate(
         auth_manager_interface& authentication_handler,
+        rights_manager_interface& rights,
         request_context& ctx,
         const dto::auth_login_pass& req,
         cis1::proto_utils::transaction tr)
@@ -26,7 +27,7 @@ void authenticate(
     std::error_code ec;
 
     auto token = authentication_handler.authenticate(
-            req.username,
+            req.email,
             req.pass,
             ec);
 
@@ -35,26 +36,24 @@ void authenticate(
         return tr.send_error("Internal error.");
     }
 
-    if(token)
+    if(!token)
     {
-        ctx.client_info = request_context::user_info{req.username, token.value()};
-        auto group = authentication_handler.get_group(req.username, ec);
-
-        if(!group || ec)
-        {
-            return tr.send_error("Internal error.");
-        }
-
-        dto::auth_login_pass_success res;
-        res.token = token.value();
-        res.group = group.value();
-
-        return tr.send(res);
+        return tr.send_error(dto::auth_error_wrong_credentials{}, "Wrong credentials.");
     }
 
-    dto::auth_error_wrong_credentials err;
+    ctx.client_info = request_context::user_info{req.email, token.value()};
 
-    return tr.send_error(err, "Wrong credentials.");
+    const auto is_admin = rights.is_admin(req.email, ec);
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
+
+    dto::auth_login_pass_success res;
+    res.token = token.value();
+    res.admin = is_admin;
+
+    return tr.send(res);
 }
 
 } // namespace handlers

@@ -31,7 +31,7 @@ struct auth_manager_interface
     virtual ~auth_manager_interface() = default;
 
     virtual std::optional<std::string> authenticate(
-            const std::string& username,
+            const std::string& email,
             const std::string& pass,
             std::error_code& ec) = 0;
 
@@ -40,24 +40,15 @@ struct auth_manager_interface
             std::error_code& ec) = 0;
 
     virtual bool has_user(
-            const std::string& username,
-            std::error_code& ec) const = 0;
-
-    virtual bool has_email(
             const std::string& email,
             std::error_code& ec) const = 0;
-
-    virtual bool change_group(
-            const std::string& username,
-            const std::string& groupname,
-            std::error_code& ec) = 0;
 
     virtual std::optional<std::string> get_group(
             const std::string& username,
             std::error_code& ec) const = 0;
 
     virtual std::optional<std::string> generate_api_key(
-            const std::string& name,
+            const std::string& email,
             std::error_code& ec) = 0;
 
     virtual std::optional<std::string> get_api_key(
@@ -69,7 +60,7 @@ struct auth_manager_interface
             std::error_code& ec) = 0;
 
     virtual bool change_pass(
-            const std::string& user,
+            const std::string& email,
             const std::string& old_pass,
             const std::string& new_pass,
             std::error_code& ec) = 0;
@@ -93,8 +84,8 @@ struct auth_manager_interface
             std::error_code& ec) = 0;
 
     virtual bool add_user(
-            const std::string& username,
-            const std::string& pass,
             const std::string& email,
+            const std::string& pass,
+            bool admin,
             std::error_code& ec) = 0;
 };

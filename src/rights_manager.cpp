@@ -18,38 +18,24 @@ rights_manager::rights_manager(
     , db_(db)
 {}
 
-std::optional<bool> rights_manager::check_user_permission(
-        const request_context::client_info_holder& cln_info,
-        const std::string& permission_name,
+bool rights_manager::is_admin(
+        const std::string& email,
         std::error_code& ec) const
 {
-    const auto username = request_context::user_or_guest_name(cln_info);
-
     try
     {
         auto db = db_.make_transaction();
 
-        auto groups = db->select(
-                &user::group_id,
-                where(c(&user::name) == username));
+        auto admin_fields = db->select(
+                &user::admin,
+                where(c(&user::email) == email));
 
-        auto permissions = db->select(
-                &permission::id,
-                where(c(&permission::name) == permission_name));
-
-        if(groups.size() == 1 && permissions.size() == 1)
+        if(admin_fields.size() != 1)
         {
-            auto group_permission_count = db->count<group_permission>(
-                    where(c(&group_permission::group_id)      == groups[0]
-                       && c(&group_permission::permission_id) == permissions[0]));
-
-            if(group_permission_count == 1)
-            {
-                db.commit();
-
-                return true;
-            }
+            return false;
         }
+
+        return admin_fields[0];
 
         return false;
     }
@@ -57,12 +43,12 @@ std::optional<bool> rights_manager::check_user_permission(
     {
         ec = e.code();
 
-        return std::nullopt;
+        return false;
     }
 }
 
-std::optional<project_user_right> rights_manager::get_project_user_right(
-        const std::string& username,
+std::optional<project_user_right> rights_manager::check_project_right(
+        const std::string& email,
         const std::string& projectname,
         std::error_code& ec) const
 {
@@ -72,7 +58,7 @@ std::optional<project_user_right> rights_manager::get_project_user_right(
 
         auto users = db->select(
                 &user::id,
-                where(c(&user::name) == username));
+                where(c(&user::email) == email));
 
         auto projects = db->select(
                 &project::id,
@@ -98,57 +84,6 @@ std::optional<project_user_right> rights_manager::get_project_user_right(
     {
         ec = e.code();
 
-        return std::nullopt;
-    }
-}
-
-std::optional<project_rights> rights_manager::check_project_right(
-        const request_context::client_info_holder& cln_info,
-        const std::string& projectname,
-        std::error_code& ec) const
-{
-    const auto username = request_context::user_or_guest_name(cln_info);
-
-    try
-    {
-        auto project_right = get_project_user_right(username, projectname, ec);
-
-        if(project_right && !ec)
-        {
-            const auto rights = project_right.value();
-            return project_rights{rights.read, rights.write, rights.execute};
-        }
-
-        ec.clear();
-
-        auto db = db_.make_transaction();
-
-        // there is no a project right within the project_user_rights table
-        // try to load a projects rights for a user's group
-
-        auto groups = db->select(
-                &user::group_id,
-                where(c(&user::name) == username));
-
-        db.commit();
-
-        if(groups.size() != 1)
-        {
-            return std::nullopt;
-        }
-
-        auto rights = get_group_default_permissions(groups[0], ec);
-        if(!rights || ec)
-        {
-            return std::nullopt;
-        }
-
-        const auto rights_val = rights.value();
-        return project_rights{rights_val.read, rights_val.write, rights_val.execute};
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
         return std::nullopt;
     }
 }
@@ -335,31 +270,6 @@ std::vector<std::string> rights_manager::get_user_permissions(
         ec = e.code();
 
         return {};
-    }
-}
-
-std::optional<database::group_default_rights>
-rights_manager::get_group_default_permissions(
-        intmax_t group_id,
-        std::error_code& ec) const
-{
-    try
-    {
-        auto db = db_.make_transaction();
-
-        const auto rights = db->get_all<group_default_rights>(
-                where(c(&group_default_rights::group_id) == group_id));
-
-        db.commit();
-        return rights.size()
-               == 1
-               ? std::make_optional<group_default_rights>(rights[0])
-               : std::nullopt;
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
-        return std::nullopt;
     }
 }
 

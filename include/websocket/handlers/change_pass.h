@@ -12,8 +12,9 @@
 
 #include "request_context.h"
 #include "auth_manager_interface.h"
+#include "rights_manager_interface.h"
 
-#include "websocket/dto/user_auth_change_pass.h"
+#include "websocket/dto/user_change_pass.h"
 
 namespace websocket
 {
@@ -23,8 +24,9 @@ namespace handlers
 
 void change_pass(
         auth_manager_interface& authentication_handler,
+        rights_manager_interface& rights,
         request_context& ctx,
-        const dto::user_auth_change_pass& req,
+        const dto::user_change_pass& req,
         cis1::proto_utils::transaction tr);
 
 } // namespace handlers

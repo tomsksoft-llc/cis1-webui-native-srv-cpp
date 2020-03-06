@@ -18,25 +18,28 @@ namespace websocket
 namespace dto
 {
 
-struct user_auth_change_pass
+struct user_change_pass
 {
+    std::string email;
     std::string old_password;
     std::string new_password;
 
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_auth_change_pass>()
+        return make_meta_converter<user_change_pass>()
                 .set_name(
                         CT_STRING("user"),
-                        CT_STRING("auth"),
                         CT_STRING("change_pass"))
                 .add_field(
+                        CT_STRING("email"),
+                        ptr_v<&user_change_pass::email>{})
+                .add_field(
                         CT_STRING("oldPassword"),
-                        ptr_v<&user_auth_change_pass::old_password>{})
+                        ptr_v<&user_change_pass::old_password>{})
                 .add_field(
                         CT_STRING("newPassword"),
-                        ptr_v<&user_auth_change_pass::new_password>{})
+                        ptr_v<&user_change_pass::new_password>{})
                 .done();
     }
 };
