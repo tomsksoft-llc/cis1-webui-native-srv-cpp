@@ -87,21 +87,19 @@ void get_job_info(
                 res.fs_entries.end(),
                 [](const dto::fs_entry& lhs, const dto::fs_entry& rhs)
                 {
-                    if(std::holds_alternative<dto::fs_entry::build_info>(
+                    return std::holds_alternative<dto::fs_entry::build_info>(
                             lhs.metainfo)
-                    && !std::holds_alternative<dto::fs_entry::build_info>(
-                            rhs.metainfo))
-                    {
-                        return true;
-                    }
-
-                    return false;
+                           && !std::holds_alternative<dto::fs_entry::build_info>(
+                            rhs.metainfo);
                 });
 
-        res.properties.push_back(
-                make_dir_entry(
-                        cis_manager.fs().root().path(),
-                        *job->get_script_entry()));
+        if(auto script = job->get_script_entry(); script != nullptr)
+        {
+            res.properties.push_back(
+                    make_dir_entry(
+                            cis_manager.fs().root().path(),
+                            *script));
+        }
 
         if(auto entry = job->get_params_entry(); entry != nullptr)
         {
