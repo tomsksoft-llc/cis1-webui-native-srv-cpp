@@ -42,16 +42,12 @@ public:
             const std::string& email,
             std::error_code& ec) const final;
 
-    std::optional<std::string> get_group(
-            const std::string& username,
-            std::error_code& ec) const final;
-
     std::optional<std::string> generate_api_key(
             const std::string& email,
             std::error_code& ec) final;
 
     std::optional<std::string> get_api_key(
-            const std::string& name,
+            const std::string& email,
             std::error_code& ec) final;
 
     bool remove_api_key(
@@ -65,17 +61,13 @@ public:
             std::error_code& ec) final;
 
     std::optional<user_info> get_user_info(
-            const std::string& username,
+            const std::string& email,
             std::error_code& ec) const final;
 
     std::vector<database::user> get_users(
             std::error_code& ec) const final;
 
     std::vector<user_info> get_user_infos(
-            std::error_code& ec) const final;
-
-    std::optional<database::group> get_group_info(
-            const std::string& group_name,
             std::error_code& ec) const final;
 
     bool delete_token(

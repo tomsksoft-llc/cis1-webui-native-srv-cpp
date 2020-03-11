@@ -34,8 +34,17 @@ handle_result multipart_form_handler::upload(
     {
         std::error_code ec;
 
+        if(!ctx.client_info)
+        {
+            ctx.res_status = beast::http::status::forbidden;
+
+            return handle_result::error;
+        }
+
+        const auto &email = ctx.client_info.value().email;
+
         auto project_rights
-                = rights_.check_project_right(ctx.client_info, project, ec);
+                = rights_.check_project_right(email, project, ec);
 
         if(ec)
         {
@@ -100,8 +109,17 @@ handle_result multipart_form_handler::replace(
     {
         std::error_code ec;
 
+        if(!ctx.client_info)
+        {
+            ctx.res_status = beast::http::status::forbidden;
+
+            return handle_result::error;
+        }
+
+        const auto &email = ctx.client_info.value().email;
+
         auto project_rights
-                = rights_.check_project_right(ctx.client_info, project, ec);
+                = rights_.check_project_right(email, project, ec);
 
         if(ec)
         {

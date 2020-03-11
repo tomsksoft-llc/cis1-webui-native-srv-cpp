@@ -56,7 +56,7 @@ public:
             request_context& ctx,
             net::http_session::request_reader& reader,
             net::http_session::queue& queue,
-            const std::string& username,
+            const std::string& email,
             const std::string& project,
             const std::string& job,
             const std::string& escaped_query_string,

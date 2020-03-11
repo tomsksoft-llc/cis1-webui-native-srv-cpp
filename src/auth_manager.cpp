@@ -153,35 +153,6 @@ bool auth_manager::has_user(
     }
 }
 
-std::optional<std::string> auth_manager::get_group(
-        const std::string& username,
-        std::error_code& ec) const
-{
-    try
-    {
-        auto db = db_.make_transaction();
-
-        auto groups = db->select(
-                &group::name,
-                inner_join<user>(on(c(&user::group_id) == &group::id)),
-                where(c(&user::name) == username));
-
-        if(groups.size() == 1)
-        {
-            db.commit();
-            return groups[0];
-        }
-
-        return std::nullopt;
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
-
-        return std::nullopt;
-    }
-}
-
 std::optional<std::string> auth_manager::generate_api_key(
         const std::string& email,
         std::error_code& ec)
@@ -227,7 +198,7 @@ std::optional<std::string> auth_manager::generate_api_key(
 }
 
 std::optional<std::string> auth_manager::get_api_key(
-        const std::string& name,
+        const std::string& email,
         std::error_code& ec)
 {
     try
@@ -236,7 +207,7 @@ std::optional<std::string> auth_manager::get_api_key(
         auto values = db->select(
                 &api_access_key::value,
                 inner_join<user>(on(c(&user::id) == &api_access_key::user_id)),
-                where(c(&user::name) == name));
+                where(c(&user::email) == email));
 
         if(values.size() == 1)
         {
@@ -339,7 +310,7 @@ std::vector<user> auth_manager::get_users(
 }
 
 std::optional<user_info> auth_manager::get_user_info(
-        const std::string& username,
+        const std::string& email,
         std::error_code& ec) const
 {
     try
@@ -348,11 +319,8 @@ std::optional<user_info> auth_manager::get_user_info(
 
         auto users = db->select(
                 columns(&user::id,
-                        &user::name,
-                        &user::email,
-                        &group::name),
-                inner_join<user>(on(c(&user::group_id) == &group::id)),
-                where(c(&user::name) == username));
+                        &user::admin),
+                where(c(&user::email) == email));
 
         if(users.size() != 1)
         {
@@ -373,10 +341,10 @@ std::optional<user_info> auth_manager::get_user_info(
         db.commit();
 
         return user_info{
-                std::get<1>(users[0]),
-                std::get<2>(users[0]),
-                std::get<3>(users[0]),
-                key};
+                email,
+                key,
+                std::get<1>(users[0]), // admin
+        };
     }
     catch(const std::system_error& e)
     {
@@ -397,15 +365,13 @@ std::vector<user_info> auth_manager::get_user_infos(
 
         auto users = db->select(
                 columns(&user::id,
-                        &user::name,
                         &user::email,
-                        &group::name),
-                inner_join<user>(on(c(&user::group_id) == &group::id)));
+                        &user::admin));
 
         result.resize(users.size());
 
         size_t i = 0;
-        for(auto [id, name, email, group] : users)
+        for(auto [id, email, admin] : users)
         {
             std::optional<std::string> key;
             auto api_access_keys = db->select(
@@ -415,7 +381,7 @@ std::vector<user_info> auth_manager::get_user_infos(
             {
                 key = api_access_keys[0];
             }
-            result[i] = {name, email, group, key};
+            result[i] = {email, key, admin};
             ++i;
         }
 
@@ -428,33 +394,6 @@ std::vector<user_info> auth_manager::get_user_infos(
         ec = e.code();
 
         return {};
-    }
-}
-
-std::optional<database::group> auth_manager::get_group_info(
-        const std::string& group_name,
-        std::error_code& ec) const
-{
-    try
-    {
-        auto db = db_.make_transaction();
-
-        auto groups = db->select(
-                &group::id,
-                where(c(&group::name) == group_name));
-
-        if(groups.size() != 1)
-        {
-            return std::nullopt;
-        }
-
-        const auto group_id = groups[0];
-        return database::group{group_id, group_name};
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
-        return std::nullopt;
     }
 }
 

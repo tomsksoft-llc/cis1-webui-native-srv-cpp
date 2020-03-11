@@ -20,10 +20,9 @@
 
 struct user_info
 {
-    std::string name;
     std::string email;
-    std::string group;
     std::optional<std::string> api_access_key;
+    bool is_admin;
 };
 
 struct auth_manager_interface
@@ -43,16 +42,12 @@ struct auth_manager_interface
             const std::string& email,
             std::error_code& ec) const = 0;
 
-    virtual std::optional<std::string> get_group(
-            const std::string& username,
-            std::error_code& ec) const = 0;
-
     virtual std::optional<std::string> generate_api_key(
             const std::string& email,
             std::error_code& ec) = 0;
 
     virtual std::optional<std::string> get_api_key(
-            const std::string& name,
+            const std::string& email,
             std::error_code& ec) = 0;
 
     virtual bool remove_api_key(
@@ -66,17 +61,13 @@ struct auth_manager_interface
             std::error_code& ec) = 0;
 
     virtual std::optional<user_info> get_user_info(
-            const std::string& username,
+            const std::string& email,
             std::error_code& ec) const = 0;
 
     virtual std::vector<database::user> get_users(
             std::error_code& ec) const = 0;
 
     virtual std::vector<user_info> get_user_infos(
-            std::error_code& ec) const = 0;
-
-    virtual std::optional<database::group> get_group_info(
-            const std::string& group_name,
             std::error_code& ec) const = 0;
 
     virtual bool delete_token(

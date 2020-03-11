@@ -187,7 +187,7 @@ action parse_args(
     {
         config.add_entry(
                 "admin_credentials",
-                user_credentials{"admin", "admin@example.com", "1234"});
+                user_credentials{"admin@example.com", "1234"});
     }
 
     return action::run;

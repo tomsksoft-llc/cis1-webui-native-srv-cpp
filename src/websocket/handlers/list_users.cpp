@@ -55,11 +55,9 @@ void list_users(
     for(auto& user : users)
     {
         res.users.push_back({
-                user.name,
                 user.email,
-                user.group,
-                false,
-                user.api_access_key ? user.api_access_key.value() : ""});
+                user.api_access_key ? user.api_access_key.value() : "",
+                user.is_admin});
     }
 
     return tr.send(res);
