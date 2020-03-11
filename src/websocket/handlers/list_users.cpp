@@ -8,8 +8,8 @@
 
 #include "websocket/handlers/list_users.h"
 
-#include "websocket/dto/user_list_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/admin_user_list_success.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 
 namespace websocket
 {
@@ -21,47 +21,48 @@ void list_users(
         auth_manager_interface& authentication_handler,
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::user_list& req,
+        const dto::admin_user_list& req,
         cis1::proto_utils::transaction tr)
 {
     std::error_code ec;
 
-    auto perm = rights.check_user_permission(ctx.client_info, "users.list", ec);
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
+    }
 
+    const auto& email = ctx.client_info.value().email;
+
+    const auto is_admin = rights.is_admin(email, ec);
     if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    auto permitted = perm.has_value() ? perm.value() : false;
-
-    if(permitted)
+    if(!is_admin)
     {
-        const auto users = authentication_handler.get_user_infos(ec);
-
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
-
-        dto::user_list_success res;
-
-        for(auto& user : users)
-        {
-            res.users.push_back({
-                    user.name,
-                    user.email,
-                    user.group,
-                    false,
-                    user.api_access_key ? user.api_access_key.value() : ""});
-        }
-
-        return tr.send(res);
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
-    dto::user_permissions_error_access_denied err;
+    const auto users = authentication_handler.get_user_infos(ec);
+    if(ec)
+    {
+        return tr.send_error("Internal error.");
+    }
 
-    return tr.send_error(err, "Action not permitted");
+    dto::admin_user_list_success res;
+
+    for(auto& user : users)
+    {
+        res.users.push_back({
+                user.name,
+                user.email,
+                user.group,
+                false,
+                user.api_access_key ? user.api_access_key.value() : ""});
+    }
+
+    return tr.send(res);
 }
 
 } // namespace handlers

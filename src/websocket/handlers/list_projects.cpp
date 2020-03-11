@@ -45,17 +45,15 @@ void list_projects(
                                 cis_manager.fs().root().path(),
                                 *project);
 
-                        bool permitted = false;
-
                         std::error_code ec;
 
-                        auto perm = rights.check_project_right(ctx.client_info, entry.name, ec);
-
-                        //ignore ec
-
-                        if((perm.has_value() && perm.value().read) || !perm.has_value())
+                        bool permitted = false;
+                        if(ctx.client_info)
                         {
-                            permitted = true;
+                            const auto& email = ctx.client_info->email;
+                            auto perm = rights.check_project_right(email, entry.name, ec);
+                            //ignore ec
+                            permitted = (perm.has_value() && perm.value().read) || !perm.has_value();
                         }
 
                         entry.metainfo = dto::fs_entry::project_info{permitted};

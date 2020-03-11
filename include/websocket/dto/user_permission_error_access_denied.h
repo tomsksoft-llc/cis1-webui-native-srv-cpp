@@ -18,22 +18,17 @@ namespace websocket
 namespace dto
 {
 
-struct user_permissions_projects_get
+struct user_permission_error_access_denied
 {
-    std::string username;
-
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_permissions_projects_get>()
+        return make_meta_converter<user_permission_error_access_denied>()
                 .set_name(
                         CT_STRING("user"),
-                        CT_STRING("permissions"),
-                        CT_STRING("projects"),
-                        CT_STRING("get"))
-                .add_field(
-                        CT_STRING("username"),
-                        ptr_v<&user_permissions_projects_get::username>{})
+                        CT_STRING("permission"),
+                        CT_STRING("error"),
+                        CT_STRING("access_denied"))
                 .done();
     }
 };

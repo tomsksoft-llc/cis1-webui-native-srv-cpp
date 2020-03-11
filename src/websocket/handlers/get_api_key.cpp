@@ -9,7 +9,7 @@
 #include "websocket/handlers/get_api_key.h"
 
 #include "websocket/dto/user_api_key_get_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 
 namespace websocket
 {
@@ -26,7 +26,7 @@ void get_api_key(
 {
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     const auto& email = ctx.client_info.value().email;
@@ -58,7 +58,7 @@ void get_api_key(
         return get();
     }
 
-    const auto is_admin = rights.is_admin(req.email, ec);
+    const auto is_admin = rights.is_admin(email, ec);
     if(ec)
     {
         return tr.send_error("Internal error.");
@@ -69,7 +69,7 @@ void get_api_key(
         return get();
     }
 
-    return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.");
+    return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
 }
 
 } // namespace handlers

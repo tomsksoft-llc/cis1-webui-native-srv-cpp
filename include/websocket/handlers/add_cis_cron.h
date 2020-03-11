@@ -17,7 +17,7 @@
 #include "websocket/dto/cis_cron_add.h"
 
 #include "websocket/dto/cis_cron_add_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 #include "websocket/dto/user_error_login_required.h"
 
@@ -94,7 +94,7 @@ void add_cis_cron(
 
     if(!permitted)
     {
-        return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_job_error_doesnt_exist err;

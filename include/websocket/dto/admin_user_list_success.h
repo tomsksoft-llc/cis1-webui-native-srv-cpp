@@ -19,7 +19,7 @@ namespace websocket
 namespace dto
 {
 
-struct user_list_success
+struct admin_user_list_success
 {
     struct user
     {
@@ -57,14 +57,15 @@ struct user_list_success
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_list_success>()
+        return make_meta_converter<admin_user_list_success>()
                 .set_name(
+                        CT_STRING("admin"),
                         CT_STRING("user"),
                         CT_STRING("list"),
                         CT_STRING("success"))
                 .add_field(
                         CT_STRING("users"),
-                        ptr_v<&user_list_success::users>{})
+                        ptr_v<&admin_user_list_success::users>{})
                 .done();
     }
 };

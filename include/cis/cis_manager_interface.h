@@ -108,7 +108,7 @@ struct cis_manager_interface
                     void(const std::string&)> on_session_started,
             std::function<
                     void(const std::string&)> on_session_finished,
-            const std::string& username) = 0;
+            const std::string& email) = 0;
 
     virtual add_cron_task_t add_cron(
             const std::string& project_name,

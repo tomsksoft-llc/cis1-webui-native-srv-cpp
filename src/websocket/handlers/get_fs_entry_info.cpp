@@ -9,7 +9,7 @@
 #include "websocket/handlers/get_fs_entry_info.h"
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/user_error_login_required.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_info_success.h"
@@ -58,7 +58,7 @@ void get_fs_entry_info(
 
     if(!path_rights || !path_rights.value().read)
     {
-        return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();

@@ -55,7 +55,7 @@ public:
             std::error_code& ec) final;
 
     bool remove_api_key(
-            const std::string& name,
+            const std::string& email,
             std::error_code& ec) final;
 
     bool change_pass(

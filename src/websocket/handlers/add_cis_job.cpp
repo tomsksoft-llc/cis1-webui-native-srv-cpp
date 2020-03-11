@@ -11,7 +11,7 @@
 #include "websocket/dto/cis_job_add_success.h"
 #include "websocket/dto/cis_job_error_already_exist.h"
 #include "websocket/dto/cis_project_error_doesnt_exist.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/user_error_login_required.h"
 
 namespace websocket
@@ -119,7 +119,7 @@ void add_cis_job(
 
     if(!permitted)
     {
-        return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_project_error_doesnt_exist err;

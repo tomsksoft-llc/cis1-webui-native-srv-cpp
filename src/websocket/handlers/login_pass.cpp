@@ -6,7 +6,7 @@
  *
  */
 
-#include "websocket/handlers/token.h"
+#include "websocket/handlers/login_pass.h"
 
 #include "websocket/dto/auth_login_pass_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"
@@ -17,38 +17,41 @@ namespace websocket
 namespace handlers
 {
 
-void token(
+void login_pass(
         auth_manager_interface& authentication_handler,
+        rights_manager_interface& rights,
         request_context& ctx,
-        const dto::auth_token& req,
+        const dto::auth_login_pass& req,
         cis1::proto_utils::transaction tr)
 {
     std::error_code ec;
 
-    auto username = authentication_handler.authenticate(req.token, ec);
+    auto token = authentication_handler.authenticate(
+            req.email,
+            req.pass,
+            ec);
 
     if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    if(!username)
+    if(!token)
     {
-        dto::auth_error_wrong_credentials err;
-        return tr.send_error(err, "Invalid token.");
+        return tr.send_error(dto::auth_error_wrong_credentials{}, "Wrong credentials.");
     }
 
-    ctx.client_info = request_context::user_info{username.value(), req.token};
+    ctx.client_info = request_context::user_info{req.email, token.value()};
 
-    auto group = authentication_handler.get_group(username.value(), ec);
-    if(!group || ec)
+    const auto is_admin = rights.is_admin(req.email, ec);
+    if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
     dto::auth_login_pass_success res;
-    res.token = req.token;
-    res.group = group.value();
+    res.token = token.value();
+    res.admin = is_admin;
 
     return tr.send(res);
 }

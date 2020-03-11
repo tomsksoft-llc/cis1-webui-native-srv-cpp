@@ -56,7 +56,7 @@ struct auth_manager_interface
             std::error_code& ec) = 0;
 
     virtual bool remove_api_key(
-            const std::string& name,
+            const std::string& email,
             std::error_code& ec) = 0;
 
     virtual bool change_pass(

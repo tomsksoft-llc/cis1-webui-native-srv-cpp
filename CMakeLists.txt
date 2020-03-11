@@ -17,14 +17,14 @@ set(${PROJECT_NAME}_SRC
     src/net/fail.cpp
 
     src/websocket/handlers/utils/make_dir_entry.cpp
-    src/websocket/handlers/authenticate.cpp
+    src/websocket/handlers/login_pass.cpp
     src/websocket/handlers/change_pass.cpp
     src/websocket/handlers/generate_api_key.cpp
     src/websocket/handlers/get_api_key.cpp
     src/websocket/handlers/get_build_info.cpp
     src/websocket/handlers/get_job_info.cpp
     src/websocket/handlers/get_project_info.cpp
-    src/websocket/handlers/get_user_permissions_projects.cpp
+    src/websocket/handlers/get_user_permissions.cpp
     src/websocket/handlers/list_cis_cron.cpp
     src/websocket/handlers/list_directory.cpp
     src/websocket/handlers/list_projects.cpp
@@ -39,7 +39,7 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/remove_fs_entry.cpp
     src/websocket/handlers/run_job.cpp
     src/websocket/handlers/set_user_permissions.cpp
-    src/websocket/handlers/token.cpp
+    src/websocket/handlers/login_token.cpp
     src/websocket/handlers/session_subscribe.cpp
     src/websocket/handlers/session_unsubscribe.cpp
     src/websocket/handlers/add_cis_job.cpp
@@ -50,9 +50,7 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/remove_cis_build.cpp
     src/websocket/handlers/set_fs_entry_executable_flag.cpp
     src/websocket/handlers/get_system_version.cpp
-    src/websocket/handlers/set_group_default_permissions.cpp
     src/websocket/handlers/add_user.cpp
-    src/websocket/handlers/get_user_permissions.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 

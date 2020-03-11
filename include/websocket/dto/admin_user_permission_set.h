@@ -20,7 +20,7 @@ namespace websocket
 namespace dto
 {
 
-struct user_permissions_projects_set
+struct admin_user_permission_set
 {
     struct permission
     {
@@ -50,24 +50,24 @@ struct user_permissions_projects_set
         }
     };
 
-    std::string username;
+    std::string email;
     std::vector<permission> permissions;
 
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_permissions_projects_set>()
+        return make_meta_converter<admin_user_permission_set>()
                 .set_name(
+                        CT_STRING("admin"),
                         CT_STRING("user"),
-                        CT_STRING("permissions"),
-                        CT_STRING("projects"),
+                        CT_STRING("permission"),
                         CT_STRING("set"))
                 .add_field(
-                        CT_STRING("username"),
-                        ptr_v<&user_permissions_projects_set::username>{})
+                        CT_STRING("email"),
+                        ptr_v<&admin_user_permission_set::email>{})
                 .add_field(
                         CT_STRING("permissions"),
-                        ptr_v<&user_permissions_projects_set::permissions>{})
+                        ptr_v<&admin_user_permission_set::permissions>{})
                 .done();
     }
 };

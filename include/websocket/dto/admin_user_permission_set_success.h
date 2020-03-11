@@ -8,8 +8,6 @@
 
 #pragma once
 
-#include <string>
-
 #include "tpl_reflect/meta_converter.h"
 
 namespace websocket
@@ -18,17 +16,18 @@ namespace websocket
 namespace dto
 {
 
-struct user_permissions_error_access_denied
+struct admin_user_permission_set_success
 {
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_permissions_error_access_denied>()
+        return make_meta_converter<admin_user_permission_set_success>()
                 .set_name(
+                        CT_STRING("admin"),
                         CT_STRING("user"),
-                        CT_STRING("permissions"),
-                        CT_STRING("error"),
-                        CT_STRING("access_denied"))
+                        CT_STRING("permission"),
+                        CT_STRING("set"),
+                        CT_STRING("success"))
                 .done();
     }
 };

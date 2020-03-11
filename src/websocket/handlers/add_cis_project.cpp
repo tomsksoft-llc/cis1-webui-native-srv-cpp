@@ -10,7 +10,7 @@
 
 #include "websocket/dto/cis_project_add_success.h"
 #include "websocket/dto/cis_project_error_already_exist.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 
 namespace websocket
 {

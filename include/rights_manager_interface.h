@@ -38,22 +38,13 @@ struct rights_manager_interface
             const std::string& project,
             std::error_code& ec) const = 0;
 
-    virtual std::map<std::string, project_rights> get_projects_permissions(
-            const std::string& username,
+    virtual std::map<std::string, project_rights> get_permissions(
+            const std::string& email,
             std::error_code& ec) const = 0;
 
     virtual bool set_user_project_permissions(
-            const std::string& user,
+            const std::string& email,
             const std::string& project,
             database::project_user_right rights,
             std::error_code& ec) = 0;
-
-    virtual std::vector<std::string> get_user_permissions(
-            const std::string& username,
-            std::error_code& ec) const = 0;
-
-    virtual bool set_group_default_permissions(
-            intmax_t group_id,
-            const project_rights& rights,
-            std::error_code& ec) const = 0;
 };

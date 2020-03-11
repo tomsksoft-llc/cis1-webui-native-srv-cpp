@@ -9,7 +9,7 @@
 #include "websocket/handlers/get_build_info.h"
 
 #include "websocket/dto/cis_build_info_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/cis_build_error_doesnt_exist.h"
 #include "websocket/dto/user_error_login_required.h"
 #include "websocket/handlers/utils/make_dir_entry.h"
@@ -74,7 +74,7 @@ void get_build_info(
 
     if(!permitted)
     {
-        return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_build_error_doesnt_exist err;

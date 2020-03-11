@@ -10,7 +10,7 @@
 
 #include "websocket/dto/cis_job_run_success.h"
 #include "websocket/dto/cis_job_finished.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 #include "websocket/dto/cis_job_error_invalid_params.h"
 #include "websocket/dto/user_error_login_required.h"
@@ -28,6 +28,13 @@ void run_job(
         const dto::cis_job_run& req,
         cis1::proto_utils::transaction tr)
 {
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::user_error_login_required{}, "Login required.");
+    }
+
+    const auto& email = ctx.client_info.value().email;
+
     std::map<std::string, std::string> params;
 
     for(auto& param : req.params)
@@ -39,7 +46,7 @@ void run_job(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
+    auto perm = rights.check_project_right(email, req.project, ec);
 
     if(ec)
     {
@@ -47,8 +54,6 @@ void run_job(
     }
 
     auto permitted = perm && perm.value().execute;
-
-    const auto username = request_context::username_or_empty(ctx.client_info);
 
     if(job != nullptr && permitted)
     {
@@ -91,7 +96,7 @@ void run_job(
                             tr.send(res);
                         },
                         [](const std::string& session_id){},
-                        username))
+                        email))
                 .then(  [tr](const cis::execution_info& info)
                         {
                             if(info.success && info.exit_code)
@@ -116,9 +121,7 @@ void run_job(
 
     if(!permitted)
     {
-        return request_context::authorized(ctx.client_info)
-               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_job_error_doesnt_exist err;

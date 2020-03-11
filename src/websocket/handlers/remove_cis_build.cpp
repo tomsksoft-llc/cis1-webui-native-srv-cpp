@@ -10,7 +10,7 @@
 
 #include "websocket/dto/cis_build_remove_success.h"
 #include "websocket/dto/cis_build_error_doesnt_exist.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/user_error_login_required.h"
 
 namespace websocket
@@ -26,6 +26,13 @@ void remove_cis_build(
         const dto::cis_build_remove& req,
         cis1::proto_utils::transaction tr)
 {
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::user_error_login_required{}, "Login required.");
+    }
+
+    const auto& email = ctx.client_info.value().email;
+
     auto build = cis_manager.get_build_info(
             req.project,
             req.job,
@@ -33,7 +40,7 @@ void remove_cis_build(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
+    auto perm = rights.check_project_right(email, req.project, ec);
 
     if(ec)
     {
@@ -67,9 +74,7 @@ void remove_cis_build(
 
     if(!permitted)
     {
-        return request_context::authorized(ctx.client_info)
-               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_build_error_doesnt_exist err;

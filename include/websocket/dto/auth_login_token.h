@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "tpl_reflect/meta_converter.h"
 
 namespace websocket
@@ -16,18 +18,20 @@ namespace websocket
 namespace dto
 {
 
-struct user_permissions_projects_set_success
+struct auth_login_token
 {
+    std::string token;
+
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_permissions_projects_set_success>()
+        return make_meta_converter<auth_login_token>()
                 .set_name(
-                        CT_STRING("user"),
-                        CT_STRING("permissions"),
-                        CT_STRING("projects"),
-                        CT_STRING("set"),
-                        CT_STRING("success"))
+                        CT_STRING("auth"),
+                        CT_STRING("login_token"))
+                .add_field(
+                        CT_STRING("token"),
+                        ptr_v<&auth_login_token::token>{})
                 .done();
     }
 };

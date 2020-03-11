@@ -109,7 +109,7 @@ std::optional<std::string> auth_manager::authenticate(
             }
 
             auto users = db->select(
-                    &user::name,
+                    &user::email,
                     where(c(&user::id) == std::get<0>(ids[0])));
 
             db.commit();
@@ -255,7 +255,7 @@ std::optional<std::string> auth_manager::get_api_key(
 }
 
 bool auth_manager::remove_api_key(
-        const std::string& name,
+        const std::string& email,
         std::error_code& ec)
 {
     try
@@ -264,7 +264,7 @@ bool auth_manager::remove_api_key(
         auto ids = db->select(
                 &api_access_key::id,
                 inner_join<user>(on(c(&user::id) == &api_access_key::user_id)),
-                where(c(&user::name) == name));
+                where(c(&user::email) == email));
         if(ids.size() == 1)
         {
             db->remove<api_access_key>(ids[0]);

@@ -9,7 +9,7 @@
 #include "websocket/handlers/refresh_fs_entry.h"
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_refresh_success.h"
 #include "websocket/dto/user_error_login_required.h"
@@ -29,6 +29,13 @@ void refresh_fs_entry(
         const dto::fs_entry_refresh& req,
         cis1::proto_utils::transaction tr)
 {
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::user_error_login_required{}, "Login required.");
+    }
+
+    const auto& email = ctx.client_info.value().email;
+
     std::filesystem::path path(req.path);
 
     if(!validate_path(path))
@@ -40,7 +47,7 @@ void refresh_fs_entry(
 
     std::error_code ec;
 
-    auto path_rights = get_path_rights(ctx, rights, path, ec);
+    auto path_rights = get_path_rights(email, rights, path, ec);
 
     if(ec)
     {
@@ -49,22 +56,17 @@ void refresh_fs_entry(
 
     if(!path_rights || !path_rights.value().read)
     {
-        return request_context::authorized(ctx.client_info)
-               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     auto refresh_result = cis_manager.refresh(path);
 
     if(!refresh_result)
     {
-        dto::fs_entry_error_doesnt_exist err;
-
-        return tr.send_error(err, "Path does not exists.");
+        return tr.send_error(dto::fs_entry_error_doesnt_exist{}, "Path does not exists.");
     }
 
     dto::fs_entry_refresh_success res;
-
     return tr.send(res);
 }
 

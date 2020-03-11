@@ -84,7 +84,7 @@ public:
                     void(const std::string&)> on_session_started,
             std::function<
                     void(const std::string&)> on_session_finished,
-            const std::string& username) override;
+            const std::string& email) override;
 
     add_cron_task_t add_cron(
             const std::string& project_name,

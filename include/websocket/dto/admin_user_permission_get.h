@@ -18,20 +18,22 @@ namespace websocket
 namespace dto
 {
 
-struct auth_token
+struct admin_user_permission_get
 {
-    std::string token;
+    std::string email;
 
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<auth_token>()
+        return make_meta_converter<admin_user_permission_get>()
                 .set_name(
-                        CT_STRING("auth"),
-                        CT_STRING("token"))
+                        CT_STRING("admin"),
+                        CT_STRING("user"),
+                        CT_STRING("permission"),
+                        CT_STRING("get"))
                 .add_field(
-                        CT_STRING("token"),
-                        ptr_v<&auth_token::token>{})
+                        CT_STRING("email"),
+                        ptr_v<&admin_user_permission_get::email>{})
                 .done();
     }
 };

@@ -27,58 +27,40 @@ void logout(
 {
     std::error_code ec;
 
-    auto username = authentication_handler.authenticate(req.token, ec);
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::auth_error_wrong_credentials{}, "Invalid token.");
+    }
+
+    auto email = authentication_handler.authenticate(req.token, ec);
 
     if(ec)
     {
         return tr.send_error("Internal error.");
     }
 
-    const auto clear_client_info
-            = std::visit(
-                    meta::overloaded{
-                            [&username, &req, &authentication_handler, &tr]
-                                    (const request_context::user_info& cln_ctx)
-                            {
-                                if(!username || username.value() != cln_ctx.username)
-                                {
-                                    dto::auth_error_wrong_credentials err;
-                                    tr.send_error(err, "Invalid token.");
-                                    // do not clear the client info
-                                    return false;
-                                }
-
-                                std::error_code ec;
-                                authentication_handler.delete_token(req.token, ec);
-                                if(ec)
-                                {
-                                    tr.send_error("Internal error.");
-                                    // do not clear the client info because of the error
-                                    return false;
-                                }
-
-                                // send a success result
-                                dto::auth_logout_success res;
-                                tr.send(res);
-
-                                // clear the client info only if the requested token equals the active token
-                                return req.token == cln_ctx.active_token;
-                            },
-                            [&tr](const request_context::guest_info& cln_ctx)
-                            {
-                                dto::auth_error_wrong_credentials err;
-                                tr.send_error(err, "Invalid token.");
-
-                                // the client is guest
-                                // therefore do not clear the client info
-                                return false;
-                            }},
-                    ctx.client_info);
-
-    if(clear_client_info)
+    if(email && email.value() == ctx.client_info.value().email)
     {
-        ctx.client_info = request_context::guest_info{};
+        if(req.token == ctx.client_info.value().active_token)
+        {
+            ctx.client_info.reset();
+        }
+
+        authentication_handler.delete_token(req.token, ec);
+
+        if(ec)
+        {
+            return tr.send_error("Internal error.");
+        }
+
+        dto::auth_logout_success res;
+
+        return tr.send(res);
     }
+
+    dto::auth_error_wrong_credentials err;
+
+    return tr.send_error(err, "Invalid token.");
 }
 
 } // namespace handlers

@@ -8,7 +8,7 @@
 
 #include "websocket/handlers/add_user.h"
 
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/admin_user_add_success.h"
 #include "websocket/dto/admin_user_add_error_exists.h"
 #include "websocket/dto/admin_user_add_error_incorrect_credentials.h"
@@ -26,7 +26,7 @@ void add_user(auth_manager_interface& authentication_handler,
 
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
     const auto& email = ctx.client_info->email;
@@ -38,7 +38,7 @@ void add_user(auth_manager_interface& authentication_handler,
 
     if(!permitted)
     {
-        return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
     if(req.email.empty() || req.pass.empty())

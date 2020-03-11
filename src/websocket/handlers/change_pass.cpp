@@ -10,7 +10,7 @@
 
 #include "websocket/dto/user_auth_error_pass_doesnt_match.h"
 #include "websocket/dto/user_auth_change_pass_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 
 namespace websocket
 {
@@ -73,7 +73,7 @@ void change_pass(
         return change();
     }
 
-    return tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.");
+    return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
 }
 
 } // namespace handlers
