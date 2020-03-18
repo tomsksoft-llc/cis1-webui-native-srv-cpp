@@ -12,7 +12,7 @@
 #include "websocket/dto/cis_job_error_already_exist.h"
 #include "websocket/dto/cis_project_error_doesnt_exist.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 
 namespace websocket
 {
@@ -33,7 +33,7 @@ void add_cis_job(
 
     if(!ctx.client_info)
     {
-        tr.send_error(dto::user_error_login_required{}, "Login required.");
+        tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     const auto& email = ctx.client_info.value().email;

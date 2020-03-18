@@ -51,6 +51,9 @@ set(${PROJECT_NAME}_SRC
     src/websocket/handlers/set_fs_entry_executable_flag.cpp
     src/websocket/handlers/get_system_version.cpp
     src/websocket/handlers/add_user.cpp
+    src/websocket/handlers/delete_user.cpp
+    src/websocket/handlers/get_project_permissions.cpp
+    src/websocket/handlers/set_admin_status.cpp
 
     src/openssl_wrapper/openssl_wrapper.cpp
 

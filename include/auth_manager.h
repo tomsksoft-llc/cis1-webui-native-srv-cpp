@@ -80,6 +80,10 @@ public:
             bool admin,
             std::error_code& ec) final;
 
+    bool delete_user(
+            const std::string& email,
+            std::error_code& ec) final;
+
     void cleanup();
 
 private:

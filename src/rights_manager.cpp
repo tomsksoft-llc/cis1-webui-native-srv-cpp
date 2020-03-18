@@ -36,8 +36,6 @@ bool rights_manager::is_admin(
         }
 
         return admin_fields[0];
-
-        return false;
     }
     catch(const std::system_error& e)
     {
@@ -47,6 +45,38 @@ bool rights_manager::is_admin(
     }
 }
 
+bool rights_manager::set_admin_status(
+        const std::string& email,
+        bool admin,
+        std::error_code& ec) const
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        auto users = db->get_all<user>(
+                where(c(&user::email) == email));
+
+        if(users.size() != 1)
+        {
+            return false;
+        }
+
+        users[0].admin = admin;
+
+        db->update(users[0]);
+
+        return true;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+
+        return false;
+    }
+}
+
+// TODO check if the user is admin
 std::optional<project_user_right> rights_manager::check_project_right(
         const std::string& email,
         const std::string& projectname,
@@ -131,6 +161,73 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
             result[project_name].read = read;
             result[project_name].write = write;
             result[project_name].execute = execute;
+        }
+
+        db.commit();
+        return result;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+
+        return {};
+    }
+}
+
+std::map<std::string, project_rights_ex> rights_manager::get_permissions_by_project(
+        const std::string& project,
+        std::error_code& ec) const
+{
+    try
+    {
+        std::map<std::string, project_rights_ex> result;
+
+        auto db = db_.make_transaction();
+
+        auto projects = db->select(
+                &project::id,
+                where(c(&project::name) == project));
+
+        if(projects.size() != 1)
+        {
+            db.commit();
+            return result;
+        }
+
+        auto users = db->select(
+                columns(&user::id,
+                        &user::email,
+                        &user::admin));
+
+        // set default rights for the users
+        for(const auto&[id, email, admin] : users)
+        {
+            result[email] = admin
+                            ? project_rights_ex{true, false, false, false}
+                            : project_rights_ex{false, true, true, true};
+        }
+
+        auto users_rights = db->select(
+                columns(&user::email,
+                        &project_user_right::read,
+                        &project_user_right::write,
+                        &project_user_right::execute),
+                inner_join<user>(
+                        on(c(&user::id) == &project_user_right::user_id)),
+                where(c(&project_user_right::project_id) == projects[0]));
+
+        for(auto&[email, read, write, execute] : users_rights)
+        {
+            project_rights_ex& rights = result[email];
+            if(rights.admin)
+            {
+                // admin has all rights always
+                continue;
+            }
+
+            rights.read = read;
+            rights.write = write;
+            rights.execute = execute;
         }
 
         db.commit();

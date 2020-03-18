@@ -8,7 +8,7 @@
 
 #include "websocket/handlers/login_token.h"
 
-#include "websocket/dto/auth_login_pass_success.h"
+#include "websocket/dto/auth_login_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"
 
 namespace websocket
@@ -46,7 +46,7 @@ void login_token(
         return tr.send_error("Internal error.");
     }
 
-    dto::auth_login_pass_success res;
+    dto::auth_login_success res;
     res.token = req.token;
     res.admin = is_admin;
 

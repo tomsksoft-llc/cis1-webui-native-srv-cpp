@@ -20,9 +20,17 @@
 
 struct project_rights
 {
-    bool read;
-    bool write;
-    bool execute;
+    bool read = false;
+    bool write = false;
+    bool execute = false;
+};
+
+struct project_rights_ex
+{
+    bool admin = false;
+    bool read = false;
+    bool write = false;
+    bool execute = false;
 };
 
 struct rights_manager_interface
@@ -33,6 +41,11 @@ struct rights_manager_interface
             const std::string& email,
             std::error_code& ec) const = 0;
 
+    virtual bool set_admin_status(
+            const std::string& email,
+            bool admin,
+            std::error_code& ec) const = 0;
+
     virtual std::optional<database::project_user_right> check_project_right(
             const std::string& email,
             const std::string& project,
@@ -40,6 +53,10 @@ struct rights_manager_interface
 
     virtual std::map<std::string, project_rights> get_permissions(
             const std::string& email,
+            std::error_code& ec) const = 0;
+
+    virtual std::map<std::string, project_rights_ex> get_permissions_by_project(
+            const std::string& project,
             std::error_code& ec) const = 0;
 
     virtual bool set_user_project_permissions(

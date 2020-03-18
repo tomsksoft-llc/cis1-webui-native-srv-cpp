@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <string>
+
 #include "tpl_reflect/meta_converter.h"
 
 namespace websocket
@@ -16,17 +18,16 @@ namespace websocket
 namespace dto
 {
 
-struct user_auth_change_pass_success
+struct user_error_pass_doesnt_match
 {
     static constexpr auto get_converter()
     {
         using namespace reflect;
-        return make_meta_converter<user_auth_change_pass_success>()
+        return make_meta_converter<user_error_pass_doesnt_match>()
                 .set_name(
                         CT_STRING("user"),
-                        CT_STRING("auth"),
-                        CT_STRING("change_pass"),
-                        CT_STRING("success"))
+                        CT_STRING("error"),
+                        CT_STRING("pass_doesnt_match"))
                 .done();
     }
 };

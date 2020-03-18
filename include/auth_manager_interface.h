@@ -79,4 +79,8 @@ struct auth_manager_interface
             const std::string& pass,
             bool admin,
             std::error_code& ec) = 0;
+
+    virtual bool delete_user(
+            const std::string& email,
+            std::error_code& ec) = 0;
 };

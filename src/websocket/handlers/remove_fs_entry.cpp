@@ -12,7 +12,7 @@
 #include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_remove_success.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 
 #include "path_utils.h"
 
@@ -31,7 +31,7 @@ void remove_fs_entry(
 {
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     const auto& email = ctx.client_info.value().email;

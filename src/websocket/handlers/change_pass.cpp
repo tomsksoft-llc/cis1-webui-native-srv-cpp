@@ -8,8 +8,8 @@
 
 #include "websocket/handlers/change_pass.h"
 
-#include "websocket/dto/user_auth_error_pass_doesnt_match.h"
-#include "websocket/dto/user_auth_change_pass_success.h"
+#include "websocket/dto/user_error_pass_doesnt_match.h"
+#include "websocket/dto/user_change_pass_success.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
 
 namespace websocket
@@ -29,7 +29,7 @@ void change_pass(
 
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_auth_error_pass_doesnt_match{}, "Invalid password");
+        return tr.send_error(dto::user_error_pass_doesnt_match{}, "Invalid password");
     }
 
     const auto change = [&]()
@@ -47,10 +47,10 @@ void change_pass(
 
         if(!ok)
         {
-            return tr.send_error(dto::user_auth_error_pass_doesnt_match{}, "Invalid password");
+            return tr.send_error(dto::user_error_pass_doesnt_match{}, "Invalid password");
         }
 
-        dto::user_auth_change_pass_success res;
+        dto::user_change_pass_success res;
         return tr.send(res);
     };
 

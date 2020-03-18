@@ -11,7 +11,7 @@
 #include "websocket/dto/cis_job_remove_success.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 
 namespace websocket
 {
@@ -28,7 +28,7 @@ void remove_cis_job(
 {
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     const auto& email = ctx.client_info.value().email;

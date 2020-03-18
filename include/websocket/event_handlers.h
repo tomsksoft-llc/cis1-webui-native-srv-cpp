@@ -42,4 +42,5 @@
 #include "handlers/set_fs_entry_executable_flag.h"
 #include "handlers/get_system_version.h"
 #include "handlers/add_user.h"
-#include "handlers/get_user_permissions.h"
+#include "handlers/delete_user.h"
+#include "handlers/get_project_permissions.h"

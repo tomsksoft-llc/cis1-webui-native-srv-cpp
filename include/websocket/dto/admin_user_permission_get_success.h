@@ -55,9 +55,9 @@ struct admin_user_permission_get_success
         using namespace reflect;
         return make_meta_converter<admin_user_permission_get_success>()
                 .set_name(
+                        CT_STRING("admin"),
                         CT_STRING("user"),
-                        CT_STRING("permissions"),
-                        CT_STRING("projects"),
+                        CT_STRING("permission"),
                         CT_STRING("get"),
                         CT_STRING("success"))
                 .add_field(

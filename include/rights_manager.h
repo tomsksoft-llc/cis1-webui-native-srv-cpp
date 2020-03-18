@@ -19,7 +19,7 @@
 #include "database.h"
 
 class rights_manager
-    : public rights_manager_interface
+        : public rights_manager_interface
 {
 public:
     rights_manager(
@@ -30,6 +30,11 @@ public:
             const std::string& email,
             std::error_code& ec) const final;
 
+    bool set_admin_status(
+            const std::string& email,
+            bool admin,
+            std::error_code& ec) const final;
+
     std::optional<database::project_user_right> check_project_right(
             const std::string& email,
             const std::string& project,
@@ -37,6 +42,10 @@ public:
 
     std::map<std::string, project_rights> get_permissions(
             const std::string& email,
+            std::error_code& ec) const final;
+
+    std::map<std::string, project_rights_ex> get_permissions_by_project(
+            const std::string& project,
             std::error_code& ec) const final;
 
     bool set_user_project_permissions(

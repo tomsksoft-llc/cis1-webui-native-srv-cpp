@@ -10,7 +10,7 @@
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_list_success.h"
 
@@ -42,7 +42,7 @@ void list_directory(
 
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     const auto& email = ctx.client_info.value().email;

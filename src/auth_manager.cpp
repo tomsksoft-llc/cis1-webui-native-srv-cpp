@@ -452,6 +452,37 @@ bool auth_manager::add_user(
     }
 }
 
+bool auth_manager::delete_user(
+        const std::string& email,
+        std::error_code& ec)
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        auto ids = db->select(
+                &user::id,
+                where(c(&user::email) == email));
+
+        if(ids.size() == 1)
+        {
+            db->remove<user>(ids[0]);
+
+            db.commit();
+
+            return true;
+        }
+
+        return false;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+
+        return false;
+    }
+}
+
 void auth_manager::cleanup()
 {
     auto db = db_.make_transaction();

@@ -11,7 +11,7 @@
 #include "websocket/dto/cis_job_info_success.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 
 #include "websocket/handlers/utils/make_dir_entry.h"
 #include "websocket/handlers/utils/unpack_build_info.h"
@@ -33,7 +33,7 @@ void get_job_info(
 
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     const auto& email = ctx.client_info.value().email;
