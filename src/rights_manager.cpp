@@ -139,7 +139,7 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
 
         auto db = db_.make_transaction();
 
-        // get user_id by the username
+        // get user_id by the email
         auto users = db->select(
                 columns(&user::id,
                         &user::admin),
