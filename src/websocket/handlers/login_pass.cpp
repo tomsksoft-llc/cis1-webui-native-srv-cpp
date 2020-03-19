@@ -11,6 +11,8 @@
 #include "websocket/dto/auth_login_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -31,10 +33,7 @@ void login_pass(
             req.pass,
             ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(!token)
     {
@@ -44,10 +43,8 @@ void login_pass(
     ctx.client_info = request_context::user_info{req.email, token.value()};
 
     const auto is_admin = rights.is_admin(req.email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     dto::auth_login_success res;
     res.token = token.value();

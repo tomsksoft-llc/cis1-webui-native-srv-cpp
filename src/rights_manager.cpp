@@ -66,6 +66,8 @@ bool rights_manager::set_admin_status(
 
         db->update(users[0]);
 
+        db.commit();
+
         return true;
     }
     catch(const std::system_error& e)
@@ -76,8 +78,7 @@ bool rights_manager::set_admin_status(
     }
 }
 
-// TODO check if the user is admin
-std::optional<project_user_right> rights_manager::check_project_right(
+std::optional<project_rights> rights_manager::check_project_right(
         const std::string& email,
         const std::string& projectname,
         std::error_code& ec) const
@@ -87,7 +88,8 @@ std::optional<project_user_right> rights_manager::check_project_right(
         auto db = db_.make_transaction();
 
         auto users = db->select(
-                &user::id,
+                columns(&user::id,
+                        &user::admin),
                 where(c(&user::email) == email));
 
         auto projects = db->select(
@@ -96,15 +98,24 @@ std::optional<project_user_right> rights_manager::check_project_right(
 
         if(users.size() == 1 && projects.size() == 1)
         {
+            const auto &[user_id, user_admin] = users[0];
+
+            if(user_admin)
+            {
+                db.commit();
+
+                return project_rights{true, true, true};
+            }
+
             auto rights = db->get_all<project_user_right>(
-                    where(c(&project_user_right::user_id)    == users[0]
-                       && c(&project_user_right::project_id) == projects[0]));
+                    where(c(&project_user_right::user_id) == user_id
+                          && c(&project_user_right::project_id) == projects[0]));
 
             if(rights.size() == 1)
             {
                 db.commit();
 
-                return rights[0];
+                return project_rights{rights[0].read, rights[0].write, rights[0].execute};
             }
         }
 
@@ -130,7 +141,8 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
 
         // get user_id by the username
         auto users = db->select(
-                &user::id,
+                columns(&user::id,
+                        &user::admin),
                 where(c(&user::email) == email));
         if(users.size() != 1)
         {
@@ -138,12 +150,24 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
             return result;
         }
 
+        const auto &[user_id, user_admin] = users[0];
+
         // get project list and fill the result with the projects and default permissions
         auto projects = db->select(&project::name);
 
+        auto default_rights = user_admin
+                              ? project_rights{true, true, true}
+                              : project_rights{false, false, false};
+
         for(auto& project_name : projects)
         {
-            result.insert({project_name, project_rights{false, false, false}});
+            result.insert({project_name, default_rights});
+        }
+
+        if(user_admin)
+        {
+            db.commit();
+            return result;
         }
 
         // set the result's permissions with the following project_rights
@@ -154,7 +178,7 @@ std::map<std::string, project_rights> rights_manager::get_permissions(
                         &project_user_right::execute),
                 inner_join<project>(
                         on(c(&project::id) == &project_user_right::project_id)),
-                where(c(&project_user_right::user_id) == users[0]));
+                where(c(&project_user_right::user_id) == user_id));
 
         for(auto&[project_name, read, write, execute] : projects_rights)
         {
@@ -203,8 +227,8 @@ std::map<std::string, project_rights_ex> rights_manager::get_permissions_by_proj
         for(const auto&[id, email, admin] : users)
         {
             result[email] = admin
-                            ? project_rights_ex{true, false, false, false}
-                            : project_rights_ex{false, true, true, true};
+                            ? project_rights_ex{true, true, true, true}
+                            : project_rights_ex{false, false, false, false};
         }
 
         auto users_rights = db->select(

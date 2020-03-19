@@ -12,6 +12,8 @@
 #include "websocket/dto/user_change_pass_success.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -29,7 +31,7 @@ void change_pass(
 
     if(!ctx.client_info)
     {
-        return tr.send_error(dto::user_error_pass_doesnt_match{}, "Invalid password");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
     const auto change = [&]()
@@ -40,10 +42,7 @@ void change_pass(
                 req.new_password,
                 ec);
 
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
+        WSHU_CHECK_EC(ec);
 
         if(!ok)
         {
@@ -63,10 +62,8 @@ void change_pass(
     }
 
     const auto is_admin = rights.is_admin(email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     if(is_admin)
     {

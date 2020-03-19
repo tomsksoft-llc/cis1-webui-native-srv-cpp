@@ -53,7 +53,7 @@ void list_projects(
                             const auto& email = ctx.client_info->email;
                             auto perm = rights.check_project_right(email, entry.name, ec);
                             //ignore ec
-                            permitted = (perm.has_value() && perm.value().read) || !perm.has_value();
+                            permitted = perm.has_value() && perm.value().read;
                         }
 
                         entry.metainfo = dto::fs_entry::project_info{permitted};

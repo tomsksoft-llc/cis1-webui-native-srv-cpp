@@ -44,3 +44,4 @@
 #include "handlers/add_user.h"
 #include "handlers/delete_user.h"
 #include "handlers/get_project_permissions.h"
+#include "handlers/set_admin_status.h"

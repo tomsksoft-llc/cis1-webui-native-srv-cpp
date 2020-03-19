@@ -14,6 +14,7 @@
 #include "websocket/dto/auth_error_login_required.h"
 
 #include "websocket/handlers/utils/make_dir_entry.h"
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -41,10 +42,7 @@ void get_project_info(
 
     auto perm = rights.check_project_right(email, req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().read;
 

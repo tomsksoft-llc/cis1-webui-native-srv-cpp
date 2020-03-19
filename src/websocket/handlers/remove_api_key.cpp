@@ -11,6 +11,8 @@
 #include "websocket/dto/user_api_key_remove_success.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -37,10 +39,7 @@ void remove_api_key(
     {
         auto result = authentication_handler.remove_api_key(req.email, ec);
 
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
+        WSHU_CHECK_EC(ec);
 
         if(!result)
         {
@@ -58,10 +57,7 @@ void remove_api_key(
     }
 
     const auto is_admin = rights.is_admin(email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(is_admin)
     {

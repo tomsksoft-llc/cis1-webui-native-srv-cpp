@@ -15,6 +15,8 @@
 #include "websocket/dto/cis_job_error_invalid_params.h"
 #include "websocket/dto/auth_error_login_required.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -48,10 +50,7 @@ void run_job(
 
     auto perm = rights.check_project_right(email, req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().execute;
 

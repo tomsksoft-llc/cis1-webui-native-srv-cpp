@@ -14,6 +14,7 @@
 #include "websocket/dto/fs_entry_new_dir_success.h"
 #include "websocket/dto/auth_error_login_required.h"
 
+#include "websocket/handlers/utils/check_ec.h"
 #include "path_utils.h"
 
 namespace websocket
@@ -49,10 +50,7 @@ void new_directory(
 
     auto path_rights = get_path_rights(email, rights, path, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(!path_rights || !path_rights.value().write)
     {

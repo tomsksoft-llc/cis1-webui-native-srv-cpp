@@ -11,6 +11,8 @@
 #include "websocket/dto/admin_user_list_success.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -34,10 +36,7 @@ void list_users(
     const auto& email = ctx.client_info.value().email;
 
     const auto is_admin = rights.is_admin(email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(!is_admin)
     {
@@ -45,10 +44,7 @@ void list_users(
     }
 
     const auto users = authentication_handler.get_user_infos(ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     dto::admin_user_list_success res;
 

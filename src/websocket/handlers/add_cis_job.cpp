@@ -14,6 +14,8 @@
 #include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/auth_error_login_required.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -39,10 +41,7 @@ void add_cis_job(
     const auto& email = ctx.client_info.value().email;
     auto perm = rights.check_project_right(email, req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().write;
 
@@ -68,18 +67,13 @@ void add_cis_job(
                 job_path,
                 ec);
 
-        if(ec)
-        {
-            return tr.send_error("Can't create directory.");
-        }
+        WSHU_CHECK_EC_MSG(ec, "Can't create directory.");
 
         auto job_script = fs.create_file_w(
                 job_path / "script",
                 ec);
-        if(ec)
-        {
-            return tr.send_error("Can't create file.");
-        }
+
+        WSHU_CHECK_EC_MSG(ec, "Can't create file.");
 
         fs.set_permissions(
                 job_path / "script",
@@ -87,26 +81,20 @@ void add_cis_job(
                     | std::filesystem::perms::group_read
                     | std::filesystem::perms::others_read,
                 ec);
-        if(ec)
-        {
-            return tr.send_error("Can't make script executable.");
-        }
+
+        WSHU_CHECK_EC_MSG(ec, "Can't make script executable.");
 
         auto job_params = fs.create_file_w(
                 job_path / "job.params",
                 ec);
-        if(ec)
-        {
-            return tr.send_error("Can't create file.");
-        }
+
+        WSHU_CHECK_EC_MSG(ec, "Can't create file.");
 
         auto job_conf = fs.create_file_w(
                 job_path / "job.conf",
                 ec);
-        if(ec)
-        {
-            return tr.send_error("Can't create file.");
-        }
+
+        WSHU_CHECK_EC_MSG(ec, "Can't create file.");
 
         *job_conf << "script=script" << '\n';
         *job_conf << "keep_last_success_builds=5" << '\n';

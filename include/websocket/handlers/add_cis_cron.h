@@ -21,6 +21,7 @@
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
 #include "websocket/dto/auth_error_login_required.h"
 
+#include "websocket/handlers/utils/check_ec.h"
 #include "websocket/transaction_handle.h"
 #include "cron_utils.h"
 
@@ -57,10 +58,7 @@ void add_cis_cron(
     const auto& email = ctx.client_info.value().email;
     auto perm = rights.check_project_right(email, req.project, ec);
 
-    if(ec)
-    {
-        return handle.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().write && perm.value().execute;
 

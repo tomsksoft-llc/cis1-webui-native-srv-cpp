@@ -14,6 +14,7 @@
 #include "websocket/dto/fs_entry_set_executable_flag_success.h"
 #include "websocket/dto/auth_error_login_required.h"
 
+#include "websocket/handlers/utils/check_ec.h"
 #include "path_utils.h"
 
 namespace websocket
@@ -47,10 +48,7 @@ void set_fs_entry_executable_flag(
 
     auto path_rights = get_path_rights(email, rights, path, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(!path_rights || !path_rights.value().write)
     {
@@ -73,10 +71,7 @@ void set_fs_entry_executable_flag(
                 : std::filesystem::perm_options::remove,
             ec);
 
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
+        WSHU_CHECK_EC(ec);
 
         dto::fs_entry_set_executable_flag_success res;
 

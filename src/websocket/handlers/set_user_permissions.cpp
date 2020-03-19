@@ -11,6 +11,8 @@
 #include "websocket/dto/admin_user_permission_set_success.h"
 #include "websocket/dto/user_permission_error_access_denied.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -33,10 +35,8 @@ void set_user_permissions(
     std::error_code ec;
 
     const auto is_admin = rights.is_admin(email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     if(!is_admin)
     {
@@ -51,10 +51,7 @@ void set_user_permissions(
                 {-1, -1, -1, perm.read, perm.write, perm.execute},
                 ec);
 
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
+        WSHU_CHECK_EC(ec);
     }
 
     dto::admin_user_permission_set_success res;

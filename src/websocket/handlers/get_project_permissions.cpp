@@ -12,6 +12,8 @@
 #include "websocket/dto/cis_project_error_doesnt_exist.h"
 #include "websocket/dto/admin_project_permission_get_success.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket::handlers
 {
 
@@ -34,10 +36,8 @@ void get_project_permissions(
 
     // check if the user is admin
     const auto is_admin = rights.is_admin(email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     if(!is_admin)
     {
@@ -52,10 +52,7 @@ void get_project_permissions(
 
     const auto permissions = rights.get_permissions_by_project(req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     dto::admin_project_permission_get_success res;
 

@@ -46,7 +46,7 @@ struct rights_manager_interface
             bool admin,
             std::error_code& ec) const = 0;
 
-    virtual std::optional<database::project_user_right> check_project_right(
+    virtual std::optional<project_rights> check_project_right(
             const std::string& email,
             const std::string& project,
             std::error_code& ec) const = 0;

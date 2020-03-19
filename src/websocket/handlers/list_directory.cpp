@@ -16,7 +16,9 @@
 
 #include "path_utils.h"
 #include "cis/cis_structs.h"
+
 #include "websocket/handlers/utils/make_dir_entry.h"
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -51,10 +53,7 @@ void list_directory(
 
     auto path_rights = get_path_rights(email, rights, path, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(!path_rights || !path_rights.value().read)
     {

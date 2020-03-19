@@ -13,6 +13,8 @@
 #include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/auth_error_login_required.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -39,10 +41,7 @@ void remove_cis_job(
 
     auto perm = rights.check_project_right(email, req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().write;
 

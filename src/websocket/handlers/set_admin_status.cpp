@@ -12,6 +12,8 @@
 #include "websocket/dto/user_error_user_not_found.h"
 #include "websocket/dto/admin_user_set_admin_status_success.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket::handlers
 {
 
@@ -32,10 +34,8 @@ void set_admin_status(
 
     const auto& email = ctx.client_info.value().email;
     const auto permitted = rights.is_admin(email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     if(!permitted)
     {
@@ -43,10 +43,8 @@ void set_admin_status(
     }
 
     const auto user_exists = authentication_handler.has_user(req.email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     if(!user_exists)
     {
@@ -55,14 +53,8 @@ void set_admin_status(
 
     // check if the user is admin
     const auto success = rights.set_admin_status(req.email, req.admin, ec);
-    if(ec)
+    if(ec || !success)
     {
-        return tr.send_error("Internal error.");
-    }
-
-    if(!success)
-    {
-        // TODO
         return tr.send_error("Internal error.");
     }
 

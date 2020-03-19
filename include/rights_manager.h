@@ -35,7 +35,7 @@ public:
             bool admin,
             std::error_code& ec) const final;
 
-    std::optional<database::project_user_right> check_project_right(
+    std::optional<project_rights> check_project_right(
             const std::string& email,
             const std::string& project,
             std::error_code& ec) const final;

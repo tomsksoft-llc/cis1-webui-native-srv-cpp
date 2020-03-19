@@ -13,6 +13,8 @@
 #include "websocket/dto/auth_logout_success.h"
 #include "websocket/dto/auth_error_wrong_credentials.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket
 {
 
@@ -34,10 +36,7 @@ void logout(
 
     auto email = authentication_handler.authenticate(req.token, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(email && email.value() == ctx.client_info.value().email)
     {
@@ -48,10 +47,7 @@ void logout(
 
         authentication_handler.delete_token(req.token, ec);
 
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
+        WSHU_CHECK_EC(ec);
 
         dto::auth_logout_success res;
 

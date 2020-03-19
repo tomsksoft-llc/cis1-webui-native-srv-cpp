@@ -13,6 +13,8 @@
 #include "websocket/dto/admin_user_add_error_exists.h"
 #include "websocket/dto/admin_user_add_error_incorrect_credentials.h"
 
+#include "websocket/handlers/utils/check_ec.h"
+
 namespace websocket::handlers
 {
 
@@ -31,10 +33,8 @@ void add_user(auth_manager_interface& authentication_handler,
 
     const auto& email = ctx.client_info->email;
     const auto permitted = rights.is_admin(email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     if(!permitted)
     {
@@ -47,15 +47,15 @@ void add_user(auth_manager_interface& authentication_handler,
     }
 
     const auto user_exists = authentication_handler.has_user(req.email, ec);
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+
+    WSHU_CHECK_EC(ec);
 
     if(user_exists)
     {
         return tr.send_error(dto::admin_user_add_error_exists{}, "User exists already");
     }
+
+    // TODO check random_pass
 
     const auto success
             = authentication_handler.add_user(req.email, req.pass, req.admin, ec);

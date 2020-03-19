@@ -16,6 +16,7 @@
 #include "cis/cis_structs.h"
 
 #include "websocket/handlers/utils/unpack_build_info.h"
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -45,10 +46,7 @@ void get_build_info(
     const auto& email = ctx.client_info.value().email;
     auto perm = rights.check_project_right(email, req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().read;
 
