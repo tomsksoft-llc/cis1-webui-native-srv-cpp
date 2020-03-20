@@ -17,33 +17,6 @@ namespace websocket::dto
 
 struct admin_project_permission_get_success
 {
-    struct permission
-    {
-        std::string project;
-        bool read;
-        bool write;
-        bool execute;
-
-        static constexpr auto get_converter()
-        {
-            using namespace reflect;
-            return make_meta_converter<permission>()
-                    .add_field(
-                            CT_STRING("project"),
-                            ptr_v<&permission::project>{})
-                    .add_field(
-                            CT_STRING("read"),
-                            ptr_v<&permission::read>{})
-                    .add_field(
-                            CT_STRING("write"),
-                            ptr_v<&permission::write>{})
-                    .add_field(
-                            CT_STRING("execute"),
-                            ptr_v<&permission::execute>{})
-                    .done();
-        }
-    };
-
     struct user
     {
         std::string email;
