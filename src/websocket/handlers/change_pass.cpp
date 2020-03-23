@@ -38,7 +38,6 @@ void change_pass(
     {
         bool ok = authentication_handler.change_pass(
                 req.email,
-                req.old_password,
                 req.new_password,
                 ec);
 
@@ -46,7 +45,7 @@ void change_pass(
 
         if(!ok)
         {
-            return tr.send_error(dto::user_error_pass_doesnt_match{}, "Invalid password");
+            tr.send_error("Can't change password.");
         }
 
         dto::user_change_pass_success res;
@@ -54,12 +53,6 @@ void change_pass(
     };
 
     const auto& email = ctx.client_info.value().email;
-
-    // check if requested email is the same or the user is admin
-    if(email == req.email)
-    {
-        return change();
-    }
 
     const auto is_admin = rights.is_admin(email, ec);
 
@@ -70,7 +63,21 @@ void change_pass(
         return change();
     }
 
-    return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
+    if(email != req.email)
+    {
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
+    }
+
+    bool is_same_pass = authentication_handler.check_pass(email, req.old_password);
+
+    WSHU_CHECK_EC(ec);
+
+    if(is_same_pass)
+    {
+        return change();
+    }
+
+    return tr.send_error(dto::user_error_pass_doesnt_match{}, "Invalid password");
 }
 
 } // namespace handlers

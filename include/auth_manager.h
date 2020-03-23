@@ -54,9 +54,12 @@ public:
             const std::string& email,
             std::error_code& ec) final;
 
+    bool check_pass(
+            const std::string& email,
+            const std::string& pass) final;
+
     bool change_pass(
             const std::string& email,
-            const std::string& old_pass,
             const std::string& new_pass,
             std::error_code& ec) final;
 

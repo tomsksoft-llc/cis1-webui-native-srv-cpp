@@ -52,7 +52,7 @@ void add_cis_cron(
 
     if(!ctx.client_info)
     {
-        tr.send_error(dto::auth_error_login_required{}, "Login required.");
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
     const auto& email = ctx.client_info.value().email;

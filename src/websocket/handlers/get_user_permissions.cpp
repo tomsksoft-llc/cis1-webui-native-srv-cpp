@@ -49,7 +49,7 @@ void get_user_permissions(
 
     dto::admin_user_permission_get_success res;
 
-    for(auto [project_name, project_rights] : permissions)
+    for(const auto &[project_name, project_rights] : permissions)
     {
         res.permissions.push_back({
                     project_name,

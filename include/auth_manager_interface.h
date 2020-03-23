@@ -54,9 +54,12 @@ struct auth_manager_interface
             const std::string& email,
             std::error_code& ec) = 0;
 
+    virtual bool check_pass(
+            const std::string& email,
+            const std::string& pass) = 0;
+
     virtual bool change_pass(
             const std::string& email,
-            const std::string& old_pass,
             const std::string& new_pass,
             std::error_code& ec) = 0;
 

@@ -254,9 +254,22 @@ bool auth_manager::remove_api_key(
     }
 }
 
+bool auth_manager::check_pass(
+        const std::string& email,
+        const std::string& pass)
+{
+    auto db = db_.make_transaction();
+
+    auto users = db->select(
+            &user::id,
+            where(c(&user::email) == email
+                  && c(&user::pass) == pass));
+
+    return users.size() == 1;
+}
+
 bool auth_manager::change_pass(
         const std::string& email,
-        const std::string& old_pass,
         const std::string& new_pass,
         std::error_code& ec)
 {
@@ -271,8 +284,7 @@ bool auth_manager::change_pass(
 
         auto users = db->select(
                 &user::id,
-                where(c(&user::email) == email
-                        && c(&user::pass) == old_pass));
+                where(c(&user::email) == email));
 
         if(users.size() == 1)
         {
@@ -371,7 +383,7 @@ std::vector<user_info> auth_manager::get_user_infos(
         result.resize(users.size());
 
         size_t i = 0;
-        for(auto [id, email, admin] : users)
+        for(const auto &[id, email, admin] : users)
         {
             std::optional<std::string> key;
             auto api_access_keys = db->select(
