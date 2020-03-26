@@ -36,7 +36,7 @@ auth_manager::auth_manager(
 }
 
 std::optional<std::string> auth_manager::authenticate(
-        const std::string& username,
+        const std::string& email,
         const std::string& pass,
         std::error_code& ec)
 {
@@ -46,7 +46,7 @@ std::optional<std::string> auth_manager::authenticate(
 
         auto ids = db->select(
                 &user::id,
-                where(c(&user::name) == username
+                where(c(&user::email) == email
                         && c(&user::pass) == pass));
 
         if(ids.size() == 1)
@@ -109,7 +109,7 @@ std::optional<std::string> auth_manager::authenticate(
             }
 
             auto users = db->select(
-                    &user::name,
+                    &user::email,
                     where(c(&user::id) == std::get<0>(ids[0])));
 
             db.commit();
@@ -128,32 +128,6 @@ std::optional<std::string> auth_manager::authenticate(
 }
 
 bool auth_manager::has_user(
-        const std::string& username,
-        std::error_code& ec) const
-{
-    try
-    {
-        auto db = db_.make_transaction();
-
-        auto users_count = db->count<user>(where(c(&user::name) == username));
-
-        if(users_count)
-        {
-            db.commit();
-            return true;
-        }
-
-        return false;
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
-
-        return false;
-    }
-}
-
-bool auth_manager::has_email(
         const std::string& email,
         std::error_code& ec) const
 {
@@ -179,73 +153,8 @@ bool auth_manager::has_email(
     }
 }
 
-bool auth_manager::change_group(
-        const std::string& username,
-        const std::string& groupname,
-        std::error_code& ec)
-{
-    try
-    {
-        auto db = db_.make_transaction();
-
-        auto users = db->select(
-                &user::id,
-                where(c(&user::name) == username));
-        auto groups = db->select(
-                &group::id,
-                where(c(&group::name) == groupname));
-
-        if(users.size() == 1 && groups.size() == 1)
-        {
-            db->update_all(
-                    set(assign(&user::group_id, groups[0])),
-                    where(c(&user::id) == users[0]));
-
-            db.commit();
-            return true;
-        }
-
-        return false;
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
-
-        return false;
-    }
-}
-
-std::optional<std::string> auth_manager::get_group(
-        const std::string& username,
-        std::error_code& ec) const
-{
-    try
-    {
-        auto db = db_.make_transaction();
-
-        auto groups = db->select(
-                &group::name,
-                inner_join<user>(on(c(&user::group_id) == &group::id)),
-                where(c(&user::name) == username));
-
-        if(groups.size() == 1)
-        {
-            db.commit();
-            return groups[0];
-        }
-
-        return std::nullopt;
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
-
-        return std::nullopt;
-    }
-}
-
 std::optional<std::string> auth_manager::generate_api_key(
-        const std::string& username,
+        const std::string& email,
         std::error_code& ec)
 {
     try
@@ -253,14 +162,14 @@ std::optional<std::string> auth_manager::generate_api_key(
         auto db = db_.make_transaction();
         auto ids = db->select(
                 &user::id,
-                where(c(&user::name) == username));
+                where(c(&user::email) == email));
 
         if(ids.size() == 1)
         {
             auto unix_timestamp = std::chrono::seconds(std::time(nullptr));
             std::ostringstream os;
             os << unix_timestamp.count();
-            std::string key_str = username + os.str() + "SALT";
+            std::string key_str = email + os.str() + "SALT";
             os.clear();
 
             static const std::hash<std::string> hash_fn;
@@ -289,7 +198,7 @@ std::optional<std::string> auth_manager::generate_api_key(
 }
 
 std::optional<std::string> auth_manager::get_api_key(
-        const std::string& name,
+        const std::string& email,
         std::error_code& ec)
 {
     try
@@ -298,7 +207,7 @@ std::optional<std::string> auth_manager::get_api_key(
         auto values = db->select(
                 &api_access_key::value,
                 inner_join<user>(on(c(&user::id) == &api_access_key::user_id)),
-                where(c(&user::name) == name));
+                where(c(&user::email) == email));
 
         if(values.size() == 1)
         {
@@ -317,7 +226,7 @@ std::optional<std::string> auth_manager::get_api_key(
 }
 
 bool auth_manager::remove_api_key(
-        const std::string& name,
+        const std::string& email,
         std::error_code& ec)
 {
     try
@@ -326,7 +235,7 @@ bool auth_manager::remove_api_key(
         auto ids = db->select(
                 &api_access_key::id,
                 inner_join<user>(on(c(&user::id) == &api_access_key::user_id)),
-                where(c(&user::name) == name));
+                where(c(&user::email) == email));
         if(ids.size() == 1)
         {
             db->remove<api_access_key>(ids[0]);
@@ -345,9 +254,22 @@ bool auth_manager::remove_api_key(
     }
 }
 
+bool auth_manager::check_pass(
+        const std::string& email,
+        const std::string& pass)
+{
+    auto db = db_.make_transaction();
+
+    auto users = db->select(
+            &user::id,
+            where(c(&user::email) == email
+                  && c(&user::pass) == pass));
+
+    return users.size() == 1;
+}
+
 bool auth_manager::change_pass(
-        const std::string& username,
-        const std::string& old_pass,
+        const std::string& email,
         const std::string& new_pass,
         std::error_code& ec)
 {
@@ -362,8 +284,7 @@ bool auth_manager::change_pass(
 
         auto users = db->select(
                 &user::id,
-                where(c(&user::name) == username
-                        && c(&user::pass) == old_pass));
+                where(c(&user::email) == email));
 
         if(users.size() == 1)
         {
@@ -401,7 +322,7 @@ std::vector<user> auth_manager::get_users(
 }
 
 std::optional<user_info> auth_manager::get_user_info(
-        const std::string& username,
+        const std::string& email,
         std::error_code& ec) const
 {
     try
@@ -410,11 +331,8 @@ std::optional<user_info> auth_manager::get_user_info(
 
         auto users = db->select(
                 columns(&user::id,
-                        &user::name,
-                        &user::email,
-                        &group::name),
-                inner_join<user>(on(c(&user::group_id) == &group::id)),
-                where(c(&user::name) == username));
+                        &user::admin),
+                where(c(&user::email) == email));
 
         if(users.size() != 1)
         {
@@ -435,10 +353,10 @@ std::optional<user_info> auth_manager::get_user_info(
         db.commit();
 
         return user_info{
-                std::get<1>(users[0]),
-                std::get<2>(users[0]),
-                std::get<3>(users[0]),
-                key};
+                email,
+                key,
+                std::get<1>(users[0]), // admin
+        };
     }
     catch(const std::system_error& e)
     {
@@ -459,15 +377,13 @@ std::vector<user_info> auth_manager::get_user_infos(
 
         auto users = db->select(
                 columns(&user::id,
-                        &user::name,
                         &user::email,
-                        &group::name),
-                inner_join<user>(on(c(&user::group_id) == &group::id)));
+                        &user::admin));
 
         result.resize(users.size());
 
         size_t i = 0;
-        for(auto [id, name, email, group] : users)
+        for(const auto &[id, email, admin] : users)
         {
             std::optional<std::string> key;
             auto api_access_keys = db->select(
@@ -477,7 +393,7 @@ std::vector<user_info> auth_manager::get_user_infos(
             {
                 key = api_access_keys[0];
             }
-            result[i] = {name, email, group, key};
+            result[i] = {email, key, admin};
             ++i;
         }
 
@@ -490,33 +406,6 @@ std::vector<user_info> auth_manager::get_user_infos(
         ec = e.code();
 
         return {};
-    }
-}
-
-std::optional<database::group> auth_manager::get_group_info(
-        const std::string& group_name,
-        std::error_code& ec) const
-{
-    try
-    {
-        auto db = db_.make_transaction();
-
-        auto groups = db->select(
-                &group::id,
-                where(c(&group::name) == group_name));
-
-        if(groups.size() != 1)
-        {
-            return std::nullopt;
-        }
-
-        const auto group_id = groups[0];
-        return database::group{group_id, group_name};
-    }
-    catch(const std::system_error& e)
-    {
-        ec = e.code();
-        return std::nullopt;
     }
 }
 
@@ -544,9 +433,9 @@ bool auth_manager::delete_token(
 }
 
 bool auth_manager::add_user(
-        const std::string& username,
-        const std::string& pass,
         const std::string& email,
+        const std::string& pass,
+        bool admin,
         std::error_code& ec)
 {
     try
@@ -554,16 +443,42 @@ bool auth_manager::add_user(
         auto db = db_.make_transaction();
 
         auto users_count = db->count<user>(
-                where(c(&user::name) == username
-                   || c(&user::email) == email));
+                where(c(&user::email) == email));
 
         if(users_count == 0)
         {
-            auto group_ids = db->select(
-                    &group::id,
-                    where(c(&group::name) == "user"));
+            db->insert(user{-1, email, pass, admin});
 
-            db->insert(user{-1, group_ids[0], username, email, pass});
+            db.commit();
+
+            return true;
+        }
+
+        return false;
+    }
+    catch(const std::system_error& e)
+    {
+        ec = e.code();
+
+        return false;
+    }
+}
+
+bool auth_manager::delete_user(
+        const std::string& email,
+        std::error_code& ec)
+{
+    try
+    {
+        auto db = db_.make_transaction();
+
+        auto ids = db->select(
+                &user::id,
+                where(c(&user::email) == email));
+
+        if(ids.size() == 1)
+        {
+            db->remove<user>(ids[0]);
 
             db.commit();
 

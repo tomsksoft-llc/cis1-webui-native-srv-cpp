@@ -9,13 +9,15 @@
 #include "websocket/handlers/get_fs_entry_info.h"
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
+#include "websocket/dto/auth_error_login_required.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_info_success.h"
 
 #include "path_utils.h"
 #include "cis/cis_structs.h"
 #include "websocket/handlers/utils/make_dir_entry.h"
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -39,20 +41,22 @@ void get_fs_entry_info(
         return tr.send_error(err, "Invalid path.");
     }
 
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
+    }
+
+    const auto& email = ctx.client_info.value().email;
+
     std::error_code ec;
 
-    auto path_rights = get_path_rights(ctx, rights, path, ec);
+    auto path_rights = get_path_rights(email, rights, path, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(!path_rights || !path_rights.value().read)
     {
-        dto::user_permissions_error_access_denied err;
-
-        return tr.send_error(err, "Action not permitted.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -68,9 +72,7 @@ void get_fs_entry_info(
         return tr.send(res);
     }
 
-    dto::fs_entry_error_doesnt_exist err;
-
-    tr.send_error(err, "Path does not exists.");
+    tr.send_error(dto::fs_entry_error_doesnt_exist{}, "Path does not exists.");
 }
 
 } // namespace handlers

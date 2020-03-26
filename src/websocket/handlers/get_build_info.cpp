@@ -9,13 +9,14 @@
 #include "websocket/handlers/get_build_info.h"
 
 #include "websocket/dto/cis_build_info_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/cis_build_error_doesnt_exist.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 #include "websocket/handlers/utils/make_dir_entry.h"
 #include "cis/cis_structs.h"
 
 #include "websocket/handlers/utils/unpack_build_info.h"
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -37,12 +38,15 @@ void get_build_info(
 
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
-
-    if(ec)
+    if(!ctx.client_info)
     {
-        return tr.send_error("Internal error.");
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
+
+    const auto& email = ctx.client_info.value().email;
+    auto perm = rights.check_project_right(email, req.project, ec);
+
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().read;
 
@@ -68,9 +72,7 @@ void get_build_info(
 
     if(!permitted)
     {
-        return request_context::authorized(ctx.client_info)
-               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_build_error_doesnt_exist err;

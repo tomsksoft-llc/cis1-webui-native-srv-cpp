@@ -9,12 +9,13 @@
 #include "websocket/handlers/get_job_info.h"
 
 #include "websocket/dto/cis_job_info_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/cis_job_error_doesnt_exist.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 
 #include "websocket/handlers/utils/make_dir_entry.h"
 #include "websocket/handlers/utils/unpack_build_info.h"
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -31,14 +32,18 @@ void get_job_info(
 {
     auto job = cis_manager.get_job_info(req.project, req.job);
 
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
+    }
+
+    const auto& email = ctx.client_info.value().email;
+
     std::error_code ec;
 
-    auto perm = rights.check_project_right(ctx.client_info, req.project, ec);
+    auto perm = rights.check_project_right(email, req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     auto permitted = perm && perm.value().read;
 
@@ -119,9 +124,7 @@ void get_job_info(
 
     if(!permitted)
     {
-        return request_context::authorized(ctx.client_info)
-               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_job_error_doesnt_exist err;

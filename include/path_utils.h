@@ -19,7 +19,7 @@ bool validate_path(const std::filesystem::path& path);
 bool validate_path_fragment(const std::string& fragment);
 
 std::optional<project_rights> get_path_rights(
-        request_context& ctx,
+        const std::string& email,
         rights_manager_interface& rights,
         const std::filesystem::path& path,
         std::error_code& ec);

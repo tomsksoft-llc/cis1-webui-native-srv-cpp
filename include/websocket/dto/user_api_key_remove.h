@@ -20,7 +20,7 @@ namespace dto
 
 struct user_api_key_remove
 {
-    std::string username;
+    std::string email;
 
     static constexpr auto get_converter()
     {
@@ -31,8 +31,8 @@ struct user_api_key_remove
                         CT_STRING("api_key"),
                         CT_STRING("remove"))
                 .add_field(
-                        CT_STRING("username"),
-                        ptr_v<&user_api_key_remove::username>{})
+                        CT_STRING("email"),
+                        ptr_v<&user_api_key_remove::email>{})
                 .done();
     }
 };

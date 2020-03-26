@@ -9,11 +9,12 @@
 #include "websocket/handlers/set_fs_entry_executable_flag.h"
 
 #include "websocket/dto/fs_entry_error_invalid_path.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
 #include "websocket/dto/fs_entry_error_doesnt_exist.h"
 #include "websocket/dto/fs_entry_set_executable_flag_success.h"
-#include "websocket/dto/user_error_login_required.h"
+#include "websocket/dto/auth_error_login_required.h"
 
+#include "websocket/handlers/utils/check_ec.h"
 #include "path_utils.h"
 
 namespace websocket
@@ -29,29 +30,29 @@ void set_fs_entry_executable_flag(
         const dto::fs_entry_set_executable_flag& req,
         cis1::proto_utils::transaction tr)
 {
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
+    }
+
+    const auto& email = ctx.client_info.value().email;
+
     std::filesystem::path path(req.path);
 
     if(!validate_path(path) || path == "/")
     {
-        dto::fs_entry_error_invalid_path err;
-
-        return tr.send_error(err, "Invalid path.");
+        return tr.send_error(dto::fs_entry_error_invalid_path{}, "Invalid path.");
     }
 
     std::error_code ec;
 
-    auto path_rights = get_path_rights(ctx, rights, path, ec);
+    auto path_rights = get_path_rights(email, rights, path, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     if(!path_rights || !path_rights.value().write)
     {
-        return request_context::authorized(ctx.client_info)
-               ? tr.send_error(dto::user_permissions_error_access_denied{}, "Action not permitted.")
-               : tr.send_error(dto::user_error_login_required{}, "Login required.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -70,10 +71,7 @@ void set_fs_entry_executable_flag(
                 : std::filesystem::perm_options::remove,
             ec);
 
-        if(ec)
-        {
-            return tr.send_error("Internal error.");
-        }
+        WSHU_CHECK_EC(ec);
 
         dto::fs_entry_set_executable_flag_success res;
 

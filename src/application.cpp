@@ -136,70 +136,72 @@ std::shared_ptr<websocket_router> make_ws_router(
 
     cis1::proto_utils::event_dispatcher<request_context&> dispatcher;
     dispatcher.add_event_handler<ws::dto::auth_login_pass>(
-            std::bind(&wsh::authenticate,
+            std::bind(&wsh::login_pass,
                     std::ref(auth_manager_),
+                    std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::auth_token>(
-            std::bind(&wsh::token,
+    dispatcher.add_event_handler<ws::dto::auth_login_token>(
+            std::bind(&wsh::login_token,
                     std::ref(auth_manager_),
+                    std::ref(rights_manager_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::auth_logout>(
             std::bind(&wsh::logout,
                     std::ref(auth_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_auth_change_pass>(
+    dispatcher.add_event_handler<ws::dto::user_change_pass>(
             std::bind(&wsh::change_pass,
                     std::ref(auth_manager_),
+                      std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_auth_add>(
+    dispatcher.add_event_handler<ws::dto::admin_user_add>(
             std::bind(&wsh::add_user,
                       std::ref(auth_manager_),
                       std::ref(rights_manager_),
                       _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_list>(
-            std::bind(&wsh::list_users,
-                std::ref(auth_manager_),
-                std::ref(rights_manager_),
-                _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_permissions_projects_get>(
-            std::bind(&wsh::get_user_permissions_projects,
-                    std::ref(rights_manager_),
-                    _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_permissions_projects_set>(
-            std::bind(&wsh::set_user_permissions_projects,
-                    std::ref(rights_manager_),
-                    _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_permissions_get>(
-            std::bind(&wsh::get_user_permissions,
+    dispatcher.add_event_handler<ws::dto::admin_user_delete>(
+            std::bind(&wsh::delete_user,
                       std::ref(auth_manager_),
                       std::ref(rights_manager_),
                       _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_auth_change_group>(
-            std::bind(&wsh::change_group,
+    dispatcher.add_event_handler<ws::dto::admin_user_list>(
+            std::bind(&wsh::list_users,
                     std::ref(auth_manager_),
                     std::ref(rights_manager_),
-                    _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_auth_ban>(
-            std::bind(&wsh::ban_user,
-                    std::ref(auth_manager_),
+                _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::admin_user_permission_get>(
+            std::bind(&wsh::get_user_permissions,
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::user_auth_unban>(
-            std::bind(&wsh::unban_user,
-                    std::ref(auth_manager_),
+    dispatcher.add_event_handler<ws::dto::admin_user_permission_set>(
+            std::bind(&wsh::set_user_permissions,
                     std::ref(rights_manager_),
                     _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::admin_project_permission_get>(
+            std::bind(&wsh::get_project_permissions,
+                    std::ref(cis_),
+                    std::ref(auth_manager_),
+                    std::ref(rights_manager_),
+                  _1, _2, _3));
+    dispatcher.add_event_handler<ws::dto::admin_user_set_admin_status>(
+            std::bind(&wsh::set_admin_status,
+                      std::ref(auth_manager_),
+                      std::ref(rights_manager_),
+                      _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::user_api_key_generate>(
             std::bind(&wsh::generate_api_key,
                     std::ref(auth_manager_),
+                    std::ref(rights_manager_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::user_api_key_get>(
             std::bind(&wsh::get_api_key,
                     std::ref(auth_manager_),
+                      std::ref(rights_manager_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::user_api_key_remove>(
             std::bind(&wsh::remove_api_key,
                     std::ref(auth_manager_),
+                    std::ref(rights_manager_),
                     _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_project_list_get>(
             std::bind(&wsh::list_projects,
@@ -286,16 +288,6 @@ std::shared_ptr<websocket_router> make_ws_router(
                     std::ref(cis_),
                     std::ref(rights_manager_),
                     _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::group_default_permissions_get>(
-            std::bind(&wsh::get_group_default_permissions,
-                      std::ref(auth_manager_),
-                      std::ref(rights_manager_),
-                      _1, _2, _3));
-    dispatcher.add_event_handler<ws::dto::group_default_permissions_set>(
-            std::bind(&wsh::set_group_default_permissions,
-                      std::ref(auth_manager_),
-                      std::ref(rights_manager_),
-                      _1, _2, _3));
     dispatcher.add_event_handler<ws::dto::cis_cron_add>(
             [&cis_, &rights_manager_](auto&& ...args){
                     wsh::add_cis_cron(
@@ -495,7 +487,6 @@ std::optional<application> application::create(
     auto db = database::database_wrapper::create(
             *(config->get_entry<std::filesystem::path>("db_root")) / "db.sqlite",
             config->get_entry<user_credentials>("admin_credentials"),
-            config->get_entry<user_credentials>("guest_credentials"),
             ec);
 
     if(ec)

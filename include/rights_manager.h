@@ -19,50 +19,40 @@
 #include "database.h"
 
 class rights_manager
-    : public rights_manager_interface
+        : public rights_manager_interface
 {
 public:
     rights_manager(
             boost::asio::io_context& ioc,
             database::database_wrapper& db);
 
-    std::optional<bool> check_user_permission(
-            const request_context::client_info_holder& cln_info,
-            const std::string& permission_name,
+    bool is_admin(
+            const std::string& email,
             std::error_code& ec) const final;
 
-    std::optional<database::project_user_right> get_project_user_right(
-            const std::string& username,
-            const std::string& project,
+    bool set_admin_status(
+            const std::string& email,
+            bool admin,
             std::error_code& ec) const final;
 
     std::optional<project_rights> check_project_right(
-            const request_context::client_info_holder& cln_info,
-            const std::string& projectname,
+            const std::string& email,
+            const std::string& project,
             std::error_code& ec) const final;
 
-    std::map<std::string, project_rights> get_projects_permissions(
-            const std::string& username,
+    std::map<std::string, project_rights> get_permissions(
+            const std::string& email,
+            std::error_code& ec) const final;
+
+    std::map<std::string, project_rights_ex> get_permissions_by_project(
+            const std::string& project,
             std::error_code& ec) const final;
 
     bool set_user_project_permissions(
-            const std::string& user,
+            const std::string& email,
             const std::string& project,
             database::project_user_right rights,
             std::error_code& ec) final;
-
-    std::vector<std::string> get_user_permissions(
-            const std::string& username,
-            std::error_code& ec) const final;
-
-    std::optional<database::group_default_rights> get_group_default_permissions(
-            intmax_t group_id,
-            std::error_code& ec) const final;
-
-    bool set_group_default_permissions(
-            intmax_t group_id,
-            const project_rights& rights,
-            std::error_code& ec) const final;
 
 private:
     boost::asio::io_context& ioc_;

@@ -10,7 +10,10 @@
 
 #include "websocket/dto/cis_project_add_success.h"
 #include "websocket/dto/cis_project_error_already_exist.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
+#include "websocket/dto/auth_error_login_required.h"
+
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -25,6 +28,12 @@ void add_cis_project(
         const dto::cis_project_add& req,
         cis1::proto_utils::transaction tr)
 {
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::auth_error_login_required{}, "Login required.");
+    }
+
+    const auto& email = ctx.client_info.value().email;
 
     auto project = cis_manager.get_project_info(req.project);
 
@@ -38,12 +47,18 @@ void add_cis_project(
 
     std::error_code ec;
 
+    const auto is_admin = rights.is_admin(email, ec);
+
+    WSHU_CHECK_EC(ec);
+
+    if(!is_admin)
+    {
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
+    }
+
     cis_manager.create_project(req.project, ec);
 
-    if(ec)
-    {
-        return tr.send_error("Internal error.");
-    }
+    WSHU_CHECK_EC(ec);
 
     dto::cis_project_add_success res;
 

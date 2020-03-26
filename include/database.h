@@ -26,25 +26,11 @@ struct detail
         using namespace sqlite_orm;
         return make_storage(
                 path,
-                make_table("groups",
-                    make_column("group_id", &group::id, autoincrement(), primary_key()),
-                    make_column("group_name", &group::name, unique())),
-                make_table("permissions",
-                    make_column("permission_id", &permission::id, autoincrement(), primary_key()),
-                    make_column("permission_name", &permission::name, unique())),
-                make_table("group_permissions",
-                    make_column("group_permission_id", &group_permission::id, autoincrement(), primary_key()),
-                    make_column("group_permission_group_id", &group_permission::group_id),
-                    make_column("group_permission_permission_id", &group_permission::permission_id),
-                    foreign_key(&group_permission::group_id).references(&group::id).on_delete.cascade(),
-                    foreign_key(&group_permission::permission_id).references(&permission::id).on_delete.cascade()),
                 make_table("users",
                     make_column("user_id", &user::id, autoincrement(), primary_key()),
-                    make_column("user_name", &user::name, unique()),
                     make_column("user_email", &user::email, unique()),
                     make_column("user_pass", &user::pass),
-                    make_column("user_group_id", &user::group_id, default_value(1)),
-                    foreign_key(&user::group_id).references(&group::id).on_delete.set_default()),
+                    make_column("admin", &user::admin)),
                 make_table("projects",
                     make_column("project_id", &project::id, autoincrement(), primary_key()),
                     make_column("project_name", &project::name, unique()),
@@ -58,13 +44,6 @@ struct detail
                     make_column("project_user_right_execute", &project_user_right::execute),
                     foreign_key(&project_user_right::project_id).references(&project::id).on_delete.cascade(),
                     foreign_key(&project_user_right::user_id).references(&user::id).on_delete.cascade()),
-                make_table("group_default_rights",
-                    make_column("group_default_right_id", &group_default_rights::id, autoincrement(), primary_key()),
-                    make_column("group_default_right_group_id", &group_default_rights::group_id),
-                    make_column("group_default_right_read", &group_default_rights::read),
-                    make_column("group_default_right_write", &group_default_rights::write),
-                    make_column("group_default_right_execute", &group_default_rights::execute),
-                    foreign_key(&group_default_rights::group_id).references(&group::id).on_delete.cascade()),
                 make_table("tokens",
                     make_column("token_id", &token::id, autoincrement(), primary_key()),
                     make_column("token_user_id", &token::user_id),
@@ -135,7 +114,6 @@ public:
     static std::unique_ptr<database_wrapper> create(
             const std::filesystem::path& path,
             user_credentials* admin_credentials,
-            user_credentials* guest_credentials,
             std::error_code& ec);
 
     template <class... Args>
@@ -163,9 +141,7 @@ private:
     database_wrapper(
             const std::filesystem::path& path);
 
-    void init(
-            user_credentials *admin_credentials,
-            user_credentials *guest_credentials);
+    void init(const user_credentials &admin_credentials);
 };
 
 } // namespace database

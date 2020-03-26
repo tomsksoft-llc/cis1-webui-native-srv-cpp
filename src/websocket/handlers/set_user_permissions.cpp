@@ -8,8 +8,10 @@
 
 #include "websocket/handlers/set_user_permissions.h"
 
-#include "websocket/dto/user_permissions_projects_set_success.h"
-#include "websocket/dto/user_permissions_error_access_denied.h"
+#include "websocket/dto/admin_user_permission_set_success.h"
+#include "websocket/dto/user_permission_error_access_denied.h"
+
+#include "websocket/handlers/utils/check_ec.h"
 
 namespace websocket
 {
@@ -17,47 +19,44 @@ namespace websocket
 namespace handlers
 {
 
-void set_user_permissions_projects(
+void set_user_permissions(
         rights_manager_interface& rights,
         request_context& ctx,
-        const dto::user_permissions_projects_set& req,
+        const dto::admin_user_permission_set& req,
         cis1::proto_utils::transaction tr)
 {
+    if(!ctx.client_info)
+    {
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
+    }
+
+    const auto& email = ctx.client_info.value().email;
+
     std::error_code ec;
 
-    auto perm = rights.check_user_permission(ctx.client_info, "users.permissions", ec);
+    const auto is_admin = rights.is_admin(email, ec);
 
-    if(ec)
+    WSHU_CHECK_EC(ec);
+
+    if(!is_admin)
     {
-        return tr.send_error("Internal error.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
-    auto permitted = perm.has_value() ? perm.value() : false;
-
-    if(permitted)
+    for(auto& perm : req.permissions)
     {
-        for(auto& perm : req.permissions)
-        {
-            rights.set_user_project_permissions(
-                    req.username,
-                    perm.project,
-                    {-1, -1, -1, perm.read, perm.write, perm.execute},
-                    ec);
+        rights.set_user_project_permissions(
+                req.email,
+                perm.project,
+                {-1, -1, -1, perm.read, perm.write, perm.execute},
+                ec);
 
-            if(ec)
-            {
-                return tr.send_error("Internal error.");
-            }
-        }
-
-        dto::user_permissions_projects_set_success res;
-
-        return tr.send(res);
+        WSHU_CHECK_EC(ec);
     }
 
-    dto::user_permissions_error_access_denied err;
+    dto::admin_user_permission_set_success res;
 
-    return tr.send_error(err, "Action not permitted");
+    return tr.send(res);
 }
 
 } // namespace handlers

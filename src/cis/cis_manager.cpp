@@ -320,7 +320,7 @@ cis_manager::run_job_task_t cis_manager::run_job(
         const std::vector<std::pair<std::string, std::string>>& params,
         std::function<void(const std::string&)> on_session_started,
         std::function<void(const std::string&)> on_session_finished,
-        const std::string& username)
+        const std::string& email)
 {
     if(get_job_info(project_name, job_name) == nullptr)
     {
@@ -343,7 +343,7 @@ cis_manager::run_job_task_t cis_manager::run_job(
                             *config_.get_entry<uint16_t>("cis_port")},
                     *config_.get_entry<std::filesystem::path>("cis_root"),
                     execs_.startjob,
-                    username),
+                    email),
             project_name,
             job_name,
             force,

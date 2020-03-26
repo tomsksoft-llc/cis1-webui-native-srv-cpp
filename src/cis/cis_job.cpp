@@ -22,7 +22,7 @@ cis_job::cis_job(
         const webui_config& webui,
         const std::filesystem::path& cis_root,
         const std::string& startjob_exec,
-        const std::string& username)
+        const std::string& email)
     : fs_(fs)
 {
     auto env = boost::this_process::environment();
@@ -32,7 +32,8 @@ cis_job::cis_job(
     env["webui_public_port"] = std::to_string(webui.public_port);
     env["webui_internal_address"] = webui.internal_address;
     env["webui_internal_port"] = std::to_string(webui.internal_port);
-    env["webui_username"] = username;
+    // TODO replace with webui_email
+    env["webui_username"] = email;
 
     cp_ = std::make_shared<child_process>(
             ioc,

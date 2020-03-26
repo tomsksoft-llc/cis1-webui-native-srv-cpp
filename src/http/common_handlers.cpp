@@ -22,7 +22,7 @@ handle_result handle_authenticate(
     {
         std::error_code ec;
 
-        auto username = authentication_handler.authenticate(cookies.at("auth_token"), ec);
+        auto email = authentication_handler.authenticate(cookies.at("auth_token"), ec);
 
         if(ec)
         {
@@ -31,9 +31,9 @@ handle_result handle_authenticate(
             return handle_result::error;
         }
 
-        if(username)
+        if(email)
         {
-            ctx.client_info = request_context::user_info{username.value()};
+            ctx.client_info = request_context::user_info{email.value()};
         }
     }
     return handle_result::next;
