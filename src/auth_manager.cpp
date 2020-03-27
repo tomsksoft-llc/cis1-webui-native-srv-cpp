@@ -166,17 +166,13 @@ std::optional<std::string> auth_manager::generate_api_key(
 
         if(ids.size() == 1)
         {
-            auto unix_timestamp = std::chrono::seconds(std::time(nullptr));
-            std::ostringstream os;
-            os << unix_timestamp.count();
-            std::string key_str = email + os.str() + "SALT";
-            os.clear();
+            std::array<unsigned char, 32> key_bytes;
+            openssl::rand(key_bytes.data(), key_bytes.size());
+            auto key_str = base64_encode(key_bytes.data(), key_bytes.size());
 
-            static const std::hash<std::string> hash_fn;
-            os << hash_fn(key_str);
             try
             {
-                auto insertedId = db->insert(api_access_key{-1, ids[0], os.str()});
+                auto insertedId = db->insert(api_access_key{-1, ids[0], key_str});
             }
             catch(std::system_error& err)
             {
@@ -184,7 +180,7 @@ std::optional<std::string> auth_manager::generate_api_key(
             }
 
             db.commit();
-            return os.str();
+            return key_str;
         }
 
         return std::nullopt;
