@@ -31,6 +31,36 @@ beast::http::response<beast::http::string_body> accepted(
     return res;
 }
 
+beast::http::response<beast::http::string_body> method_not_allowed(
+        beast::http::request<beast::http::empty_body>&& req,
+        const std::vector<beast::http::verb>& allowed_verbs)
+{
+    beast::http::response<beast::http::string_body> res{
+            beast::http::status::method_not_allowed,
+            req.version()};
+    res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
+    res.set(beast::http::field::content_type, "text/html");
+    
+    std::stringstream allow_string;
+    
+    for(auto it = allowed_verbs.begin(); it != allowed_verbs.end(); ++it)
+    {
+        if(it != allowed_verbs.begin())
+        {
+            allow_string << ", ";
+        }
+
+        allow_string << *it;
+    }
+
+    res.set(beast::http::field::allow, allow_string.str());
+    res.keep_alive(req.keep_alive());
+    res.body() = "Method not allowed.";
+    res.prepare_payload();
+
+    return res;
+}
+
 beast::http::response<beast::http::string_body> not_found(
         beast::http::request<beast::http::empty_body>&& req)
 {

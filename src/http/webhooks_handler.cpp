@@ -79,6 +79,16 @@ handle_result webhooks_handler::operator()(
         const std::string& escaped_query_string,
         api api_provider)
 {
+    if(req.method() != beast::http::verb::post)
+    {
+        ctx.allowed_verbs = {
+            beast::http::verb::post
+        };
+        ctx.res_status = beast::http::status::method_not_allowed;
+
+        return handle_result::error;
+    }
+
     std::error_code ec;
 
     auto user = auth_.get_user_info(email, ec);

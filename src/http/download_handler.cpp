@@ -63,7 +63,10 @@ handle_result download_handler::operator()(
         return files_.single_file(req, ctx, reader, queue, p.string());
     }
 
-    ctx.res_status = beast::http::status::not_found;
+    ctx.allowed_verbs = {
+        beast::http::verb::get
+    };
+    ctx.res_status = beast::http::status::method_not_allowed;
 
     return handle_result::error;
 }

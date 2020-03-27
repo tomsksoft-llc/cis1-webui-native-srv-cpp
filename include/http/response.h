@@ -8,6 +8,8 @@
 
 #pragma once
 
+#include <vector>
+
 #include <boost/beast.hpp>
 
 namespace beast = boost::beast;
@@ -24,6 +26,10 @@ using string_request_t =
     boost::beast::http::request<boost::beast::http::empty_body>;
 
 string_response_t accepted(string_request_t&& req);
+
+string_response_t method_not_allowed(
+        string_request_t&& req,
+        const std::vector<beast::http::verb>& allowed_verbs);
 
 string_response_t not_found(string_request_t&& req);
 

@@ -32,6 +32,11 @@ void error_handler::operator()(
             queue.send(response::forbidden(std::move(req)));
             break;
         }
+        case status::method_not_allowed:
+        {
+            queue.send(response::method_not_allowed(std::move(req), ctx.allowed_verbs));
+            break;
+        }
         default:
         {
             queue.send(response::server_error(std::move(req), ctx.error));

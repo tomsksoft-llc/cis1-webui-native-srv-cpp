@@ -34,6 +34,8 @@ handle_result file_handler::single_file(
         net::http_session::queue& queue,
         std::string_view path)
 {
+    if(req.method() == beast::http::verb::get)
+    {
         std::string full_path = path_cat(doc_root_, path);
         std::filesystem::path file_path(full_path);
 
@@ -62,6 +64,7 @@ handle_result file_handler::single_file(
             std::piecewise_construct,
             std::make_tuple(std::move(body)),
             std::make_tuple(beast::http::status::ok, req.version())};
+
         res.set(beast::http::field::server, BOOST_BEAST_VERSION_STRING);
 
         res.set(beast::http::field::content_type, mime_type(file_path));
@@ -83,6 +86,14 @@ handle_result file_handler::single_file(
         queue.send(std::move(res));
 
         return handle_result::done;
+    }
+
+    ctx.allowed_verbs = {
+        beast::http::verb::get
+    };
+    ctx.res_status = beast::http::status::method_not_allowed;
+
+    return handle_result::error;
 }
 
 handle_result file_handler::sef(
@@ -92,6 +103,7 @@ handle_result file_handler::sef(
         net::http_session::queue& queue)
 {
     auto real_path = std::string(req.target()) + ".html";
+
     return single_file(req, ctx, reader, queue, real_path);
 }
 
