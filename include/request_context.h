@@ -27,7 +27,6 @@ struct request_context
     std::optional<user_info> client_info = std::nullopt;
     uint64_t session_id;
     std::map<std::string, std::string> cookies;
-    std::map<std::string, std::any> other;
     boost::beast::http::status res_status = boost::beast::http::status::unknown;
     std::string error;
 };
