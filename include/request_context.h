@@ -32,4 +32,5 @@ struct request_context
     boost::beast::http::status res_status = boost::beast::http::status::unknown;
     std::vector<boost::beast::http::verb> allowed_verbs;
     std::string error;
+    std::pair<std::string, unsigned short> remote_addr;
 };

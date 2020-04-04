@@ -35,6 +35,7 @@ void add_cis_job(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
         tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -58,7 +59,8 @@ void add_cis_job(
             err.project = req.project;
             err.job = req.job;
 
-            return tr.send_error(err, "Job already exits.");
+            WSHU_LOG(scl::Level::Info, R"(Job "%s/%s" already exists)", req.project, req.job);
+            return tr.send_error(err, "Job already exists.");
         }
 
         std::error_code ec;
@@ -100,6 +102,11 @@ void add_cis_job(
         *job_conf << "keep_last_success_builds=5" << '\n';
         *job_conf << "keep_last_break_builds=5";
 
+        WSHU_LOG(scl::Level::Action,
+                 R"(CIS job "%s/%s" was created successfully)",
+                 req.project,
+                 req.job);
+
         dto::cis_job_add_success res;
 
         return tr.send(res);
@@ -107,13 +114,15 @@ void add_cis_job(
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_project_error_doesnt_exist err;
     err.project = req.project;
 
-    return tr.send_error(err, "Job doesn't exists.");
+    WSHU_LOG(scl::Level::Info, "Project doesn't exists");
+    return tr.send_error(err, "Project doesn't exists.");
 }
 
 } // namespace handlers

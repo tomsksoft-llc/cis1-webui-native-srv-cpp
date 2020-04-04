@@ -66,6 +66,7 @@ public:
             std::error_code& ec);
 
     void handle_header(
+            const tcp::socket& socket,
             request_header_t& req,
             net::http_session::request_reader& reader,
             net::http_session::queue& queue) const;

@@ -137,6 +137,7 @@ void http_session::on_read_header(boost::beast::error_code ec)
     }
 
     app_->handle_header(
+            socket_,
             request_reader_.get_header_parser().get(),
             request_reader_,
             queue_);

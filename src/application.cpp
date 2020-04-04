@@ -23,6 +23,7 @@
 #include "cis/dirs.h"
 #include "openssl_wrapper/openssl_wrapper.h"
 #include "error_code.h"
+#include "logger.h"
 
 using namespace std::placeholders;              // from <functional>
 
@@ -135,6 +136,12 @@ std::shared_ptr<websocket_router> make_ws_router(
     auto router = std::make_shared<websocket_router>();
 
     cis1::proto_utils::event_dispatcher<request_context&> dispatcher;
+    dispatcher.set_error_handler(
+            [](std::string_view message)
+            {
+                LOG(scl::Level::Error, "WS error: %s", message);
+            });
+
     dispatcher.add_event_handler<ws::dto::auth_login_pass>(
             std::bind(&wsh::login_pass,
                     std::ref(auth_manager_),
@@ -471,12 +478,62 @@ std::optional<boost::asio::ip::tcp::endpoint> resolve_endpoint(
     return *(endpoints.begin());
 }
 
+void init_log(const std::unique_ptr<configuration_manager> &config)
+{
+    std::optional<FileRecorder::Options> file_options;
+    std::optional<ConsoleRecorder::Options> console_options;
+    WebuiLogger::Options logger_options{};
+
+    const auto *log_root = config->get_entry<std::filesystem::path>("log_root");
+    if(log_root)
+    {
+        FileRecorder::Options options;
+        options.log_directory = *log_root;
+        options.file_name_template = "cis1_srv.%t.%n";
+        options.align = true;
+
+        if(auto *size_limit = config->get_entry<std::size_t>("size_limit");
+                size_limit)
+        {
+            options.size_limit = *size_limit;
+        }
+
+        file_options = options;
+    }
+
+    const auto *console_output = config->get_entry<bool>("console_output");
+    if(console_output && *console_output)
+    {
+        console_options = ConsoleRecorder::Options{};
+        console_options.value().align = true;
+    }
+
+    const auto *log_level = config->get_entry<std::string>("log_level");
+    if(log_level)
+    {
+        const auto level = scl::LevelFromStr(*log_level);
+        if(level)
+        {
+            logger_options.level = level.value();
+        }
+    }
+
+    if(file_options || console_options)
+    {
+        init_log(logger_options, file_options, console_options);
+    }
+}
+
 std::optional<application> application::create(
         boost::asio::io_context& ioc,
         std::unique_ptr<configuration_manager> config,
         std::error_code& ec)
 {
     openssl::init();
+
+    init_log(config);
+
+    LOG(scl::Level::Action, "Log is initialized");
 
     //apps
 

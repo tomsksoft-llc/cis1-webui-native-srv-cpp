@@ -64,11 +64,14 @@ void handlers_chain::listen(
 }
 
 void handlers_chain::handle_header(
+            const boost::asio::ip::tcp::socket& socket,
             request_header_t& req,
             net::http_session::request_reader& reader,
             net::http_session::queue& queue) const
 {
     context_t ctx{};
+    ctx.remote_addr = std::make_pair(socket.remote_endpoint().address().to_string(),
+                                     socket.remote_endpoint().port());
 
     for(auto& handler : handlers_)
     {
@@ -102,6 +105,8 @@ void handlers_chain::handle_upgrade(
         net::http_session::queue& queue) const
 {
     context_t ctx{};
+    ctx.remote_addr = std::make_pair(socket.remote_endpoint().address().to_string(),
+                                     socket.remote_endpoint().port());
 
     for(auto& handler : ws_handlers_)
     {

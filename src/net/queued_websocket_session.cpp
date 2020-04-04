@@ -9,10 +9,7 @@
 #include "net/queued_websocket_session.h"
 
 #include "net/fail.h"
-
-#ifndef NDEBUG
-#include <iostream>
-#endif
+#include "logger.h"
 
 namespace net
 {
@@ -22,25 +19,28 @@ void queued_websocket_session::accept_handler(
         boost::beast::http::request<boost::beast::http::empty_body>&& req,
         request_handler_t handler)
 {
+    const auto address = socket.remote_endpoint().address().to_string();
+    const auto port = socket.remote_endpoint().port();
+
     std::make_shared<queued_websocket_session>(
-        std::move(socket), std::move(handler))->do_accept(std::move(req));
-#ifndef NDEBUG
-    std::cout << "accept_handler()" << std::endl;
-#endif
+        std::move(socket), std::move(handler), std::make_pair(address, port))
+        ->do_accept(std::move(req));
 }
 
-queued_websocket_session::queued_websocket_session(boost::asio::ip::tcp::socket socket, request_handler_t handler)
+queued_websocket_session::queued_websocket_session(boost::asio::ip::tcp::socket socket, request_handler_t handler,
+  remote_addr_t addr)
     : basic_websocket_session(std::move(socket))
     , handler_(std::move(handler))
     , queue_(*this)
-{}
+    , remote_addr_(std::move(addr))
+{
+    LOG(scl::Level::Debug, "Accept websocket session: %s:%d", remote_addr_.first, remote_addr_.second);
+}
 
-#ifndef NDEBUG
 queued_websocket_session::~queued_websocket_session()
 {
-    std::cout << "~queued_websocket_session()" << std::endl;
+    LOG(scl::Level::Debug, "Close websocket session: %s:%d", remote_addr_.first, remote_addr_.second);
 }
-#endif
 
 void queued_websocket_session::on_accept_success()
 {
@@ -78,9 +78,8 @@ void queued_websocket_session::on_read(
     // This indicates that the websocket_session was closed
     if(ec == boost::beast::websocket::error::closed)
     {
-#ifndef NDEBUG
-        std::cout << "websocket::error::closed" << std::endl;
-#endif
+        LOG(scl::Level::Debug, "websocket::error::closed");
+
         timer_.expires_after(std::chrono::seconds(0));
         return;
     }

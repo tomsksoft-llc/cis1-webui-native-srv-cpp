@@ -23,6 +23,7 @@ public:
             boost::beast::http::request<boost::beast::http::empty_body>&& req,
             http_session::queue& queue) const = 0;
     virtual void handle_header(
+            const boost::asio::ip::tcp::socket& socket,
             boost::beast::http::request<boost::beast::http::empty_body>& req,
             http_session::request_reader& reader,
             http_session::queue& queue) const = 0;
