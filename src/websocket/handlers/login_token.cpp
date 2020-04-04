@@ -34,6 +34,7 @@ void login_token(
 
     if(!email)
     {
+        WSHU_LOG(scl::Level::Info, "Invalid token");
         return tr.send_error(dto::auth_error_wrong_credentials{}, "Invalid token.");
     }
 
@@ -42,6 +43,7 @@ void login_token(
     const auto is_admin = rights.is_admin(email.value(), ec);
 
     WSHU_CHECK_EC(ec);
+    WSHU_LOG(scl::Level::Action, "%s logged in successfully", is_admin ? "Admin" : "User");
 
     dto::auth_login_success res;
     res.token = req.token;

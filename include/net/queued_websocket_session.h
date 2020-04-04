@@ -28,6 +28,8 @@ public:
             size_t,
             std::shared_ptr<cis1::proto_utils::queue_interface>)>;
 
+    using remote_addr_t = std::pair<std::string, unsigned short>;
+
     static void accept_handler(
             boost::asio::ip::tcp::socket&& socket,
             boost::beast::http::request<boost::beast::http::empty_body>&& req,
@@ -35,11 +37,10 @@ public:
 
     explicit queued_websocket_session(
             boost::asio::ip::tcp::socket socket,
-            request_handler_t handler);
+            request_handler_t handler,
+            remote_addr_t addr);
 
-#ifndef NDEBUG
     ~queued_websocket_session();
-#endif
 
     void on_accept_success() override;
 
@@ -61,6 +62,7 @@ private:
     request_handler_t handler_;
     websocket_queue queue_;
     boost::beast::flat_buffer in_buffer_;
+    remote_addr_t remote_addr_;
     friend class websocket_queue;
 };
 

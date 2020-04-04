@@ -137,6 +137,30 @@ action parse_args(
 
                 config.add_entry("db_root", std::filesystem::path{db_root_opt.value()});
 
+                auto log_root = pt.get_optional<std::string>("log.log_root");
+                if(log_root)
+                {
+                    config.add_entry("log_root", std::filesystem::path{log_root.value()});
+                }
+
+                auto size_limit = pt.get_optional<std::size_t>("log.size_limit");
+                if(size_limit)
+                {
+                    config.add_entry("size_limit", size_limit.value());
+                }
+
+                auto console_output = pt.get_optional<bool>("log.console_output");
+                if(console_output)
+                {
+                    config.add_entry("console_output", console_output.value());
+                }
+
+                auto log_level = pt.get_optional<std::string>("log.log_level");
+                if(log_level)
+                {
+                    config.add_entry("log_level", log_level.value());
+                }
+
                 break;
             }
         }

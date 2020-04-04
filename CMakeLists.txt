@@ -95,7 +95,8 @@ set(${PROJECT_NAME}_SRC
     src/file_util.cpp
     src/rights_manager.cpp
     src/child_process.cpp
-    src/fs_cache.cpp)
+    src/fs_cache.cpp
+    src/logger.cpp)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup()
