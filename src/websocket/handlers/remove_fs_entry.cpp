@@ -32,6 +32,8 @@ void remove_fs_entry(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -41,9 +43,9 @@ void remove_fs_entry(
 
     if(!validate_path(path) || path == "/")
     {
-        dto::fs_entry_error_invalid_path err;
+        WSHU_LOG(scl::Level::Info, R"(Invalid path "%s")", req.path);
 
-        return tr.send_error(err, "Invalid path.");
+        return tr.send_error(dto::fs_entry_error_invalid_path{}, "Invalid path.");
     }
 
     std::error_code ec;
@@ -54,6 +56,8 @@ void remove_fs_entry(
 
     if(!path_rights || !path_rights.value().write)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -61,10 +65,12 @@ void remove_fs_entry(
 
     if(!remove_result)
     {
-        dto::fs_entry_error_doesnt_exist err;
+        WSHU_LOG(scl::Level::Info, R"(Path "%s" does not exist)", req.path);
 
-        return tr.send_error(err, "Path does not exists.");
+        return tr.send_error(dto::fs_entry_error_doesnt_exist{}, "Path does not exist.");
     }
+
+    WSHU_LOG(scl::Level::Action, R"(fs entry "%s" was removed)", req.path);
 
     dto::fs_entry_remove_success res;
 

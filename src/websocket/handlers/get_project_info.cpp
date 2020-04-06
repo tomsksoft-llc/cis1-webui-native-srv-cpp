@@ -33,6 +33,8 @@ void get_project_info(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -76,18 +78,24 @@ void get_project_info(
             res.fs_entries.push_back(res_entry);
         }
 
+        WSHU_LOG(scl::Level::Action, R"("%s" project info was sent)", req.project);
+
         return tr.send(res);
     }
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     dto::cis_project_error_doesnt_exist err;
     err.project = req.project;
 
-    return tr.send_error(err, "Project doesn't exists.");
+    WSHU_LOG(scl::Level::Info, R"("%s" project doesn't exist)", req.project);
+
+    return tr.send_error(err, "Project doesn't exist.");
 }
 
 } // namespace handlers

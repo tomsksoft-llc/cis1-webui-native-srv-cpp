@@ -8,6 +8,7 @@
 
 #include "websocket/handlers/list_cis_cron.h"
 
+#include "logger.h"
 #include "websocket/dto/cis_cron_list_success.h"
 
 namespace websocket
@@ -46,6 +47,8 @@ void list_cis_cron(
                         }
                         else
                         {
+                            LOG(scl::Level::Error, "Cron list error");
+
                             tr.send_error("Cron list error.");
                         }
                     })

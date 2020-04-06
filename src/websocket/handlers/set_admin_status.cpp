@@ -29,6 +29,8 @@ void set_admin_status(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -39,6 +41,8 @@ void set_admin_status(
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -48,6 +52,8 @@ void set_admin_status(
 
     if(!user_exists)
     {
+        WSHU_LOG(scl::Level::Info, R"(User "%s" doesn't exist)", req.email);
+
         return tr.send_error(dto::user_error_user_not_found{}, "User does not exist.");
     }
 
@@ -55,8 +61,15 @@ void set_admin_status(
     const auto success = rights.set_admin_status(req.email, req.admin, ec);
     if(ec || !success)
     {
+        WSHU_LOG(scl::Level::Error, "Internal error: %s", ec.message());
+
         return tr.send_error("Internal error.");
     }
+
+    WSHU_LOG(scl::Level::Action,
+             R"("%s" became %s)",
+             req.email,
+             req.admin ? "Admin" : "User");
 
     dto::admin_user_set_admin_status_success res;
 

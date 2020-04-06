@@ -28,6 +28,8 @@ void remove_api_key(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -43,8 +45,12 @@ void remove_api_key(
 
         if(!result)
         {
+            WSHU_LOG(scl::Level::Info, R"(Can't remove APIAccessSecretKey for user "%s")", req.email);
+
             return tr.send_error("Can't remove APIAccessSecretKey.");
         }
+
+        WSHU_LOG(scl::Level::Action, R"(APIAccessSecretKey was removed for user "%s")", req.email);
 
         dto::user_api_key_remove_success res;
 
@@ -63,6 +69,8 @@ void remove_api_key(
     {
         return remove();
     }
+
+    WSHU_LOG(scl::Level::Info, "Action not permitted");
 
     return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
 }

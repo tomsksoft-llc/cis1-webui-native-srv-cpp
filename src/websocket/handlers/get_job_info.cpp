@@ -34,6 +34,8 @@ void get_job_info(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -119,19 +121,25 @@ void get_job_info(
                         cis_manager.fs().root().path(),
                         *job->get_conf_entry()));
 
+        WSHU_LOG(scl::Level::Action, R"("%s/%s" job info was sent)", req.project, req.job);
+
         return tr.send(res);
     }
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
+
+    WSHU_LOG(scl::Level::Info, R"("%s/%s" job doesn't exist)", req.project, req.job);
 
     dto::cis_job_error_doesnt_exist err;
     err.project = req.project;
     err.job = req.job;
 
-    return tr.send_error(err, "Job doesn't exists.");
+    return tr.send_error(err, "Job doesn't exist.");
 }
 
 } // namespace handlers

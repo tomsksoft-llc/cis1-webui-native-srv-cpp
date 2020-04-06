@@ -32,6 +32,8 @@ void new_directory(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -41,9 +43,9 @@ void new_directory(
 
     if(!validate_path(path))
     {
-        dto::fs_entry_error_invalid_path err;
+        WSHU_LOG(scl::Level::Info, R"(Invalid path "%s")", req.path);
 
-        return tr.send_error(err, "Invalid path.");
+        return tr.send_error(dto::fs_entry_error_invalid_path{}, "Invalid path.");
     }
 
     std::error_code ec;
@@ -54,6 +56,8 @@ void new_directory(
 
     if(!path_rights || !path_rights.value().write)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -63,10 +67,15 @@ void new_directory(
 
     if(ec)
     {
+        WSHU_LOG(scl::Level::Info, "Error while creating directory: %s", ec.message());
+
         return tr.send_error(dto::fs_entry_error_cant_create_dir{}, "Error while creating directory.");
     }
 
+    WSHU_LOG(scl::Level::Action, R"(Directory "%s" was created)", req.path);
+
     dto::fs_entry_new_dir_success res;
+
     return tr.send(res);
 }
 

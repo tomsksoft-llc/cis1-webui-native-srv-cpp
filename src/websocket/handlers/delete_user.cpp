@@ -28,6 +28,8 @@ void delete_user(auth_manager_interface& authentication_handler,
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -38,6 +40,8 @@ void delete_user(auth_manager_interface& authentication_handler,
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -47,6 +51,8 @@ void delete_user(auth_manager_interface& authentication_handler,
 
     if(!user_exists)
     {
+        WSHU_LOG(scl::Level::Info, R"(User "%s" doesn't exist)", req.email);
+
         return tr.send_error(dto::user_error_user_not_found{}, "User does not exist.");
     }
 
@@ -54,8 +60,12 @@ void delete_user(auth_manager_interface& authentication_handler,
             = authentication_handler.delete_user(req.email, ec);
     if(!success || ec)
     {
+        WSHU_LOG(scl::Level::Error, "Internal error: %s", ec.message());
+
         return tr.send_error("Internal error.");
     }
+
+    WSHU_LOG(scl::Level::Action, R"(User "%s" was deleted)", req.email);
 
     dto::admin_user_delete_success res;
     return tr.send(res);

@@ -28,6 +28,8 @@ void generate_api_key(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -43,8 +45,15 @@ void generate_api_key(
 
         if(!api_key)
         {
+            WSHU_LOG(scl::Level::Info, "Can't generate APIAccessSecretKey");
+
             return tr.send_error("Can't generate APIAccessSecretKey.");
         }
+
+        WSHU_LOG(scl::Level::Action,
+                 R"(APIAccessSecretKey "%s" was generated for user "%s")",
+                 api_key.value(),
+                 req.email);
 
         dto::user_api_key_generate_success res;
         res.api_key = api_key.value();
@@ -65,6 +74,8 @@ void generate_api_key(
     {
         return generate();
     }
+
+    WSHU_LOG(scl::Level::Info, "Action not permitted");
 
     return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
 }

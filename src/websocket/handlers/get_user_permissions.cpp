@@ -29,6 +29,8 @@ void get_user_permissions(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -40,6 +42,8 @@ void get_user_permissions(
 
     if(!is_admin)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -57,6 +61,8 @@ void get_user_permissions(
                     project_rights.write,
                     project_rights.execute});
     }
+
+    WSHU_LOG(scl::Level::Action, R"("Permissions of %s" users were sent)", req.email);
 
     return tr.send(res);
 }

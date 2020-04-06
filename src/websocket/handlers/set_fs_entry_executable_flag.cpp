@@ -32,6 +32,8 @@ void set_fs_entry_executable_flag(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -41,6 +43,8 @@ void set_fs_entry_executable_flag(
 
     if(!validate_path(path) || path == "/")
     {
+        WSHU_LOG(scl::Level::Info, R"(Invalid path "%s")", req.path);
+
         return tr.send_error(dto::fs_entry_error_invalid_path{}, "Invalid path.");
     }
 
@@ -52,6 +56,8 @@ void set_fs_entry_executable_flag(
 
     if(!path_rights || !path_rights.value().write)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -73,14 +79,19 @@ void set_fs_entry_executable_flag(
 
         WSHU_CHECK_EC(ec);
 
+        WSHU_LOG(scl::Level::Action,
+                 R"(fs entry "%s" became %s)",
+                 req.path,
+                 req.executable ? "executable" : "non-executable");
+
         dto::fs_entry_set_executable_flag_success res;
 
         return tr.send(res);
     }
 
-    dto::fs_entry_error_doesnt_exist err;
+    WSHU_LOG(scl::Level::Info, R"(Path "%s" doesn't exist)", req.path);
 
-    return tr.send_error(err, "Path does not exists.");
+    return tr.send_error(dto::fs_entry_error_doesnt_exist{}, "Path does not exist.");
 }
 
 } // namespace handlers

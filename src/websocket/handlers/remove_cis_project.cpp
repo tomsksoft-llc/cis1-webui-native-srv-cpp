@@ -30,6 +30,8 @@ void remove_cis_project(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -60,8 +62,12 @@ void remove_cis_project(
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
+
+    WSHU_LOG(scl::Level::Info, R"("%s" project doesn't exist)", req.project);
 
     dto::cis_project_error_doesnt_exist err;
     err.project = req.project;

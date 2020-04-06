@@ -29,6 +29,7 @@ void add_user(auth_manager_interface& authentication_handler,
     if(!ctx.client_info)
     {
         WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -45,6 +46,7 @@ void add_user(auth_manager_interface& authentication_handler,
     if(req.email.empty() || req.pass.empty())
     {
         WSHU_LOG(scl::Level::Info, "Incorrect credentials: email or pass is empty");
+
         return tr.send_error(dto::admin_user_add_error_incorrect_credentials{}, "Incorrect credentials.");
     }
 
@@ -55,6 +57,7 @@ void add_user(auth_manager_interface& authentication_handler,
     if(user_exists)
     {
         WSHU_LOG(scl::Level::Info, R"(User with the "%s" email exists already)", req.email);
+
         return tr.send_error(dto::admin_user_add_error_exists{}, "User exists already");
     }
 
@@ -65,10 +68,11 @@ void add_user(auth_manager_interface& authentication_handler,
     if(!success || ec)
     {
         WSHU_LOG(scl::Level::Error, "Internal error: %s", ec.message());
+
         return tr.send_error("Internal error.");
     }
 
-    WSHU_LOG(scl::Level::Info, R"(User "%s" was added successfully)", req.email);
+    WSHU_LOG(scl::Level::Action, R"(User "%s" was added)", req.email);
 
     dto::admin_user_add_success res;
     return tr.send(res);

@@ -32,6 +32,8 @@ void run_job(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -66,9 +68,9 @@ void run_job(
             {
                 if(param.default_value.empty())
                 {
-                    dto::cis_job_error_invalid_params err;
+                    WSHU_LOG(scl::Level::Info, "Invalid params");
 
-                    return tr.send_error(err, "Invalid params.");
+                    return tr.send_error(dto::cis_job_error_invalid_params{}, "Invalid params.");
                 }
 
                 param_values.push_back({param.name, param.default_value});
@@ -120,14 +122,18 @@ void run_job(
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
+
+    WSHU_LOG(scl::Level::Info, R"(Job "%s/%s" doesn't exist)", req.project, req.job);
 
     dto::cis_job_error_doesnt_exist err;
     err.project = req.project;
     err.job = req.job;
 
-    return tr.send_error(err, "Job doesn't exists.");
+    return tr.send_error(err, "Job doesn't exist.");
 }
 
 } // namespace handlers

@@ -29,6 +29,8 @@ void get_project_permissions(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -41,13 +43,17 @@ void get_project_permissions(
 
     if(!is_admin)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
     // check if the project exists
     if(!cis_manager.get_project_info(req.project))
     {
-        return tr.send_error(dto::cis_project_error_doesnt_exist{}, "Project doesn't exists.");
+        WSHU_LOG(scl::Level::Info, R"("%s" project doesn't exist)", req.project);
+
+        return tr.send_error(dto::cis_project_error_doesnt_exist{}, "Project doesn't exist.");
     }
 
     const auto permissions = rights.get_permissions_by_project(req.project, ec);
@@ -66,6 +72,8 @@ void get_project_permissions(
                 project_rights_ex.write,
                 project_rights_ex.execute});
     }
+
+    WSHU_LOG(scl::Level::Action, R"("%s" project permissions were sent)", req.project);
 
     return tr.send(res);
 }

@@ -40,6 +40,8 @@ void get_build_info(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -67,20 +69,26 @@ void get_build_info(
                             entry));
         }
 
+        WSHU_LOG(scl::Level::Action, R"("%s/%s/%s" build info was sent)", req.project, req.job, req.build);
+
         return tr.send(res);
     }
 
     if(!permitted)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
+
+    WSHU_LOG(scl::Level::Info, R"(Build "%s/%s/%s" doesn't exist)", req.project, req.job, req.build);
 
     dto::cis_build_error_doesnt_exist err;
     err.project = req.project;
     err.job = req.job;
     err.build = req.build;
 
-    return tr.send_error(err, "Build doesn't exists.");
+    return tr.send_error(err, "Build doesn't exist.");
 }
 
 } // namespace handlers

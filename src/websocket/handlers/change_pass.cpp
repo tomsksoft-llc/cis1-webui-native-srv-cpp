@@ -31,6 +31,8 @@ void change_pass(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -45,8 +47,12 @@ void change_pass(
 
         if(!ok)
         {
+            WSHU_LOG(scl::Level::Info, "Can't change password");
+
             tr.send_error("Can't change password.");
         }
+
+        WSHU_LOG(scl::Level::Action, R"(User's "%s" password was changed)", req.email);
 
         dto::user_change_pass_success res;
         return tr.send(res);
@@ -65,6 +71,8 @@ void change_pass(
 
     if(email != req.email)
     {
+        WSHU_LOG(scl::Level::Action, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -76,6 +84,8 @@ void change_pass(
     {
         return change();
     }
+
+    WSHU_LOG(scl::Level::Action, "Password doesn't match");
 
     return tr.send_error(dto::user_error_pass_doesnt_match{}, "Invalid password");
 }
