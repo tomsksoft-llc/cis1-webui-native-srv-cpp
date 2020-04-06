@@ -31,6 +31,8 @@ void logout(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Invalid token");
+
         return tr.send_error(dto::auth_error_wrong_credentials{}, "Invalid token.");
     }
 
@@ -48,11 +50,14 @@ void logout(
         authentication_handler.delete_token(req.token, ec);
 
         WSHU_CHECK_EC(ec);
+        WSHU_LOG(scl::Level::Action, R"(User "%s" logged out)", email.value());
 
         dto::auth_logout_success res;
 
         return tr.send(res);
     }
+
+    WSHU_LOG(scl::Level::Info, "Invalid token");
 
     dto::auth_error_wrong_credentials err;
 

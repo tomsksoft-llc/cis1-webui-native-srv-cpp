@@ -32,6 +32,8 @@ void move_fs_entry(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -42,6 +44,8 @@ void move_fs_entry(
 
     if(!validate_path(old_path) || !validate_path(new_path))
     {
+        WSHU_LOG(scl::Level::Info, R"(Invalid path: old "%s" or new "%s")", req.old_path, req.new_path);
+
         return tr.send_error(dto::fs_entry_error_invalid_path{}, "Invalid path.");
     }
 
@@ -53,6 +57,8 @@ void move_fs_entry(
 
     if(!path_rights || !path_rights.value().write)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -62,6 +68,8 @@ void move_fs_entry(
 
     if(!path_rights || !path_rights.value().write)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -70,8 +78,12 @@ void move_fs_entry(
     fs.move_entry(old_path, new_path, ec);
     if(ec)
     {
+        WSHU_LOG(scl::Level::Error, "Error on move: %s", ec.message());
+
         return tr.send_error(dto::fs_entry_error_cant_move{}, "Error on move.");
     }
+
+    WSHU_LOG(scl::Level::Action, R"(fs entry was moved from "%s" to "%s")", req.old_path, req.new_path);
 
     dto::fs_entry_move_success res;
     return tr.send(res);

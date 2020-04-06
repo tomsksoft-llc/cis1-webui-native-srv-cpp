@@ -39,11 +39,15 @@ void list_directory(
     {
         dto::fs_entry_error_invalid_path err;
 
+        WSHU_LOG(scl::Level::Info, R"(Invalid path "%s")", req.path);
+
         return tr.send_error(err, "Invalid path.");
     }
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -57,9 +61,9 @@ void list_directory(
 
     if(!path_rights || !path_rights.value().read)
     {
-        dto::user_permission_error_access_denied err;
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
 
-        return tr.send_error(err, "Action not permitted.");
+        return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     auto& fs = cis_manager.fs();
@@ -76,8 +80,12 @@ void list_directory(
                     make_dir_entry(fs.root().path(), entry));
         }
 
+        WSHU_LOG(scl::Level::Action, R"(List directory (path "%s") was sent)", req.path);
+
         return tr.send(res);
     }
+
+    WSHU_LOG(scl::Level::Info, R"(Path "%s" does not exists)", req.path);
 
     dto::fs_entry_error_doesnt_exist err;
 

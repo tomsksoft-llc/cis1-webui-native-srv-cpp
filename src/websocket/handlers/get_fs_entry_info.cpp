@@ -36,13 +36,15 @@ void get_fs_entry_info(
 
     if(!validate_path(path))
     {
-        dto::fs_entry_error_invalid_path err;
+        WSHU_LOG(scl::Level::Info, "Invalid path");
 
-        return tr.send_error(err, "Invalid path.");
+        return tr.send_error(dto::fs_entry_error_invalid_path{}, "Invalid path.");
     }
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -56,6 +58,8 @@ void get_fs_entry_info(
 
     if(!path_rights || !path_rights.value().read)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
@@ -69,8 +73,12 @@ void get_fs_entry_info(
         
         make_dir_entry(res, fs.root().path(), entry);
 
+        WSHU_LOG(scl::Level::Action, R"("%s" path info was sent)", req.path);
+
         return tr.send(res);
     }
+
+    WSHU_LOG(scl::Level::Info, R"("%s" path doesn't exist)", req.path);
 
     tr.send_error(dto::fs_entry_error_doesnt_exist{}, "Path does not exists.");
 }

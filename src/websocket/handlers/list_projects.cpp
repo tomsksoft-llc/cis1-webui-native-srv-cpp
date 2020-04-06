@@ -11,6 +11,7 @@
 #include "websocket/dto/cis_project_list_get_success.h"
 
 #include "websocket/handlers/utils/make_dir_entry.h"
+#include "websocket/handlers/utils/wsh_log.h"
 
 #include "cis/dirs.h"
 
@@ -65,6 +66,8 @@ void list_projects(
 
         res.fs_entries.push_back(res_entry);
     }
+
+    WSHU_LOG(scl::Level::Action, "Project list was sent");
 
     return tr.send(res);
 }

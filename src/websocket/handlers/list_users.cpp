@@ -30,6 +30,8 @@ void list_users(
 
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -40,10 +42,13 @@ void list_users(
 
     if(!is_admin)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
     const auto users = authentication_handler.get_user_infos(ec);
+
     WSHU_CHECK_EC(ec);
 
     dto::admin_user_list_success res;
@@ -55,6 +60,8 @@ void list_users(
                 user.api_access_key ? user.api_access_key.value() : "",
                 user.is_admin});
     }
+
+    WSHU_LOG(scl::Level::Action, "User list was sent");
 
     return tr.send(res);
 }

@@ -38,6 +38,7 @@ void login_pass(
     if(!token)
     {
         WSHU_LOG(scl::Level::Info, "Wrong credentials");
+
         return tr.send_error(dto::auth_error_wrong_credentials{}, "Wrong credentials.");
     }
 
@@ -46,7 +47,7 @@ void login_pass(
     const auto is_admin = rights.is_admin(req.email, ec);
 
     WSHU_CHECK_EC(ec);
-    WSHU_LOG(scl::Level::Action, "%s logged in successfully", is_admin ? "Admin" : "User");
+    WSHU_LOG(scl::Level::Action, "%s logged in", is_admin ? "Admin" : "User");
 
     dto::auth_login_success res;
     res.token = token.value();

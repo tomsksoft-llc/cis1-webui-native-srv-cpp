@@ -27,6 +27,8 @@ void set_user_permissions(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -40,6 +42,8 @@ void set_user_permissions(
 
     if(!is_admin)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted");
     }
 
@@ -52,6 +56,12 @@ void set_user_permissions(
                 ec);
 
         WSHU_CHECK_EC(ec);
+        WSHU_LOG(scl::Level::Action,
+                 R"(Permissions of "%s" were set: %b %b %b)",
+                 req.email,
+                 perm.read,
+                 perm.write,
+                 perm.execute);
     }
 
     dto::admin_user_permission_set_success res;

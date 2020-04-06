@@ -60,6 +60,7 @@ void add_cis_job(
             err.job = req.job;
 
             WSHU_LOG(scl::Level::Info, R"(Job "%s/%s" already exists)", req.project, req.job);
+
             return tr.send_error(err, "Job already exists.");
         }
 
@@ -103,7 +104,7 @@ void add_cis_job(
         *job_conf << "keep_last_break_builds=5";
 
         WSHU_LOG(scl::Level::Action,
-                 R"(CIS job "%s/%s" was created successfully)",
+                 R"(CIS job "%s/%s" was created)",
                  req.project,
                  req.job);
 
@@ -121,7 +122,7 @@ void add_cis_job(
     dto::cis_project_error_doesnt_exist err;
     err.project = req.project;
 
-    WSHU_LOG(scl::Level::Info, "Project doesn't exists");
+    WSHU_LOG(scl::Level::Info, "Project doesn't exist");
     return tr.send_error(err, "Project doesn't exists.");
 }
 

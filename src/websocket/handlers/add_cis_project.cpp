@@ -30,6 +30,8 @@ void add_cis_project(
 {
     if(!ctx.client_info)
     {
+        WSHU_LOG(scl::Level::Info, "Login required");
+
         return tr.send_error(dto::auth_error_login_required{}, "Login required.");
     }
 
@@ -42,6 +44,8 @@ void add_cis_project(
         dto::cis_project_error_already_exist err;
         err.project = req.project;
 
+        WSHU_LOG(scl::Level::Info, R"(Project "%s" already exists)", req.project);
+
         return tr.send_error(err, "Project already exists.");
     }
 
@@ -53,12 +57,15 @@ void add_cis_project(
 
     if(!is_admin)
     {
+        WSHU_LOG(scl::Level::Info, "Action not permitted");
+
         return tr.send_error(dto::user_permission_error_access_denied{}, "Action not permitted.");
     }
 
     cis_manager.create_project(req.project, ec);
 
     WSHU_CHECK_EC(ec);
+    WSHU_LOG(scl::Level::Action, R"(Project "%s" was added)", req.project);
 
     dto::cis_project_add_success res;
 
