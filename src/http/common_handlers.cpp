@@ -36,6 +36,7 @@ handle_result handle_authenticate(
             ctx.client_info = request_context::user_info{email.value()};
         }
     }
+
     return handle_result::next;
 }
 

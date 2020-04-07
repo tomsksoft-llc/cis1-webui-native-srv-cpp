@@ -12,8 +12,10 @@
 #include <string>
 #include <any>
 #include <variant>
+#include <vector>
 
 #include <boost/beast/http/status.hpp>
+#include <boost/beast/http/verb.hpp>
 
 struct request_context
 {
@@ -27,7 +29,7 @@ struct request_context
     std::optional<user_info> client_info = std::nullopt;
     uint64_t session_id;
     std::map<std::string, std::string> cookies;
-    std::map<std::string, std::any> other;
     boost::beast::http::status res_status = boost::beast::http::status::unknown;
+    std::vector<boost::beast::http::verb> allowed_verbs;
     std::string error;
 };

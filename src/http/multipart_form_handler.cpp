@@ -28,10 +28,16 @@ handle_result multipart_form_handler::upload(
         const std::string& project,
         const std::string& dir)
 {
-    if(req.method() == beast::http::verb::post
-        && req[beast::http::field::content_type].find(
-                "multipart/form-data") == 0)
+    if(req.method() == beast::http::verb::post)
     {
+        if(req[beast::http::field::content_type].find(
+                "multipart/form-data") != 0)
+        {
+            ctx.res_status = beast::http::status::bad_request;
+
+            return handle_result::error;
+        }
+
         std::error_code ec;
 
         if(!ctx.client_info)
@@ -90,6 +96,9 @@ handle_result multipart_form_handler::upload(
         return handle_result::done;
     }
 
+    ctx.allowed_verbs = {
+        beast::http::verb::get
+    };
     ctx.res_status = beast::http::status::method_not_allowed;
 
     return handle_result::error;
@@ -103,10 +112,16 @@ handle_result multipart_form_handler::replace(
         const std::string& project,
         const std::string& dir)
 {
-    if(req.method() == beast::http::verb::post
-        && req[beast::http::field::content_type].find(
-                "multipart/form-data") == 0)
+    if(req.method() == beast::http::verb::post)
     {
+        if(req[beast::http::field::content_type].find(
+                "multipart/form-data") != 0)
+        {
+            ctx.res_status = beast::http::status::bad_request;
+
+            return handle_result::error;
+        }
+
         std::error_code ec;
 
         if(!ctx.client_info)
@@ -165,6 +180,9 @@ handle_result multipart_form_handler::replace(
         return handle_result::done;
     }
 
+    ctx.allowed_verbs = {
+        beast::http::verb::post
+    };
     ctx.res_status = beast::http::status::method_not_allowed;
 
     return handle_result::error;
