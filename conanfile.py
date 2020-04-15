@@ -28,13 +28,13 @@ class Cis1WebUINativeSrvCpp(ConanFile):
                 "boost_optional/1.69.0@bincrafters/stable",
                 "boost_assert/1.69.0@bincrafters/stable",
                 "rapidjson/1.1.0@bincrafters/stable",
-                "OpenSSL/1.1.1a@conan/stable",
+                "openssl/1.1.1c@_/_",
                 "sqlite_orm/1.3@tomsksoft/cis1",
                 "cis1_tpl/0.0.3@tomsksoft/cis1",
                 "cis1_cwu_transport/0.0.5@tomsksoft/cis1",
                 "cis1_cwu_protocol/0.0.5@tomsksoft/cis1",
                 "cis1_proto_utils/0.0.8@tomsksoft/cis1",
-                "sc_logger/1.0.2@tomsksoft/cis1",
+                "sc_logger/1.0.3@tomsksoft/cis1",
                 "croncpp/1.0@tomsksoft/cis1")
 
     def build(self):

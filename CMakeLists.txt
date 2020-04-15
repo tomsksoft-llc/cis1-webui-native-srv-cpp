@@ -99,11 +99,33 @@ set(${PROJECT_NAME}_SRC
     src/logger.cpp)
 
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
+conan_basic_setup(TARGETS)
 
 add_compile_definitions(BOOST_BEAST_USE_STD_STRING_VIEW)
 
 add_library(${PROJECT_NAME}_impl STATIC ${${PROJECT_NAME}_SRC})
+
+target_link_libraries(${PROJECT_NAME}_impl
+    CONAN_PKG::boost_beast
+    CONAN_PKG::boost_process
+    CONAN_PKG::boost_filesystem
+    CONAN_PKG::boost_system
+    CONAN_PKG::boost_asio
+    CONAN_PKG::boost_intrusive
+    CONAN_PKG::boost_lexical_cast
+    CONAN_PKG::boost_property_tree
+    CONAN_PKG::boost_optional
+    CONAN_PKG::boost_assert
+    CONAN_PKG::rapidjson
+    CONAN_PKG::openssl
+    CONAN_PKG::sqlite_orm
+    CONAN_PKG::cis1_tpl
+    CONAN_PKG::cis1_cwu_transport
+    CONAN_PKG::cis1_cwu_protocol
+    CONAN_PKG::cis1_proto_utils
+    CONAN_PKG::sc_logger
+    CONAN_PKG::croncpp)
+
 
 set(PRE_CONFIGURE_FILE "include/version.h.in")
 set(POST_CONFIGURE_FILE "include/version.h")
@@ -126,8 +148,7 @@ target_link_libraries(
     ${PROJECT_NAME}
     ${PROJECT_NAME}_impl
     Threads::Threads
-    std::filesystem
-    ${CONAN_LIBS})
+    std::filesystem)
 
 if(BUILD_TESTING)
     add_subdirectory(test_package)
